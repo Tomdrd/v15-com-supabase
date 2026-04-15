@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sobral Cultural — Mapa Turístico</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{--ochre:#C8871A;--terracotta:#B54A2A;--cream:#F5EDD8;--deep:#1A1410;--mid:#2E2118;--sand:#E8D4B0;--teal:#1B6B6B;--gold:#D4A843}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--cream);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+header{position:relative;z-index:1000;background:var(--deep);border-bottom:1px solid rgba(200,135,26,.3);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:12px}.logo-icon{width:40px;height:40px;background:var(--ochre);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;animation:pulse-glow 3s ease-in-out infinite}
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(200,135,26,.4)}50%{box-shadow:0 0 0 8px rgba(200,135,26,0)}}
+.logo-text h1{font-family:'Playfair Display',serif;font-size:20px;font-weight:800;line-height:1;color:var(--cream)}.logo-text span{font-size:11px;color:var(--ochre);letter-spacing:2px;text-transform:uppercase}
+.header-right{display:flex;align-items:center;gap:12px}
+.btn-geo{display:flex;align-items:center;gap:8px;background:var(--terracotta);color:white;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:all .2s}.btn-geo:hover{background:#c55530;transform:translateY(-1px);box-shadow:0 4px 14px rgba(181,74,42,.4)}.btn-geo.locating{background:var(--teal);animation:btn-pulse 1s ease-in-out infinite}
+.btn-admin{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);color:var(--cream);border:1px solid rgba(200,135,26,.3);padding:9px 16px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;text-decoration:none;transition:.15s}.btn-admin:hover{background:rgba(200,135,26,.15)}
+@keyframes btn-pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.app-body{display:flex;flex:1;overflow:hidden}
+.sidebar{width:340px;flex-shrink:0;background:var(--mid);display:flex;flex-direction:column;overflow:hidden;border-right:1px solid rgba(200,135,26,.2)}
+.sidebar-header{padding:20px 20px 14px;border-bottom:1px solid rgba(255,255,255,.06)}.sidebar-header h2{font-family:'Playfair Display',serif;font-size:15px;color:var(--gold);margin-bottom:12px}
+.search-box{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(200,135,26,.25);border-radius:8px;padding:10px 14px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s}.search-box::placeholder{color:rgba(245,237,216,.35)}.search-box:focus{border-color:var(--ochre)}
+.filter-pills{display:flex;gap:6px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.06)}
+.pill{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid transparent;transition:all .15s;letter-spacing:.3px}
+.pill[data-cat="todos"]{background:var(--ochre);color:var(--deep);border-color:var(--ochre)}.pill[data-cat="religioso"]{background:rgba(100,60,180,.2);color:#b09ce8;border-color:rgba(100,60,180,.4)}.pill[data-cat="cultura"]{background:rgba(27,107,107,.2);color:#7ecece;border-color:rgba(27,107,107,.4)}.pill[data-cat="natureza"]{background:rgba(60,120,40,.2);color:#8ecb6e;border-color:rgba(60,120,40,.4)}.pill[data-cat="historico"]{background:rgba(181,74,42,.2);color:#e89e7e;border-color:rgba(181,74,42,.4)}.pill[data-cat="lazer"]{background:rgba(200,135,26,.2);color:#f0c060;border-color:rgba(200,135,26,.4)}.pill:not(.active){opacity:.55}
+.spots-list{flex:1;overflow-y:auto;padding:10px}.spots-list::-webkit-scrollbar{width:4px}.spots-list::-webkit-scrollbar-thumb{background:rgba(200,135,26,.3);border-radius:4px}
+.spot-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;overflow:hidden;animation:card-in .4s ease both}
+@keyframes card-in{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+.spot-card:hover,.spot-card.active{background:rgba(200,135,26,.12);border-color:rgba(200,135,26,.4);transform:translateX(3px)}
+.spot-card-thumb{height:80px;position:relative;overflow:hidden}.spot-card-thumb img{width:100%;height:100%;object-fit:cover}.spot-card-thumb-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;opacity:.4}
+.spot-card-body{padding:12px;display:flex;gap:10px;align-items:flex-start}.spot-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}.spot-info{flex:1;min-width:0}.spot-name{font-weight:500;font-size:13px;color:var(--cream);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.spot-tag{font-size:10.5px;color:rgba(245,237,216,.45)}.spot-dist{font-size:11px;color:var(--ochre);text-align:right;flex-shrink:0}
+.no-results{text-align:center;padding:40px 20px;color:rgba(245,237,216,.3);font-size:13px}
+#map{flex:1;position:relative}.leaflet-container{background:#1a1a2e!important;font-family:'DM Sans',sans-serif}
+.detail-panel{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,var(--mid) 80%,transparent);padding:0 20px 20px;z-index:900;transform:translateY(100%);transition:transform .35s cubic-bezier(.34,1.2,.64,1);pointer-events:none}.detail-panel.open{transform:translateY(0);pointer-events:all}
+.detail-inner{background:var(--mid);border:1px solid rgba(200,135,26,.3);border-radius:16px;overflow:hidden;box-shadow:0 -20px 60px rgba(0,0,0,.5);max-width:720px;margin:0 auto;display:flex;flex-direction:column}
+.detail-photo{height:160px;position:relative;overflow:hidden;background:var(--deep)}.detail-photo img{width:100%;height:100%;object-fit:cover;filter:brightness(.85)}.detail-photo-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:56px;opacity:.3}
+.detail-body{padding:18px 22px 20px;display:flex;gap:16px;align-items:flex-start}.detail-emoji{font-size:36px;flex-shrink:0}.detail-content{flex:1}.detail-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}.detail-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--cream);line-height:1.2}.detail-cat{font-size:11px;padding:3px 10px;border-radius:12px;flex-shrink:0;margin-top:2px}.detail-desc{font-size:12.5px;color:rgba(245,237,216,.7);line-height:1.6;margin-bottom:12px}.detail-meta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}.detail-meta span{font-size:11.5px;color:rgba(245,237,216,.5);display:flex;align-items:center;gap:5px}.detail-meta strong{color:var(--ochre)}
+.detail-actions{display:flex;gap:10px}.btn-blog{display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.15s}.btn-blog:hover{background:var(--gold)}
+.btn-close-detail{background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.5);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0;margin-top:-4px}.btn-close-detail:hover{background:rgba(255,255,255,.15);color:white}
+.stats-bar{background:rgba(0,0,0,.3);border-top:1px solid rgba(200,135,26,.15);padding:8px 20px;display:flex;gap:24px;align-items:center;flex-shrink:0}.stat-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:rgba(245,237,216,.4)}.stat-item strong{color:var(--gold)}
+.toast{position:fixed;top:76px;right:20px;background:var(--mid);border:1px solid rgba(200,135,26,.4);color:var(--cream);padding:12px 18px;border-radius:10px;font-size:13px;z-index:9999;transform:translateX(120%);transition:transform .3s cubic-bezier(.34,1.2,.64,1);max-width:280px}.toast.show{transform:translateX(0)}.toast.error{border-color:rgba(181,74,42,.6)}
+#loading{position:fixed;inset:0;background:var(--deep);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .6s ease}#loading.fade{opacity:0;pointer-events:none}
+.loading-title{font-family:'Playfair Display',serif;font-size:36px;font-weight:800;color:var(--cream);text-align:center;animation:title-in .8s ease both}@keyframes title-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.loading-sub{font-size:13px;color:var(--ochre);letter-spacing:3px;text-transform:uppercase;animation:title-in .8s .2s ease both}.loading-spinner{width:48px;height:48px;border:3px solid rgba(200,135,26,.2);border-top:3px solid var(--ochre);border-radius:50%;animation:spin .9s linear infinite,title-in .8s .4s ease both}@keyframes spin{to{transform:rotate(360deg)}}
+.user-dot{width:16px;height:16px;background:#4fc3f7;border-radius:50%;border:3px solid white;box-shadow:0 0 0 6px rgba(79,195,247,.25);animation:geo-pulse 2s ease-in-out infinite}@keyframes geo-pulse{0%,100%{box-shadow:0 0 0 6px rgba(79,195,247,.25)}50%{box-shadow:0 0 0 14px rgba(79,195,247,0)}}
+.leaflet-popup-content-wrapper{background:var(--mid)!important;border:1px solid rgba(200,135,26,.4)!important;border-radius:12px!important;box-shadow:0 8px 30px rgba(0,0,0,.6)!important;color:var(--cream)!important}.leaflet-popup-tip{background:var(--mid)!important}.leaflet-popup-close-button{color:var(--ochre)!important}
+.popup-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--cream);margin-bottom:4px}.popup-sub{font-size:12px;color:rgba(245,237,216,.5)}.popup-btn{margin-top:10px;display:inline-block;background:var(--ochre);color:var(--deep);padding:6px 14px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;width:100%;text-align:center;transition:background .15s}.popup-btn:hover{background:var(--gold)}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="loading-title">Sobral Cultural</div>
+  <div class="loading-sub">Ceará · Brasil</div>
+  <div class="loading-spinner"></div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏛️</div>
+    <div class="logo-text"><h1>Sobral Cultural</h1><span>Mapa Turístico · Ceará</span></div>
+  </div>
+  <div class="header-right">
+    <button class="btn-geo" id="btnGeo" onclick="getUserLocation()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>
+      Minha Localização
+    </button>
+    <a href="sobral_admin.html" class="btn-admin">⚙️ Administrar</a>
+  </div>
+</header>
+
+<div class="app-body">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>✦ Pontos Turísticos</h2>
+      <input class="search-box" id="searchInput" placeholder="Buscar ponto turístico…" oninput="filterSpots()">
+    </div>
+    <div class="filter-pills" id="filterPills">
+      <div class="pill active" data-cat="todos" onclick="setCat('todos')">Todos</div>
+      <div class="pill" data-cat="religioso" onclick="setCat('religioso')">⛪ Religioso</div>
+      <div class="pill" data-cat="cultura" onclick="setCat('cultura')">🎭 Cultura</div>
+      <div class="pill" data-cat="historico" onclick="setCat('historico')">🏛️ Histórico</div>
+      <div class="pill" data-cat="natureza" onclick="setCat('natureza')">🌿 Natureza</div>
+      <div class="pill" data-cat="lazer" onclick="setCat('lazer')">🎡 Lazer</div>
+    </div>
+    <div class="spots-list" id="spotsList"></div>
+  </div>
+
+  <div style="position:relative;flex:1;display:flex;flex-direction:column">
+    <div id="map"></div>
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-inner">
+        <div class="detail-photo" id="detailPhoto"></div>
+        <div class="detail-body">
+          <div class="detail-emoji" id="detailEmoji">🏛️</div>
+          <div class="detail-content">
+            <div class="detail-header">
+              <div><div class="detail-title" id="detailTitle">-</div><div class="detail-cat" id="detailCat">-</div></div>
+              <button class="btn-close-detail" onclick="closeDetail()">✕</button>
+            </div>
+            <div class="detail-desc" id="detailDesc">-</div>
+            <div class="detail-meta" id="detailMeta"></div>
+            <div class="detail-actions"><a id="detailBlogLink" href="#" target="_blank" class="btn-blog">📰 Ver Post Completo →</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="stats-bar">
+      <div class="stat-item">📍 <strong id="countVisible">0</strong> pontos exibidos</div>
+      <div class="stat-item">🗺️ Sobral, Ceará</div>
+      <div class="stat-item" id="statGeo" style="display:none">🔵 <strong>Você está aqui</strong></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  SUPABASE
+// ══════════════════════════════════════════
+const SUPA_URL = 'https://nrohpfggqcbscyoigpiz.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+const CAT_LABELS = { todos:'Todos',religioso:'⛪ Religioso',cultura:'🎭 Cultura',historico:'🏛️ Histórico',natureza:'🌿 Natureza',lazer:'🎡 Lazer' };
+
+let SPOTS = [], map, currentCat='todos', searchTerm='', markers={}, userMarker=null, userLat=null, userLng=null;
+
+function mapRow(r) {
+  return { id:r.id, name:r.name, cat:r.cat, emoji:r.emoji, color:r.color,
+    lat:r.lat, lng:r.lng, desc:r.description, address:r.address,
+    horario:r.horario, entrada:r.entrada, photo:r.photo,
+    blogTitle:r.blog_title, blogContent:r.blog_content, blogAuthor:r.blog_author, blogDate:r.blog_date };
+}
+
+async function loadSpots() {
+  const { data } = await supa.from('spots').select('*').order('created_at', { ascending: true });
+  SPOTS = (data || []).map(mapRow);
+}
+
+function getSpots() { return SPOTS; }
+
+function startRealtime() {
+  supa.channel('map-spots')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'spots' }, async () => {
+      await loadSpots();
+      refreshMarkers();
+      buildList();
+    })
+    .subscribe();
+}
+
+// ══════════════════════════════════════════
+//  MAPA
+// ══════════════════════════════════════════
+function initMap() {
+  map = L.map('map', { center:[-3.6880,-40.3497], zoom:14, zoomControl:true });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution:'© OSM © CARTO', maxZoom:19, subdomains:'abcd' }).addTo(map);
+  buildList();
+  placeMarkers();
+  setTimeout(() => { const b = Object.values(markers).map(m=>m.getLatLng()); if (b.length) map.fitBounds(L.latLngBounds(b).pad(.15)); }, 200);
+}
+
+function makeIcon(spot, active=false) {
+  const sz = active ? 52 : 44;
+  return L.divIcon({ html:`<div style="width:${sz}px;height:${sz}px;background:${spot.color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.5)${active?',0 0 0 3px rgba(200,135,26,.8)':''};border:2px solid rgba(255,255,255,.3)"><span style="transform:rotate(45deg);font-size:${active?22:18}px;line-height:1">${spot.emoji}</span></div>`, className:'', iconSize:[sz,sz], iconAnchor:[sz/2,sz], popupAnchor:[0,-sz] });
+}
+
+function placeMarkers() {
+  getSpots().forEach((spot, i) => {
+    const marker = L.marker([spot.lat, spot.lng], { icon: makeIcon(spot) });
+    marker.bindPopup(`<div class="popup-title">${spot.emoji} ${spot.name}</div><div class="popup-sub">${CAT_LABELS[spot.cat]||spot.cat}</div><button class="popup-btn" onclick="openDetail('${spot.id}')">Ver detalhes ↓</button>`, { maxWidth:220 });
+    marker.on('click', () => { openDetail(spot.id); highlightCard(spot.id); });
+    setTimeout(() => { marker.addTo(map); markers[spot.id] = marker; }, i*80);
+  });
+  updateCount();
+}
+
+function refreshMarkers() {
+  // Remove markers not in new data
+  const newIds = new Set(getSpots().map(s => s.id));
+  Object.keys(markers).forEach(id => { if (!newIds.has(id)) { if (map.hasLayer(markers[id])) markers[id].remove(); delete markers[id]; } });
+  // Add/update
+  getSpots().forEach((spot, i) => {
+    if (!markers[spot.id]) {
+      const marker = L.marker([spot.lat, spot.lng], { icon: makeIcon(spot) });
+      marker.bindPopup(`<div class="popup-title">${spot.emoji} ${spot.name}</div><div class="popup-sub">${CAT_LABELS[spot.cat]||spot.cat}</div><button class="popup-btn" onclick="openDetail('${spot.id}')">Ver detalhes ↓</button>`, { maxWidth:220 });
+      marker.on('click', () => { openDetail(spot.id); highlightCard(spot.id); });
+      setTimeout(() => { if (map) { marker.addTo(map); markers[spot.id] = marker; } }, i*40);
+    }
+  });
+  updateCount();
+}
+
+// ══════════════════════════════════════════
+//  LISTA SIDEBAR
+// ══════════════════════════════════════════
+function buildList() {
+  const spots = getSpots();
+  const list = document.getElementById('spotsList');
+  const filtered = spots.filter(s => (currentCat==='todos'||s.cat===currentCat) && s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  if (userLat !== null) filtered.sort((a,b) => dist(userLat,userLng,a.lat,a.lng) - dist(userLat,userLng,b.lat,b.lng));
+  if (filtered.length === 0) { list.innerHTML='<div class="no-results">Nenhum ponto encontrado 🔍</div>'; updateCount(0); return; }
+  list.innerHTML = filtered.map((s,i) => `
+    <div class="spot-card" id="card-${s.id}" onclick="focusSpot('${s.id}')" style="animation-delay:${i*40}ms">
+      <div class="spot-card-thumb" style="background:${s.color}22">
+        ${s.photo?`<img src="${s.photo}" alt="${s.name}">`:`<div class="spot-card-thumb-placeholder">${s.emoji}</div>`}
+      </div>
+      <div class="spot-card-body">
+        <div class="spot-icon" style="background:${s.color}22;color:${s.color}"><span style="font-size:18px">${s.emoji}</span></div>
+        <div class="spot-info"><div class="spot-name">${s.name}</div><div class="spot-tag">${CAT_LABELS[s.cat]||s.cat}</div></div>
+        ${userLat!==null?`<div class="spot-dist">${fmtDist(dist(userLat,userLng,s.lat,s.lng))}</div>`:''}
+      </div>
+    </div>`).join('');
+  updateCount(filtered.length);
+  spots.forEach(s => {
+    if (!markers[s.id]) return;
+    if (filtered.find(f => f.id===s.id)) { if (!map.hasLayer(markers[s.id])) markers[s.id].addTo(map); }
+    else { if (map.hasLayer(markers[s.id])) markers[s.id].remove(); }
+  });
+}
+
+// ══════════════════════════════════════════
+//  DETALHES
+// ══════════════════════════════════════════
+function focusSpot(id) {
+  const spot = getSpots().find(s => s.id===id);
+  if (!spot || !markers[id]) return;
+  map.flyTo([spot.lat,spot.lng], 17, { duration:1.2 });
+  setTimeout(() => markers[id].openPopup(), 1300);
+  openDetail(id); highlightCard(id);
+}
+
+function openDetail(id) {
+  const spot = getSpots().find(s => String(s.id)===String(id));
+  if (!spot) return;
+  const ph = document.getElementById('detailPhoto');
+  ph.innerHTML = spot.photo ? `<img src="${spot.photo}" alt="${spot.name}">` : `<div class="detail-photo-placeholder">${spot.emoji}</div>`;
+  document.getElementById('detailEmoji').textContent = spot.emoji;
+  document.getElementById('detailTitle').textContent = spot.name;
+  const ce = document.getElementById('detailCat');
+  ce.textContent = CAT_LABELS[spot.cat]||spot.cat;
+  ce.style.cssText = `background:${spot.color}33;color:${spot.color};border:1px solid ${spot.color}66`;
+  document.getElementById('detailDesc').textContent = spot.desc;
+  const dStr = userLat!==null?`<span>📏 <strong>${fmtDist(dist(userLat,userLng,spot.lat,spot.lng))}</strong> de você</span>`:'';
+  document.getElementById('detailMeta').innerHTML = `<span>📍 <strong>${spot.address||''}</strong></span><span>🕐 <strong>${spot.horario||''}</strong></span><span>🎫 <strong>${spot.entrada||''}</strong></span>${dStr}`;
+  document.getElementById('detailBlogLink').href = `sobral_post.html?id=${spot.id}`;
+  document.getElementById('detailPanel').classList.add('open');
+}
+function closeDetail() { document.getElementById('detailPanel').classList.remove('open'); }
+function highlightCard(id) {
+  document.querySelectorAll('.spot-card').forEach(c=>c.classList.remove('active'));
+  const c = document.getElementById('card-'+id);
+  if (c) { c.classList.add('active'); c.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+}
+
+// ══════════════════════════════════════════
+//  GEOLOCALIZAÇÃO
+// ══════════════════════════════════════════
+function getUserLocation() {
+  if (!navigator.geolocation) { showToast('Geolocalização não suportada.', true); return; }
+  const btn = document.getElementById('btnGeo');
+  btn.classList.add('locating'); btn.innerHTML = '<span>Localizando…</span>';
+  navigator.geolocation.getCurrentPosition(pos => {
+    userLat = pos.coords.latitude; userLng = pos.coords.longitude;
+    btn.classList.remove('locating'); btn.innerHTML = '✓ Localizado!'; btn.style.background = '#1B6B6B';
+    if (userMarker) userMarker.remove();
+    userMarker = L.marker([userLat,userLng], { icon: L.divIcon({ html:'<div class="user-dot"></div>', className:'', iconSize:[16,16], iconAnchor:[8,8] }) }).addTo(map);
+    userMarker.bindPopup('<div class="popup-title">📍 Você está aqui</div>');
+    map.flyTo([userLat,userLng], 15, { duration:1.5 });
+    document.getElementById('statGeo').style.display = 'flex';
+    showToast('📍 Localização encontrada! Lista ordenada por proximidade.');
+    buildList();
+  }, err => {
+    btn.classList.remove('locating'); btn.innerHTML = 'Minha Localização';
+    showToast(err.code===1?'Permissão negada.':err.code===2?'Localização indisponível.':'Erro ao localizar.', true);
+  }, { timeout:10000, enableHighAccuracy:true });
+}
+
+// ══════════════════════════════════════════
+//  FILTROS
+// ══════════════════════════════════════════
+function setCat(cat) {
+  currentCat = cat;
+  document.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p.dataset.cat===cat));
+  buildList();
+}
+function filterSpots() { searchTerm = document.getElementById('searchInput').value; buildList(); }
+
+// ══════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════
+function dist(la1,ln1,la2,ln2){const R=6371e3,dL=(la2-la1)*Math.PI/180,dN=(ln2-ln1)*Math.PI/180,a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dN/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+function fmtDist(m){return m<1000?`${Math.round(m)} m`:`${(m/1e3).toFixed(1)} km`;}
+function updateCount(n){document.getElementById('countVisible').textContent=n!==undefined?n:getSpots().length;}
+function showToast(msg,error=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(error?' error':'');setTimeout(()=>t.className='toast'+(error?' error':''),3800);}
+
+// ══════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════
+window.addEventListener('load', async () => {
+  await loadSpots();
+  initMap();
+  startRealtime();
+  const l = document.getElementById('loading');
+  l.classList.add('fade');
+  setTimeout(() => l.remove(), 700);
+});
+</script>
+</body>
+</html>
