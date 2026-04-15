@@ -56,7 +56,7 @@
 <div class="topbar">
   <div class="topbar-logo"><span>🏛️ Sobral <em>Cultural</em></span></div>
   <div class="topbar-actions">
-    <a href="sobral_turismo.html" class="btn-back">← Voltar ao Mapa</a>
+    <a href="/" class="btn-back">← Voltar ao Mapa</a>
     <button class="btn-share" onclick="sharePost()">↗ Compartilhar</button>
   </div>
 </div>
@@ -120,7 +120,7 @@ async function renderPage() {
       <div class="hero-overlay"></div>
       <div class="hero-content">
         <div class="hero-breadcrumb">
-          <a href="sobral_turismo.html">Mapa Turístico</a>
+          <a href="/">Mapa Turístico</a>
           <span>›</span><span>${catLabel}</span>
           <span>›</span><span>${spot.name}</span>
         </div>
@@ -171,7 +171,7 @@ async function renderPage() {
         <div class="related-card">
           <h3>Veja Também</h3>
           ${related.map(rel => `
-            <a href="sobral_post.html?id=${rel.id}" class="related-item">
+            <a href="sobral_post?id=${rel.id}" class="related-item">
               <div class="related-emoji" style="background:${rel.color||'#1B6B6B'}22">${rel.emoji}</div>
               <div><div class="related-name">${rel.name}</div><div class="related-cat">${CAT_LABELS[rel.cat]||rel.cat}</div></div>
             </a>`).join('')}
@@ -202,7 +202,7 @@ function renderNotFound() {
       <div style="font-size:64px;margin-bottom:20px">🗺️</div>
       <h2>Ponto não encontrado</h2>
       <p>Este ponto turístico não existe ou foi removido do sistema.</p>
-      <a href="sobral_turismo.html" class="btn-back" style="display:inline-flex;margin:0 auto">← Voltar ao Mapa</a>
+      <a href="/" class="btn-back" style="display:inline-flex;margin:0 auto">← Voltar ao Mapa</a>
     </div>`;
 }
 

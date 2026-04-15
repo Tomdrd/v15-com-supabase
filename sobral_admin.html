@@ -70,7 +70,7 @@
       <button class="nav-btn" onclick="navigate('pesquisa')"><div class="icon">🔍</div> Pesquisa</button>
     </nav>
     <div class="sb-footer">
-      <a href="sobral_turismo.html" target="_blank">🗺️ Abrir Mapa ao Vivo</a>
+      <a href="/" target="_blank">🗺️ Abrir Mapa ao Vivo</a>
       <button class="btn btn-danger" style="width:100%;margin-top:8px;justify-content:center" onclick="logout()">🚪 Sair</button>
     </div>
   </aside>
@@ -322,7 +322,7 @@ function spotCard(s) {
       <div class="spot-actions">
         <button class="btn btn-sm btn-secondary" onclick="navigate('edit','${s.id}')">✏️ Editar</button>
         <button class="btn btn-sm btn-danger" onclick="confirmDelete('${s.id}')">🗑️</button>
-        <a href="sobral_post.html?id=${s.id}" target="_blank" class="btn btn-sm btn-ghost">👁️</a>
+        <a href="sobral_post?id=${s.id}" target="_blank" class="btn btn-sm btn-ghost">👁️</a>
       </div>
     </div>
   </div>`;
