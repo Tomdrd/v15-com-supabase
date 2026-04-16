@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contato — Sobral Cultural</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{--ochre:#C8871A;--gold:#D4A843;--terra:#B54A2A;--deep:#1A1410;--mid:#251B12;--panel:#2E2118;--cream:#F5EDD8;--muted:rgba(245,237,216,.55);--teal:#1B6B6B;--H:56px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--cream);min-height:100vh}
+
+/* TOPBAR */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:1000;height:var(--H);padding:0 20px;display:flex;align-items:center;justify-content:space-between;background:rgba(26,20,16,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,135,26,.2);gap:12px}
+.tb-logo{display:flex;align-items:center;gap:8px;text-decoration:none;flex-shrink:0}
+.tb-logo span{font-family:'Playfair Display',serif;font-size:17px;color:var(--cream)}.tb-logo em{color:var(--ochre);font-style:normal}
+.tb-nav{display:flex;gap:4px}.tb-nav a{padding:6px 12px;border-radius:7px;font-size:12.5px;color:rgba(245,237,216,.65);text-decoration:none;transition:.15s;border:1px solid transparent}.tb-nav a:hover,.tb-nav a.active{background:rgba(200,135,26,.1);color:var(--cream)}
+.hbg{display:none;flex-direction:column;gap:5px;width:38px;height:38px;background:rgba(255,255,255,.07);border:1px solid rgba(200,135,26,.2);border-radius:8px;cursor:pointer;padding:8px;justify-content:center;flex-shrink:0}
+.hbg span{display:block;height:2px;background:var(--cream);border-radius:2px;transition:all .3s}
+.hbg.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hbg.open span:nth-child(2){opacity:0}
+.hbg.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.dov{position:fixed;inset:0;top:var(--H);background:rgba(0,0,0,.5);z-index:1800;opacity:0;pointer-events:none;transition:opacity .3s}.dov.open{opacity:1;pointer-events:all}
+.drw{position:fixed;top:var(--H);right:0;bottom:0;width:260px;background:var(--mid);border-left:1px solid rgba(200,135,26,.2);z-index:1900;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto}.drw.open{transform:translateX(0)}
+.drw-inner{padding:14px 12px}.drw-sec{font-size:10px;color:rgba(245,237,216,.35);letter-spacing:1.5px;text-transform:uppercase;padding:12px 10px 5px}
+.drw-lnk{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:9px;color:var(--cream);text-decoration:none;font-size:13.5px;transition:.15s;border:none;background:transparent;cursor:pointer;width:100%;text-align:left}.drw-lnk:hover{background:rgba(200,135,26,.12);color:var(--ochre)}
+.drw-ic{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+
+/* HERO */
+.hero{height:36vh;min-height:240px;background:linear-gradient(135deg,var(--mid) 0%,#2e1818 50%,var(--mid) 100%);display:flex;align-items:center;justify-content:center;text-align:center;padding:80px 24px 36px;position:relative;overflow:hidden;margin-top:var(--H)}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(181,74,42,.15),transparent 60%)}
+.hero-icon{font-size:48px;margin-bottom:14px;animation:fi .8s ease both}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(26px,5vw,44px);font-weight:800;color:var(--cream);margin-bottom:9px;animation:fi .8s .1s ease both}
+.hero p{font-size:14.5px;color:var(--muted);max-width:460px;line-height:1.6;animation:fi .8s .2s ease both}
+@keyframes fi{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* LAYOUT */
+.page-wrap{max-width:1000px;margin:0 auto;padding:52px 24px 80px;display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:start}
+
+/* FORM */
+.form-card{background:var(--panel);border:1px solid rgba(200,135,26,.2);border-radius:16px;padding:32px}
+.form-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:6px}
+.form-sub{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.5}
+.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+label{font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.3px}
+label em{color:var(--terra);font-style:normal}
+input,select,textarea{background:rgba(255,255,255,.06);border:1.5px solid rgba(200,135,26,.2);border-radius:9px;padding:11px 14px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:13.5px;outline:none;transition:.15s;width:100%}
+input:focus,textarea:focus,select:focus{border-color:var(--ochre);background:rgba(200,135,26,.06)}
+input::placeholder,textarea::placeholder{color:rgba(245,237,216,.25)}
+select option{background:var(--panel);color:var(--cream)}
+textarea{resize:vertical;min-height:120px;line-height:1.55}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.helper{font-size:11.5px;color:var(--muted);margin-top:4px}
+
+/* SUBMIT */
+.btn-submit{width:100%;padding:13px;border-radius:9px;background:var(--ochre);color:var(--deep);border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px}
+.btn-submit:hover{background:var(--gold);transform:translateY(-1px);box-shadow:0 4px 14px rgba(200,135,26,.4)}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+/* SUCCESS */
+.success-card{background:rgba(60,120,40,.12);border:1px solid rgba(60,120,40,.4);border-radius:14px;padding:28px;text-align:center;display:none}
+.success-card.show{display:block;animation:fi .5s ease both}
+.success-ico{font-size:44px;margin-bottom:12px}
+.success-title{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:8px;color:var(--cream)}
+.success-msg{font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:18px}
+.btn-back-home{display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:9px 18px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600;transition:.15s}
+.btn-back-home:hover{background:var(--gold)}
+
+/* INFO SIDEBAR */
+.info-side{display:flex;flex-direction:column;gap:16px;position:sticky;top:calc(var(--H) + 20px)}
+.info-card{background:var(--panel);border:1px solid rgba(200,135,26,.2);border-radius:14px;padding:22px}
+.ic-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--cream);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(200,135,26,.15)}
+.ci{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}.ci:last-child{margin-bottom:0}
+.ci-ico{font-size:20px;flex-shrink:0;width:36px;height:36px;background:rgba(200,135,26,.1);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.ci-lbl{font-size:11px;color:var(--muted);margin-bottom:2px;text-transform:uppercase;letter-spacing:.4px}
+.ci-val{font-size:13.5px;color:var(--cream);line-height:1.4}
+
+/* MESSAGES PREVIEW (admin) */
+.msg-hint{background:rgba(27,107,107,.1);border:1px solid rgba(27,107,107,.3);border-radius:10px;padding:14px;font-size:12.5px;color:rgba(245,237,216,.6);line-height:1.5}
+.msg-hint strong{color:#7ecece}
+
+/* RESPONSIVE */
+@media(max-width:900px){.page-wrap{grid-template-columns:1fr;gap:24px;padding:36px 16px 60px}.info-side{position:static}}
+@media(max-width:600px){.tb-nav{display:none}.hbg{display:flex}.form-row{grid-template-columns:1fr}}
+@media(min-width:601px){.hbg{display:none!important}.tb-nav{display:flex}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="tb-logo"><span>🏛️ Sobral <em>Cultural</em></span></a>
+  <nav class="tb-nav">
+    <a href="index.html">🗺️ Mapa</a>
+    <a href="sobral_sobre.html">ℹ️ Sobre</a>
+    <a href="sobral_contato.html" class="active">✉️ Contato</a>
+  </nav>
+  <button class="hbg" id="hbg" onclick="toggleDrw()"><span></span><span></span><span></span></button>
+</div>
+
+<div class="dov" id="dov" onclick="closeDrw()"></div>
+<div class="drw" id="drw">
+  <div class="drw-inner">
+    <div class="drw-sec">Navegação</div>
+    <a href="index.html" class="drw-lnk"><div class="drw-ic">🗺️</div> Mapa Turístico</a>
+    <a href="sobral_sobre.html" class="drw-lnk"><div class="drw-ic">ℹ️</div> Sobre o Projeto</a>
+    <a href="sobral_contato.html" class="drw-lnk"><div class="drw-ic">✉️</div> Contato</a>
+    <a href="sobral_admin.html" class="drw-lnk"><div class="drw-ic">⚙️</div> Painel Admin</a>
+  </div>
+</div>
+
+<div class="hero">
+  <div>
+    <div class="hero-icon">✉️</div>
+    <h1>Entre em Contato</h1>
+    <p>Dúvidas, sugestões ou quer divulgar um ponto turístico? Fale conosco!</p>
+  </div>
+</div>
+
+<div class="page-wrap">
+  <!-- FORMULÁRIO -->
+  <div>
+    <div class="form-card" id="formCard">
+      <div class="form-title">Envie sua mensagem</div>
+      <div class="form-sub">Responderemos o mais breve possível. Todas as mensagens são armazenadas com segurança no Supabase.</div>
+
+      <div class="form-row">
+        <div class="fg"><label>Nome <em>*</em></label><input id="cName" placeholder="Seu nome completo"></div>
+        <div class="fg"><label>E-mail <em>*</em></label><input id="cEmail" type="email" placeholder="seu@email.com"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Telefone / WhatsApp</label><input id="cPhone" placeholder="(88) 9 9999-9999"></div>
+        <div class="fg">
+          <label>Assunto</label>
+          <select id="cSubject">
+            <option value="">Selecione um assunto…</option>
+            <option>Sugestão de ponto turístico</option>
+            <option>Correção de informação</option>
+            <option>Parceria ou colaboração</option>
+            <option>Imprensa e mídia</option>
+            <option>Outro assunto</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Mensagem <em>*</em></label>
+        <textarea id="cMsg" placeholder="Escreva sua mensagem aqui…" rows="5"></textarea>
+        <div class="helper">Mínimo de 20 caracteres.</div>
+      </div>
+
+      <button class="btn-submit" id="btnSubmit" onclick="sendContact()">
+        <span id="btnTxt">✉️ Enviar Mensagem</span>
+      </button>
+      <div id="formErr" style="margin-top:10px;font-size:13px;color:#e89e7e;display:none"></div>
+    </div>
+
+    <!-- SUCESSO -->
+    <div class="success-card" id="successCard">
+      <div class="success-ico">🎉</div>
+      <div class="success-title">Mensagem enviada!</div>
+      <div class="success-msg">Obrigado pelo contato. Sua mensagem foi recebida com sucesso e já está armazenada no nosso sistema. Retornaremos em breve!</div>
+      <a href="index.html" class="btn-back-home">🗺️ Voltar ao Mapa</a>
+    </div>
+  </div>
+
+  <!-- SIDEBAR INFO -->
+  <div class="info-side">
+    <div class="info-card">
+      <div class="ic-title">📍 Informações</div>
+      <div class="ci"><div class="ci-ico">📍</div><div><div class="ci-lbl">Localização</div><div class="ci-val">Sobral, Ceará<br>Brasil</div></div></div>
+      <div class="ci"><div class="ci-ico">📧</div><div><div class="ci-lbl">E-mail</div><div class="ci-val">contato@sobralcultural.com</div></div></div>
+      <div class="ci"><div class="ci-ico">📱</div><div><div class="ci-lbl">WhatsApp</div><div class="ci-val">(88) 9 9999-9999</div></div></div>
+      <div class="ci"><div class="ci-ico">🕐</div><div><div class="ci-lbl">Atendimento</div><div class="ci-val">Seg – Sex<br>8h às 18h</div></div></div>
+    </div>
+    <div class="info-card">
+      <div class="ic-title">💡 Quer sugerir um ponto?</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px">Conhece um lugar incrível em Sobral que ainda não está no mapa? Nos conte! Avaliamos todas as sugestões.</p>
+      <a href="index.html" style="display:inline-flex;align-items:center;gap:5px;background:rgba(200,135,26,.12);color:var(--ochre);padding:9px 14px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:500;border:1px solid rgba(200,135,26,.25);transition:.15s" onmouseover="this.style.background='rgba(200,135,26,.2)'" onmouseout="this.style.background='rgba(200,135,26,.12)'">🗺️ Ver o Mapa →</a>
+    </div>
+    <div class="msg-hint">
+      <strong>Para administradores:</strong> todas as mensagens recebidas aparecem no <a href="sobral_admin.html" style="color:var(--ochre)">Painel Admin</a> → seção Mensagens de Contato.
+    </div>
+  </div>
+</div>
+
+<script>
+const SU='https://nrohpfggqcbscyoigpiz.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA';
+const supa=supabase.createClient(SU,SK);
+
+function toggleDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id).classList.toggle('open'));}
+function closeDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id).classList.remove('open'));}
+
+async function sendContact(){
+  const name=document.getElementById('cName').value.trim();
+  const email=document.getElementById('cEmail').value.trim();
+  const phone=document.getElementById('cPhone').value.trim();
+  const subject=document.getElementById('cSubject').value;
+  const message=document.getElementById('cMsg').value.trim();
+  const errEl=document.getElementById('formErr');
+
+  // Validações
+  errEl.style.display='none';
+  if(!name){showErr('Preencha seu nome.');return;}
+  if(!email||!/\S+@\S+\.\S+/.test(email)){showErr('Informe um e-mail válido.');return;}
+  if(!message||message.length<20){showErr('Mensagem muito curta (mínimo 20 caracteres).');return;}
+
+  const btn=document.getElementById('btnSubmit'),txt=document.getElementById('btnTxt');
+  btn.disabled=true;txt.textContent='⏳ Enviando…';
+
+  const{error}=await supa.from('contacts').insert({name,email,phone,subject,message});
+  if(error){
+    btn.disabled=false;txt.textContent='✉️ Enviar Mensagem';
+    showErr('Erro ao enviar: '+error.message);return;
+  }
+  document.getElementById('formCard').style.display='none';
+  document.getElementById('successCard').classList.add('show');
+}
+function showErr(msg){const e=document.getElementById('formErr');e.textContent=msg;e.style.display='block';}
+
+// Enter no campo de email/name não submete
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.tagName!=='TEXTAREA'&&e.target.tagName!=='BUTTON')e.preventDefault();});
+</script>
+</body>
+</html>

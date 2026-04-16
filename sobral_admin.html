@@ -33,6 +33,60 @@
 .empty-state{text-align:center;padding:60px 20px;color:var(--muted)}.empty-state .es-icon{font-size:48px;margin-bottom:16px;opacity:.5}.empty-state h3{font-size:16px;font-weight:600;color:var(--cream);margin-bottom:8px}.empty-state p{font-size:13px;max-width:300px;margin:0 auto 20px;line-height:1.6}
 .search-bar{display:flex;gap:10px;align-items:center;margin-bottom:20px}.search-bar input{flex:1;background:var(--panel);border:1.5px solid var(--border)}.filter-select{background:var(--panel);border:1.5px solid var(--border);color:var(--cream);padding:10px 14px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;outline:none}
 .section-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;margin-bottom:4px;color:var(--cream)}.section-sub{font-size:12.5px;color:var(--muted);margin-bottom:20px}
+/* ── RESPONSIVE ADMIN ── */
+.adm-topbar{display:none}
+.adm-hbg{display:none;flex-direction:column;gap:5px;width:38px;height:38px;background:rgba(255,255,255,.07);border:1px solid var(--border);border-radius:9px;cursor:pointer;padding:8px;justify-content:center}
+.adm-hbg span{display:block;height:2px;background:var(--cream);border-radius:2px;transition:all .3s}
+.adm-hbg.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.adm-hbg.open span:nth-child(2){opacity:0}
+.adm-hbg.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.mob-sb-back{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:800}
+@media(max-width:900px){
+  .app{position:relative}
+  .sidebar{position:fixed;top:0;left:0;bottom:0;width:260px;z-index:900;transform:translateX(-100%);transition:transform .3s}
+  .sidebar.mob-open{transform:translateX(0)}
+  .mob-sb-back{display:block}
+  .adm-hbg{display:flex}
+  .adm-topbar{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:54px;background:var(--mid);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:700;width:100%}
+  .adm-topbar h2{font-family:'Playfair Display',serif;font-size:15px;color:var(--cream)}
+  .page-header{padding:20px 18px 0;flex-wrap:wrap;gap:10px}
+  .page-actions{flex-wrap:wrap}
+  .page-content{padding:18px 18px 40px}
+  .page-title h2{font-size:20px}
+  .form-row.cols-2{grid-template-columns:1fr}
+  .backup-area{grid-template-columns:1fr}
+  .spots-grid{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:1fr 1fr}
+  #coordMap{height:220px}
+  .blog-editor{min-height:200px}
+}
+@media(min-width:901px){.adm-topbar{display:none!important}.sidebar{transform:none!important;position:relative!important}.mob-sb-back{display:none!important}}
+/* ── MESSAGES TABLE ── */
+.msg-table{width:100%;border-collapse:separate;border-spacing:0 6px}
+.msg-table th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:6px 12px;text-align:left;font-weight:500}
+.msg-row{background:var(--panel);border-radius:var(--radius);cursor:pointer;transition:.15s}
+.msg-row:hover{background:rgba(200,135,26,.08)}
+.msg-row td{padding:12px;font-size:13px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.msg-row td:first-child{border-left:1px solid var(--border);border-radius:var(--radius) 0 0 var(--radius)}
+.msg-row td:last-child{border-right:1px solid var(--border);border-radius:0 var(--radius) var(--radius) 0)}
+.msg-row.unread td:first-child{border-left:3px solid var(--ochre)}
+.msg-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600}
+.msg-badge.new{background:rgba(200,135,26,.2);color:var(--ochre)}
+.msg-badge.read{background:rgba(255,255,255,.05);color:var(--muted)}
+/* ── PAGES MANAGER ── */
+.pages-list{display:flex;flex-direction:column;gap:10px}
+.page-item{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:.15s}
+.page-item:hover{border-color:rgba(200,135,26,.4)}
+.page-item-icon{font-size:22px;flex-shrink:0}
+.page-item-info{flex:1}.page-item-name{font-weight:600;font-size:14px;margin-bottom:3px}.page-item-meta{font-size:12px;color:var(--muted)}
+.page-item-actions{display:flex;gap:8px}
+/* ── MSG MODAL ── */
+.msg-modal-inner{max-width:560px}
+.msg-modal-inner .msg-body{font-size:14px;line-height:1.7;color:var(--muted);background:rgba(0,0,0,.2);border-radius:9px;padding:14px;margin:12px 0}
+/* ── PAGES EDITOR TOOLBAR ── */
+.page-editor-wrap{border:1.5px solid rgba(200,135,26,.2);border-radius:var(--radius);overflow:hidden}
+.page-editor-wrap .editor-toolbar{border-radius:0}
+.page-editor-wrap .blog-editor{border:none;border-radius:0;min-height:400px}
 .login-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:.25s}.login-overlay.active{pointer-events:all;opacity:1}.login-modal{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:26px;min-width:320px;max-width:380px;box-shadow:0 18px 40px rgba(0,0,0,.8);text-align:center}.login-modal h2{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:10px}.login-modal p{color:var(--muted);margin-bottom:18px;font-size:13px}.login-modal .form-group{margin-bottom:12px;text-align:left}.login-modal input{width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid var(--border);background:rgba(255,255,255,.06);color:var(--cream)}.login-modal .btn{width:100%;justify-content:center}.login-modal .login-error{color:#e89e7e;font-size:12px;height:18px;line-height:18px;margin-bottom:8px}
 </style>
 </head>
@@ -41,16 +95,24 @@
 <div class="login-overlay" id="loginOverlay">
   <div class="login-modal">
     <h2>🏛️ Área Administrativa</h2>
-    <p>Faça login para acessar o painel</p>
-    <div class="form-group"><label style="font-size:12px;margin-bottom:4px;display:block">Usuário</label><input id="adminUser" placeholder="admin" autocomplete="username"></div>
+    <p>Faça login com sua conta de administrador</p>
+    <div class="form-group"><label style="font-size:12px;margin-bottom:4px;display:block">E-mail</label><input id="adminUser" type="email" placeholder="admin@email.com" autocomplete="email"></div>
     <div class="form-group"><label style="font-size:12px;margin-bottom:4px;display:block">Senha</label><input id="adminPass" type="password" placeholder="********" autocomplete="current-password" onkeydown="if(event.key==='Enter')performLogin()"></div>
     <div class="login-error" id="loginError"></div>
     <button class="btn btn-primary" onclick="performLogin()">Entrar</button>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center">Acesso restrito a administradores autorizados.</div>
   </div>
 </div>
 
-<div class="app">
-  <aside class="sidebar">
+<div class="app" id="theApp">
+  <!-- MOBILE TOPBAR -->
+  <div class="adm-topbar" id="admTopbar">
+    <button class="adm-hbg" id="admHbg" onclick="toggleAdmSb()"><span></span><span></span><span></span></button>
+    <h2>Sobral Cultural</h2>
+    <button class="btn btn-sm btn-primary" onclick="navigate('new')">+ Novo</button>
+  </div>
+  <div class="mob-sb-back" id="mobSbBack" onclick="closeAdmSb()" style="display:none"></div>
+  <aside class="sidebar" id="admSidebar">
     <div class="sb-logo">
       <div class="sb-logo-top">
         <div class="sb-logo-icon">🏛️</div>
@@ -62,15 +124,16 @@
       <button class="nav-btn active" onclick="navigate('dashboard')"><div class="icon">📊</div> Painel Geral</button>
       <button class="nav-btn" onclick="navigate('list')"><div class="icon">📍</div> Pontos Turísticos <span class="badge" id="spotCountBadge">…</span></button>
       <button class="nav-btn" onclick="navigate('new')"><div class="icon">➕</div> Adicionar Novo Ponto</button>
+      <div class="nav-section">Comunicação</div>
+      <button class="nav-btn" onclick="navigate('messages')"><div class="icon">✉️</div> Mensagens de Contato <span class="badge" id="msgBadge" style="display:none">0</span></button>
+      <button class="nav-btn" onclick="navigate('moderation')"><div class="icon">🔍</div> Moderação <span class="badge" id="modBadge" style="display:none">0</span></button>
+      <div class="nav-section">Páginas do Site</div>
+      <button class="nav-btn" onclick="navigate('pages')"><div class="icon">📄</div> Gerenciar Páginas</button>
       <div class="nav-section">Sistema</div>
       <button class="nav-btn" onclick="navigate('backup')"><div class="icon">💾</div> Backup e Restauração</button>
-      <div class="nav-section">Páginas</div>
-      <button class="nav-btn" onclick="navigate('contato')"><div class="icon">📞</div> Contato</button>
-      <button class="nav-btn" onclick="navigate('sobre')"><div class="icon">ℹ️</div> Sobre</button>
-      <button class="nav-btn" onclick="navigate('pesquisa')"><div class="icon">🔍</div> Pesquisa</button>
     </nav>
     <div class="sb-footer">
-      <a href="/" target="_blank">🗺️ Abrir Mapa ao Vivo</a>
+      <a href="index.html" target="_blank">🗺️ Abrir Mapa ao Vivo</a>
       <button class="btn btn-danger" style="width:100%;margin-top:8px;justify-content:center" onclick="logout()">🚪 Sair</button>
     </div>
   </aside>
@@ -212,26 +275,46 @@ async function deleteSpotFromSupabase(id) {
 // ══════════════════════════════════════════
 //  AUTH
 // ══════════════════════════════════════════
-const CREDS = { user: 'admin', pass: 'S0br@lT0ur!' };
-const AUTH_KEY = 'sobral_admin_auth';
-function isAuthenticated() { return localStorage.getItem(AUTH_KEY) === 'true'; }
+function isAuthenticated() { return !!window._adminUser; }
 function showLoginOverlay(show = true) {
   const ov = document.getElementById('loginOverlay'), app = document.querySelector('.app');
   if (show) { ov.classList.add('active'); if (app) { app.style.filter='blur(2px)'; app.style.pointerEvents='none'; } }
   else { ov.classList.remove('active'); if (app) { app.style.filter=''; app.style.pointerEvents=''; } }
 }
-function performLogin() {
-  const u = document.getElementById('adminUser')?.value.trim();
-  const p = document.getElementById('adminPass')?.value.trim();
-  const err = document.getElementById('loginError');
-  if (!u || !p) { err.textContent = 'Preencha usuário e senha.'; return; }
-  if (u === CREDS.user && p === CREDS.pass) {
-    localStorage.setItem(AUTH_KEY, 'true'); err.textContent = '';
-    showToast('Login bem-sucedido! 🎉', 'success'); showLoginOverlay(false); navigate('dashboard');
-  } else err.textContent = 'Usuário ou senha incorretos.';
+async function performLogin() {
+  const email = document.getElementById('adminUser')?.value.trim();
+  const pass  = document.getElementById('adminPass')?.value.trim();
+  const err   = document.getElementById('loginError');
+  if (!email || !pass) { err.textContent = 'Preencha e-mail e senha.'; return; }
+
+  const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
+  if (error) { err.textContent = 'Credenciais inválidas.'; return; }
+
+  // check admin role
+  const { data: prof } = await supa.from('profiles').select('role').eq('id', data.user.id).single();
+  if (!prof || prof.role !== 'admin') {
+    await supa.auth.signOut();
+    err.textContent = 'Acesso negado: conta sem permissão de administrador.';
+    return;
+  }
+  window._adminUser = data.user;
+  err.textContent = '';
+  showToast('Login realizado! 🎉', 'success');
+  showLoginOverlay(false);
+  navigate('dashboard');
 }
-function logout() { localStorage.removeItem(AUTH_KEY); showLoginOverlay(true); document.getElementById('adminUser').value=''; document.getElementById('adminPass').value=''; showToast('Sessão encerrada.', 'info'); }
-function requireAuth() { if (!isAuthenticated()) { showLoginOverlay(true); return false; } showLoginOverlay(false); return true; }
+async function logout() {
+  await supa.auth.signOut();
+  window._adminUser = null;
+  showLoginOverlay(true);
+  document.getElementById('adminUser').value = '';
+  document.getElementById('adminPass').value = '';
+  showToast('Sessão encerrada.', 'info');
+}
+function requireAuth() {
+  if (!isAuthenticated()) { showLoginOverlay(true); return false; }
+  showLoginOverlay(false); return true;
+}
 
 // ══════════════════════════════════════════
 //  NAVEGAÇÃO
@@ -242,18 +325,35 @@ function navigate(view, id = null) {
   if (!requireAuth()) return;
   currentView = view; editingId = id;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const nm = { dashboard:0, list:1, new:2, backup:3, contato:4, sobre:5, pesquisa:6 };
+  const nm = { dashboard:0, list:1, new:2, messages:3, moderation:4, pages:5, backup:6 };
   const btns = document.querySelectorAll('.nav-btn');
   if (view === 'edit') btns[2]?.classList.add('active');
-  else btns[nm[view]]?.classList.add('active');
+  else if (nm[view] !== undefined) btns[nm[view]]?.classList.add('active');
   const main = document.getElementById('mainContent');
   if (view === 'dashboard') main.innerHTML = renderDashboard();
   else if (view === 'list') main.innerHTML = renderList();
   else if (view === 'new') { main.innerHTML = renderForm(null); initFormExtras(); }
   else if (view === 'edit') { main.innerHTML = renderForm(id); initFormExtras(id); }
   else if (view === 'backup') main.innerHTML = renderBackup();
-  else if (['contato','sobre','pesquisa'].includes(view)) main.innerHTML = renderPageEditor(view);
+  else if (view === 'moderation') main.innerHTML = renderModeration();
+  else if (view === 'pages') main.innerHTML = renderPagesManager();
+  else if (view === 'editPage') { main.innerHTML = renderPageEditor(id); initPageEditor(id); }
   main.scrollTop = 0;
+  closeAdmSb();
+}
+function toggleAdmSb() {
+  const sb = document.getElementById('admSidebar');
+  const bk = document.getElementById('mobSbBack');
+  const hb = document.getElementById('admHbg');
+  const open = sb.classList.toggle('mob-open');
+  bk.style.display = open ? 'block' : 'none';
+  hb?.classList.toggle('open', open);
+}
+function closeAdmSb() {
+  document.getElementById('admSidebar')?.classList.remove('mob-open');
+  const bk = document.getElementById('mobSbBack');
+  if (bk) bk.style.display = 'none';
+  document.getElementById('admHbg')?.classList.remove('open');
 }
 
 // ══════════════════════════════════════════
@@ -263,6 +363,8 @@ function renderDashboard() {
   const spots = getSpots(), bycat = {};
   spots.forEach(s => { bycat[s.cat] = (bycat[s.cat]||0)+1; });
   const wp = spots.filter(s => s.photo).length;
+  const unread  = _messages.filter(m => !m.read).length;
+  const pending = _submissions.filter(s => s.status === 'pending').length;
   return `
   <div class="page-header">
     <div class="page-title"><h2>Painel Geral</h2><p>Visão geral · <span style="color:var(--teal);font-size:11px">☁️ Supabase conectado</span></p></div>
@@ -271,14 +373,18 @@ function renderDashboard() {
   <div class="page-content">
     <div class="stats-row">
       <div class="stat-card"><div class="stat-icon">📍</div><div class="stat-num">${spots.length}</div><div class="stat-label">Total de Pontos Turísticos</div></div>
-      <div class="stat-card" data-c="green"><div class="stat-icon">📸</div><div class="stat-num">${wp}</div><div class="stat-label">Pontos com Foto</div></div>
-      <div class="stat-card" data-c="terra"><div class="stat-icon">📷</div><div class="stat-num">${spots.length-wp}</div><div class="stat-label">Sem Foto (adicionar!)</div></div>
+      <div class="stat-card" data-c="green" style="cursor:pointer" onclick="navigate('moderation')"><div class="stat-icon">🔍</div><div class="stat-num">${pending}</div><div class="stat-label">Aguardando Moderação</div></div>
+      <div class="stat-card" data-c="terra" style="cursor:pointer" onclick="navigate('messages')"><div class="stat-icon">✉️</div><div class="stat-num">${unread}</div><div class="stat-label">Mensagens Não Lidas</div></div>
       <div class="stat-card" data-c="teal"><div class="stat-icon">🗂️</div><div class="stat-num">${Object.keys(bycat).length}</div><div class="stat-label">Categorias Ativas</div></div>
     </div>
     <div class="section-title">Pontos por Categoria</div><div class="section-sub">Distribuição atual</div>
     <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px">
-      ${Object.entries(bycat).map(([k,v]) => `<div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 20px;min-width:140px"><div style="font-size:22px;margin-bottom:6px">${CAT_LABELS[k]?.split(' ')[0]||'📍'}</div><div style="font-size:24px;font-family:'Playfair Display',serif;font-weight:800;color:var(--cream)">${v}</div><div style="font-size:12px;color:var(--muted)">${CAT_LABELS[k]||k}</div></div>`).join('')}
+      ${Object.entries(bycat).map(([k,v]) => `<div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 20px;min-width:130px"><div style="font-size:22px;margin-bottom:6px">${CAT_LABELS[k]?.split(' ')[0]||'📍'}</div><div style="font-size:24px;font-family:'Playfair Display',serif;font-weight:800;color:var(--cream)">${v}</div><div style="font-size:12px;color:var(--muted)">${CAT_LABELS[k]||k}</div></div>`).join('')}
     </div>
+    ${unread > 0 ? `<div style="background:rgba(181,74,42,.1);border:1px solid rgba(181,74,42,.3);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer" onclick="navigate('messages')">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">✉️</span><div><div style="font-weight:600;font-size:14px;color:var(--cream)">Você tem ${unread} mensagem${unread!==1?'s':''} não lida${unread!==1?'s':''}</div><div style="font-size:12px;color:var(--muted)">Clique para ver as mensagens de contato</div></div></div>
+      <button class="btn btn-sm btn-secondary">Ver mensagens →</button>
+    </div>` : ''}
     <div class="section-title">Acesso Rápido</div><div class="section-sub">Últimos pontos cadastrados</div>
     <div class="spots-grid">${spots.slice(-4).reverse().map(s => spotCard(s)).join('')}</div>
   </div>`;
@@ -322,7 +428,7 @@ function spotCard(s) {
       <div class="spot-actions">
         <button class="btn btn-sm btn-secondary" onclick="navigate('edit','${s.id}')">✏️ Editar</button>
         <button class="btn btn-sm btn-danger" onclick="confirmDelete('${s.id}')">🗑️</button>
-        <a href="sobral_post?id=${s.id}" target="_blank" class="btn btn-sm btn-ghost">👁️</a>
+        <a href="sobral_post.html?id=${s.id}" target="_blank" class="btn btn-sm btn-ghost">👁️</a>
       </div>
     </div>
   </div>`;
@@ -598,19 +704,380 @@ function confirmReset() {
 }
 
 // ══════════════════════════════════════════
-//  EDITOR DE PÁGINAS
+//  MODERATION
 // ══════════════════════════════════════════
-function renderPageEditor(page) {
-  const defaults = { contato:`<h1>Contato</h1><p>Email: contato@sobralcultural.com</p><p>Telefone: (88) 1234-5678</p>`, sobre:`<h1>Sobre Sobral Cultural</h1><p>Projeto de difusão cultural de Sobral, Ceará.</p>`, pesquisa:`<h1>Pesquisa</h1><p>Use os filtros para localizar pontos turísticos.</p>` };
-  const content = localStorage.getItem(`sobral_page_${page}`) || defaults[page] || '';
-  const titles = { contato:'Contato', sobre:'Sobre', pesquisa:'Pesquisa' }, icons = { contato:'📞', sobre:'ℹ️', pesquisa:'🔍' };
-  return `<div class="page-header"><div class="page-title"><h2>${icons[page]} ${titles[page]}</h2></div><div class="page-actions"><button class="btn btn-primary" onclick="savePageContent('${page}')">💾 Salvar</button></div></div>
-  <div class="page-content"><div class="form-section"><div class="form-section-header"><h3>Conteúdo</h3><span class="form-section-icon">📝</span></div><div class="form-section-body">
-    <textarea id="pageContent" style="width:100%;height:400px;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--panel);color:var(--cream);font-family:'DM Sans',sans-serif;font-size:14px;resize:vertical">${content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
-    <div class="helper" style="margin-top:8px">Use HTML. Ex: &lt;h1&gt;Título&lt;/h1&gt;, &lt;p&gt;Parágrafo&lt;/p&gt;</div>
-  </div></div></div>`;
+let _submissions = [];
+
+async function loadSubmissions() {
+  const { data } = await supa.from('submissions').select('*, profiles:user_id(full_name,role)').order('created_at', { ascending: false });
+  _submissions = data || [];
+  const pending = _submissions.filter(s => s.status === 'pending').length;
+  const badge = document.getElementById('modBadge');
+  if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline-flex' : 'none'; }
 }
-function savePageContent(page) { const c = document.getElementById('pageContent').value; localStorage.setItem(`sobral_page_${page}`, c); showToast('Página salva! ✓', 'success'); }
+
+function renderModeration() {
+  const pending   = _submissions.filter(s => s.status === 'pending');
+  const approved  = _submissions.filter(s => s.status === 'approved');
+  const rejected  = _submissions.filter(s => s.status === 'rejected');
+
+  const renderCard = (s, showActions = false) => {
+    const user = s.profiles?.full_name || 'Usuário';
+    const dt   = new Date(s.created_at).toLocaleDateString('pt-BR');
+    const typeLabel = s.type === 'event' ? '📅 Evento' : '📍 Ponto Turístico';
+    return `<div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
+      <div style="height:100px;overflow:hidden;background:var(--card);position:relative">
+        ${s.photo ? `<img src="${s.photo}" style="width:100%;height:100%;object-fit:cover;filter:brightness(.8)">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;opacity:.4">${s.emoji||'📍'}</div>`}
+        <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,.6);padding:2px 9px;border-radius:10px;font-size:10.5px;color:#fff">${typeLabel}</div>
+      </div>
+      <div style="padding:12px 14px;flex:1">
+        <div style="font-weight:600;font-size:14px;color:var(--cream);margin-bottom:3px">${s.emoji||''} ${s.name}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px">Por ${user} · ${dt}<br>${s.cat||''} · ${s.address||'Sem endereço'}</div>
+        ${s.description ? `<div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px">${s.description.substring(0,120)}${s.description.length>120?'…':''}</div>` : ''}
+        ${showActions ? `<div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:7px">
+            <button class="btn btn-sm btn-primary" style="flex:1" onclick="moderateSubmission('${s.id}','approved')">✅ Aprovar</button>
+            <button class="btn btn-sm btn-danger" style="flex:1" onclick="promptReject('${s.id}')">❌ Rejeitar</button>
+          </div>
+          <button class="btn btn-sm btn-secondary" onclick="previewSubmission('${s.id}')">👁️ Ver Detalhes</button>
+        </div>` : `<div style="display:flex;gap:7px">
+          ${s.status==='approved' ? `<button class="btn btn-sm btn-danger" onclick="moderateSubmission('${s.id}','rejected')">↩️ Revogar</button>` : `<button class="btn btn-sm btn-primary" onclick="moderateSubmission('${s.id}','approved')">✅ Re-aprovar</button>`}
+        </div>`}
+      </div>
+    </div>`;
+  };
+
+  return `
+  <div class="page-header">
+    <div class="page-title"><h2>🔍 Moderação de Conteúdo</h2><p>${pending.length} aguardando · ${approved.length} aprovado${approved.length!==1?'s':''} · ${rejected.length} rejeitado${rejected.length!==1?'s':''}</p></div>
+    <div class="page-actions"><button class="btn btn-secondary" onclick="loadSubmissions().then(()=>navigate('moderation'))">↺ Atualizar</button></div>
+  </div>
+  <div class="page-content">
+    ${pending.length > 0 ? `
+    <div style="background:rgba(200,135,26,.08);border:1px solid rgba(200,135,26,.3);border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:20px">⏳</span>
+      <div><strong style="color:var(--ochre)">${pending.length} submissão${pending.length!==1?'s':''} aguardando revisão</strong><div style="font-size:12px;color:var(--muted)">Revise e aprove ou rejeite cada uma abaixo</div></div>
+    </div>` : ''}
+
+    <div class="section-title" style="margin-bottom:6px">⏳ Aguardando Aprovação (${pending.length})</div>
+    ${pending.length === 0
+      ? `<div class="empty-state" style="padding:28px"><div class="es-icon" style="font-size:28px;margin-bottom:8px">✅</div><p style="font-size:13px">Nenhuma submissão pendente.</p></div>`
+      : `<div class="spots-grid" style="margin-bottom:28px">${pending.map(s => renderCard(s, true)).join('')}</div>`}
+
+    <div class="section-title" style="margin-bottom:6px">✅ Aprovados (${approved.length})</div>
+    ${approved.length === 0
+      ? `<div style="font-size:13px;color:var(--muted);padding:16px 0 24px">Nenhuma submissão aprovada ainda.</div>`
+      : `<div class="spots-grid" style="margin-bottom:28px">${approved.slice(0,6).map(s => renderCard(s, false)).join('')}</div>`}
+
+    <div class="section-title" style="margin-bottom:6px">❌ Rejeitados (${rejected.length})</div>
+    ${rejected.length === 0
+      ? `<div style="font-size:13px;color:var(--muted);padding:16px 0">Nenhuma submissão rejeitada.</div>`
+      : `<div class="spots-grid">${rejected.slice(0,6).map(s => renderCard(s, false)).join('')}</div>`}
+  </div>`;
+}
+
+async function moderateSubmission(id, status, adminNote = '') {
+  const sub = _submissions.find(s => s.id === id);
+  if (!sub) return;
+
+  // If approving a spot type: publish to spots table
+  if (status === 'approved' && sub.type === 'spot') {
+    const spotRow = {
+      id: sub.id, name: sub.name, cat: sub.cat, emoji: sub.emoji || '📍',
+      color: sub.color || '#C8871A', lat: sub.lat, lng: sub.lng,
+      description: sub.description, address: sub.address,
+      horario: sub.horario, entrada: sub.entrada, photo: sub.photo,
+      blog_title: sub.name, blog_content: `<p>${sub.description||''}</p>`,
+      blog_author: sub.profiles?.full_name || 'Sobral Cultural',
+      blog_date: new Date().toISOString().split('T')[0],
+      created_at: new Date().toISOString()
+    };
+    await supa.from('spots').upsert(spotRow, { onConflict: 'id' });
+  }
+
+  // If revoking an approved spot
+  if (status === 'rejected' && sub.status === 'approved' && sub.type === 'spot') {
+    await supa.from('spots').delete().eq('id', sub.id);
+  }
+
+  await supa.from('submissions').update({ status, admin_note: adminNote, updated_at: new Date().toISOString() }).eq('id', id);
+  await loadSubmissions();
+  await loadSpots();
+  showToast(`Submissão ${status === 'approved' ? 'aprovada ✅' : 'rejeitada ❌'}`, status === 'approved' ? 'success' : 'info');
+  navigate('moderation');
+}
+
+function promptReject(id) {
+  const note = prompt('Motivo da rejeição (será exibido ao usuário):');
+  if (note === null) return; // cancelled
+  moderateSubmission(id, 'rejected', note || 'Não atende aos critérios da plataforma.');
+}
+
+function previewSubmission(id) {
+  const s = _submissions.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('confirmTitle').textContent = `📍 ${s.name}`;
+  document.getElementById('confirmMsg').innerHTML = `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${s.type==='event'?'📅 Evento':'📍 Ponto'} · ${s.cat} · ${new Date(s.created_at).toLocaleDateString('pt-BR')}</div>
+    ${s.photo ? `<img src="${s.photo}" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:10px">` : ''}
+    <div style="font-size:13px;line-height:1.6;color:var(--muted);background:rgba(0,0,0,.2);border-radius:8px;padding:12px">${s.description||'Sem descrição'}</div>
+    <div style="font-size:12px;margin-top:10px;color:var(--muted)">📍 ${s.address||'—'} · 🕐 ${s.horario||'—'} · 🎫 ${s.entrada||'—'}</div>
+    ${s.lat&&s.lng ? `<div style="font-size:11px;margin-top:6px;color:var(--muted)">Coords: ${s.lat.toFixed(4)}, ${s.lng.toFixed(4)}</div>` : ''}`;
+  document.getElementById('confirmOk').textContent = '✅ Aprovar';
+  document.getElementById('confirmOk').className = 'btn btn-primary';
+  document.getElementById('confirmOk').onclick = () => { moderateSubmission(s.id,'approved'); closeModal(); };
+  document.getElementById('confirmModal').classList.add('open');
+}
+
+// ══════════════════════════════════════════
+//  MESSAGES
+// ══════════════════════════════════════════
+let _messages = [];
+
+async function loadMessages() {
+  const { data } = await supa.from('contacts').select('*').order('created_at', { ascending: false });
+  _messages = data || [];
+  const unread = _messages.filter(m => !m.read).length;
+  const badge = document.getElementById('msgBadge');
+  if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? 'inline-flex' : 'none'; }
+}
+
+function renderMessages() {
+  const msgs = _messages;
+  const unread = msgs.filter(m => !m.read).length;
+  return `
+  <div class="page-header">
+    <div class="page-title"><h2>✉️ Mensagens de Contato</h2><p>${msgs.length} recebida${msgs.length!==1?'s':''} · <strong style="color:var(--ochre)">${unread} não lida${unread!==1?'s':''}</strong></p></div>
+    <div class="page-actions"><button class="btn btn-secondary" onclick="markAllRead()">✓ Todas como lidas</button></div>
+  </div>
+  <div class="page-content">
+    ${msgs.length === 0
+      ? `<div class="empty-state"><div class="es-icon">✉️</div><h3>Nenhuma mensagem ainda</h3><p>Mensagens enviadas pela página de Contato aparecerão aqui.</p></div>`
+      : `<div style="overflow-x:auto"><table class="msg-table">
+          <thead><tr><th>Status</th><th>Nome</th><th>E-mail</th><th>Assunto</th><th>Data</th><th></th></tr></thead>
+          <tbody>${msgs.map(m => {
+            const dt = new Date(m.created_at).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+            return `<tr class="msg-row ${!m.read?'unread':''}" onclick="openMessage('${m.id}')">
+              <td><span class="msg-badge ${!m.read?'new':'read'}">${!m.read?'Nova':'Lida'}</span></td>
+              <td style="font-weight:${!m.read?'600':'400'};white-space:nowrap">${m.name}</td>
+              <td style="color:var(--muted)">${m.email}</td>
+              <td style="color:var(--muted)">${m.subject||'—'}</td>
+              <td style="color:var(--muted);white-space:nowrap">${dt}</td>
+              <td onclick="event.stopPropagation()"><button class="btn btn-sm btn-danger" onclick="confirmDeleteMsg('${m.id}')">🗑️</button></td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table></div>`
+    }
+  </div>`;
+}
+
+function openMessage(id) {
+  const m = _messages.find(x => x.id === id);
+  if (!m) return;
+  const dt = new Date(m.created_at).toLocaleString('pt-BR');
+  document.getElementById('confirmTitle').textContent = `✉️ ${m.name}`;
+  document.getElementById('confirmMsg').innerHTML = `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${dt}${m.subject?` · ${m.subject}`:''}</div>
+    <div style="font-size:13px;margin-bottom:12px">
+      <strong style="color:var(--ochre)">Email:</strong> <a href="mailto:${m.email}" style="color:var(--ochre)">${m.email}</a>
+      ${m.phone?` &nbsp;·&nbsp; <strong style="color:var(--ochre)">Tel:</strong> ${m.phone}`:''}
+    </div>
+    <div style="background:rgba(0,0,0,.25);border-radius:9px;padding:14px;font-size:13.5px;line-height:1.7;color:var(--muted);white-space:pre-wrap">${m.message}</div>`;
+  document.getElementById('confirmOk').textContent = '✉️ Responder por E-mail';
+  document.getElementById('confirmOk').className = 'btn btn-primary';
+  document.getElementById('confirmOk').onclick = () => { window.open(`mailto:${m.email}?subject=Re: ${encodeURIComponent(m.subject||'Sobral Cultural')}`); closeModal(); };
+  document.getElementById('confirmModal').classList.add('open');
+  if (!m.read) markRead(id);
+}
+
+async function markRead(id) {
+  await supa.from('contacts').update({ read: true }).eq('id', id);
+  await loadMessages();
+  if (currentView === 'messages') document.getElementById('mainContent').innerHTML = renderMessages();
+}
+
+async function markAllRead() {
+  await supa.from('contacts').update({ read: true }).eq('read', false);
+  await loadMessages();
+  document.getElementById('mainContent').innerHTML = renderMessages();
+  showToast('Todas marcadas como lidas.', 'success');
+}
+
+function confirmDeleteMsg(id) {
+  const m = _messages.find(x => x.id === id);
+  document.getElementById('confirmTitle').textContent = `Excluir mensagem de "${m?.name}"?`;
+  document.getElementById('confirmMsg').textContent = 'Esta ação não pode ser desfeita.';
+  document.getElementById('confirmOk').textContent = 'Excluir';
+  document.getElementById('confirmOk').className = 'btn btn-danger';
+  document.getElementById('confirmOk').onclick = async () => {
+    closeModal();
+    await supa.from('contacts').delete().eq('id', id);
+    await loadMessages();
+    document.getElementById('mainContent').innerHTML = renderMessages();
+    showToast('Mensagem excluída.', 'info');
+  };
+  document.getElementById('confirmModal').classList.add('open');
+}
+
+// ══════════════════════════════════════════
+//  PAGES MANAGER
+// ══════════════════════════════════════════
+const PAGE_DEFS = [
+  { id:'sobre', icon:'ℹ️', name:'Sobre o Projeto', desc:'Conteúdo da página Sobre', url:'sobral_sobre.html' },
+];
+let _pagesCache = {};
+
+async function loadPages() {
+  const { data } = await supa.from('pages').select('*');
+  _pagesCache = {};
+  (data || []).forEach(p => { _pagesCache[p.id] = p; });
+}
+
+function renderPagesManager() {
+  const custom = Object.values(_pagesCache).filter(p => !PAGE_DEFS.find(d => d.id === p.id));
+  return `
+  <div class="page-header">
+    <div class="page-title"><h2>📄 Gerenciar Páginas</h2><p>Crie, edite e exclua páginas do site</p></div>
+    <div class="page-actions"><button class="btn btn-primary" onclick="navigate('editPage','nova')">➕ Nova Página</button></div>
+  </div>
+  <div class="page-content">
+    <div class="section-title" style="margin-bottom:6px">Páginas do Site</div>
+    <div class="section-sub">Conteúdo editável das páginas fixas</div>
+    <div class="pages-list" style="margin-bottom:28px">
+      ${PAGE_DEFS.map(p => {
+        const pg = _pagesCache[p.id];
+        const upd = pg?.updated_at ? new Date(pg.updated_at).toLocaleDateString('pt-BR') : 'Nunca editada';
+        return `<div class="page-item" onclick="navigate('editPage','${p.id}')">
+          <div class="page-item-icon">${p.icon}</div>
+          <div class="page-item-info"><div class="page-item-name">${p.name}</div><div class="page-item-meta">${p.desc} · Última edição: ${upd}</div></div>
+          <div class="page-item-actions">
+            <a href="${p.url}" target="_blank" class="btn btn-sm btn-ghost" onclick="event.stopPropagation()">👁️</a>
+            <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();navigate('editPage','${p.id}')">✏️ Editar</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="section-title" style="margin-bottom:6px">Páginas Personalizadas</div>
+    <div class="section-sub">Páginas extras criadas por você</div>
+    <div class="pages-list">
+      ${custom.length === 0
+        ? `<div class="empty-state" style="padding:28px"><div class="es-icon" style="font-size:32px;margin-bottom:10px">📄</div><p style="font-size:13px">Nenhuma página personalizada. Clique em "Nova Página" para criar.</p></div>`
+        : custom.map(p => `<div class="page-item" onclick="navigate('editPage','${p.id}')">
+          <div class="page-item-icon">📄</div>
+          <div class="page-item-info"><div class="page-item-name">${p.title}</div><div class="page-item-meta">ID: ${p.id} · ${new Date(p.updated_at).toLocaleDateString('pt-BR')}</div></div>
+          <div class="page-item-actions">
+            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();confirmDeletePage('${p.id}')">🗑️</button>
+            <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();navigate('editPage','${p.id}')">✏️</button>
+          </div>
+        </div>`).join('')
+      }
+    </div>
+  </div>`;
+}
+
+function renderPageEditor(pageId) {
+  const isNew = pageId === 'nova';
+  const predef = PAGE_DEFS.find(p => p.id === pageId);
+  const existing = _pagesCache[pageId];
+  const title = isNew ? 'Nova Página' : (predef?.name || existing?.title || 'Editar');
+  const content = existing?.content || '';
+  const pgTitle = existing?.title || predef?.name || '';
+  return `
+  <div class="page-header">
+    <div class="page-title"><h2>${isNew ? '➕ Nova Página' : `✏️ ${title}`}</h2><p>${isNew ? 'Preencha e salve para criar' : 'Edite e salve as alterações'}</p></div>
+    <div class="page-actions">
+      <button class="btn btn-ghost" onclick="navigate('pages')">← Cancelar</button>
+      <button class="btn btn-primary" onclick="savePage('${pageId}')">💾 Salvar</button>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="form-section" id="sec-pageinfo">
+      <div class="form-section-header" onclick="toggleSection('pageinfo')"><span class="form-section-icon">📝</span><h3>Informações</h3><span class="form-section-toggle">▾</span></div>
+      <div class="form-section-body">
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label>Título <em>*</em></label>
+            <input id="pg-title" placeholder="Ex: Sobre o Projeto" value="${pgTitle}" ${predef&&!isNew?'readonly style="opacity:.6"':''}>
+          </div>
+          <div class="form-group">
+            <label>ID / Slug ${isNew?'<em>*</em>':''}</label>
+            <input id="pg-id" placeholder="ex: sobre" value="${isNew?'':pageId}" ${!isNew?'readonly style="opacity:.6"':''}>
+            <div class="helper">Minúsculas, sem espaços.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="form-section" id="sec-pagecontent">
+      <div class="form-section-header" onclick="toggleSection('pagecontent')"><span class="form-section-icon">📄</span><h3>Conteúdo da Página</h3><span class="form-section-toggle">▾</span></div>
+      <div class="form-section-body">
+        <div class="helper" style="margin-bottom:12px">Editor de texto rico. O conteúdo é salvo no Supabase e exibido automaticamente no site.</div>
+        <div class="page-editor-wrap">
+          <div class="editor-toolbar">
+            <button onclick="fmtPg('bold')"><b>B</b></button>
+            <button onclick="fmtPg('italic')"><i>I</i></button>
+            <div class="sep"></div>
+            <button onclick="fmtPg('formatBlock','h2')">H2</button>
+            <button onclick="fmtPg('formatBlock','h3')">H3</button>
+            <button onclick="fmtPg('formatBlock','p')">¶</button>
+            <div class="sep"></div>
+            <button onclick="fmtPg('insertUnorderedList')">•</button>
+            <button onclick="fmtPg('insertOrderedList')">1.</button>
+            <button onclick="fmtPg('formatBlock','blockquote')">❝</button>
+            <div class="sep"></div>
+            <button onclick="insertPgLink()">🔗</button>
+            <button onclick="fmtPg('removeFormat')">✕</button>
+          </div>
+          <div id="pageEditor" class="blog-editor" contenteditable="true">${content||'<p>Escreva aqui o conteúdo da página…</p>'}</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost" onclick="navigate('pages')">← Cancelar</button>
+      <button class="btn btn-primary" onclick="savePage('${pageId}')">💾 Salvar</button>
+    </div>
+  </div>`;
+}
+
+function initPageEditor(pageId) { /* nothing extra needed */ }
+
+function fmtPg(cmd, val=null) { document.execCommand(cmd, false, val); document.getElementById('pageEditor')?.focus(); }
+function insertPgLink() { const u=prompt('URL:'); if(u) document.execCommand('createLink',false,u); }
+
+async function savePage(pageId) {
+  const isNew = pageId === 'nova';
+  const pgTitle = document.getElementById('pg-title')?.value?.trim();
+  const pgId = isNew
+    ? (document.getElementById('pg-id')?.value?.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,''))
+    : pageId;
+  const content = document.getElementById('pageEditor')?.innerHTML || '';
+  if (!pgTitle) { showToast('Preencha o título.', 'error'); return; }
+  if (!pgId) { showToast('Preencha o ID da página.', 'error'); return; }
+
+  const { error } = await supa.from('pages').upsert(
+    { id: pgId, title: pgTitle, content, updated_at: new Date().toISOString() },
+    { onConflict: 'id' }
+  );
+  if (error) { showToast('Erro ao salvar: ' + error.message, 'error'); return; }
+  await loadPages();
+  showToast(`✅ "${pgTitle}" salva!`, 'success');
+  setTimeout(() => navigate('pages'), 900);
+}
+
+async function confirmDeletePage(id) {
+  const p = _pagesCache[id];
+  document.getElementById('confirmTitle').textContent = `Excluir "${p?.title}"?`;
+  document.getElementById('confirmMsg').textContent = 'Esta ação não pode ser desfeita.';
+  document.getElementById('confirmOk').textContent = 'Excluir';
+  document.getElementById('confirmOk').className = 'btn btn-danger';
+  document.getElementById('confirmOk').onclick = async () => {
+    closeModal();
+    await supa.from('pages').delete().eq('id', id);
+    await loadPages();
+    navigate('pages');
+    showToast('Página excluída.', 'info');
+  };
+  document.getElementById('confirmModal').classList.add('open');
+}
 
 // ══════════════════════════════════════════
 //  HELPERS GERAIS
@@ -632,12 +1099,22 @@ function showToast(msg, type='info') {
 //  BOOT
 // ══════════════════════════════════════════
 window.onload = async () => {
-  if (requireAuth()) {
-    showToast('Conectando ao Supabase…', 'info');
-    await loadSpots();
-    startRealtime();
-    navigate('dashboard');
+  // Check Supabase session
+  const { data: { session } } = await supa.auth.getSession();
+  if (session) {
+    const { data: prof } = await supa.from('profiles').select('role').eq('id', session.user.id).single();
+    if (prof?.role === 'admin') {
+      window._adminUser = session.user;
+      showLoginOverlay(false);
+      showToast('Conectando ao Supabase…', 'info');
+      await Promise.all([loadSpots(), loadMessages(), loadPages(), loadSubmissions()]);
+      startRealtime();
+      navigate('dashboard');
+      return;
+    }
   }
+  // Not logged in / not admin
+  showLoginOverlay(true);
 };
 window.addEventListener('beforeunload', () => { if (coordPickerMap) { coordPickerMap.remove(); coordPickerMap=null; } });
 </script>

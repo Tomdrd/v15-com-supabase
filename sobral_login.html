@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entrar — Sobral Cultural</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{--ochre:#C8871A;--gold:#D4A843;--terra:#B54A2A;--deep:#1A1410;--mid:#251B12;--panel:#2E2118;--cream:#F5EDD8;--muted:rgba(245,237,216,.55);--teal:#1B6B6B;--border:rgba(200,135,26,.2)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--cream)}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;position:relative;overflow-x:hidden}
+
+/* BG */
+.bg-decor{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.bg-decor::before{content:'🏛️';position:absolute;font-size:400px;opacity:.025;top:-60px;right:-80px;transform:rotate(-10deg);line-height:1}
+.bg-decor::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 80%,rgba(200,135,26,.08),transparent 60%)}
+
+/* CARD */
+.auth-card{position:relative;z-index:1;background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:36px 32px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+
+.logo-wrap{text-align:center;margin-bottom:28px}
+.logo-icon{width:54px;height:54px;background:var(--ochre);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px;animation:pg 3s infinite}
+@keyframes pg{0%,100%{box-shadow:0 0 0 0 rgba(200,135,26,.4)}50%{box-shadow:0 0 0 10px rgba(200,135,26,0)}}
+.logo-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:800;color:var(--cream);margin-bottom:3px}
+.logo-sub{font-size:12px;color:var(--muted);letter-spacing:.5px}
+
+/* TABS */
+.tabs{display:flex;background:rgba(0,0,0,.2);border-radius:10px;padding:3px;margin-bottom:24px;gap:2px}
+.tab{flex:1;text-align:center;padding:9px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:500;transition:.2s;color:var(--muted);border:none;background:transparent;font-family:'DM Sans',sans-serif}
+.tab.active{background:var(--ochre);color:var(--deep);box-shadow:0 2px 8px rgba(200,135,26,.4)}
+
+/* FORM */
+.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+label{font-size:12px;font-weight:500;color:var(--muted)}
+.inp-wrap{position:relative}
+input[type=text],input[type=email],input[type=password]{width:100%;background:rgba(255,255,255,.07);border:1.5px solid var(--border);border-radius:9px;padding:12px 14px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:.15s}
+input:focus{border-color:var(--ochre);background:rgba(200,135,26,.06)}
+input::placeholder{color:rgba(245,237,216,.25)}
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:4px}
+
+.btn-main{width:100%;padding:13px;border-radius:10px;background:var(--ochre);color:var(--deep);border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:4px}
+.btn-main:hover{background:var(--gold);transform:translateY(-1px);box-shadow:0 4px 16px rgba(200,135,26,.4)}
+.btn-main:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+/* SOCIAL */
+.divider{display:flex;align-items:center;gap:12px;margin:18px 0;font-size:12px;color:var(--muted)}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.social-btns{display:flex;flex-direction:column;gap:10px}
+.btn-social{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;transition:all .2s;border:1.5px solid var(--border);background:rgba(255,255,255,.05);color:var(--cream);width:100%}
+.btn-social:hover{background:rgba(255,255,255,.1);transform:translateY(-1px)}
+.btn-google{border-color:rgba(234,67,53,.4)}
+.btn-google:hover{background:rgba(234,67,53,.08)}
+.btn-facebook{border-color:rgba(24,119,242,.4)}
+.btn-facebook:hover{background:rgba(24,119,242,.08)}
+
+/* SOCIAL ICONS inline SVG */
+.ico-google,.ico-facebook{width:20px;height:20px;flex-shrink:0}
+
+/* FORGOT */
+.forgot-link{display:block;text-align:right;font-size:12px;color:var(--ochre);text-decoration:none;margin-top:-8px;margin-bottom:14px}
+.forgot-link:hover{text-decoration:underline}
+
+/* TERMS note */
+.terms-note{font-size:11.5px;color:var(--muted);text-align:center;line-height:1.5;margin-top:14px}
+.terms-note a{color:var(--ochre)}
+
+/* MESSAGES */
+.msg{display:none;padding:11px 14px;border-radius:9px;font-size:13px;margin-bottom:14px;animation:fi .3s ease}
+@keyframes fi{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.msg.success{display:block;background:rgba(60,120,40,.15);border:1px solid rgba(60,120,40,.4);color:#8ecb6e}
+.msg.error{display:block;background:rgba(181,74,42,.12);border:1px solid rgba(181,74,42,.4);color:#e89e7e}
+.msg.info{display:block;background:rgba(200,135,26,.1);border:1px solid rgba(200,135,26,.3);color:var(--gold)}
+
+/* back link */
+.back-link{position:absolute;top:20px;left:20px;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);text-decoration:none;transition:.15s;z-index:2}
+.back-link:hover{color:var(--cream)}
+
+/* strength */
+.pwd-strength{height:3px;border-radius:2px;margin-top:6px;background:var(--border);overflow:hidden}
+.pwd-strength-fill{height:100%;border-radius:2px;transition:width .3s,background .3s}
+
+/* CHECK */
+.check-row{display:flex;align-items:flex-start;gap:9px;margin-bottom:14px}
+.check-row input[type=checkbox]{width:16px;height:16px;margin-top:2px;accent-color:var(--ochre);flex-shrink:0;cursor:pointer}
+.check-row label{font-size:12.5px;color:var(--muted);cursor:pointer;line-height:1.5}
+.check-row label a{color:var(--ochre)}
+
+/* loader */
+.loader{display:inline-block;width:16px;height:16px;border:2px solid rgba(26,20,16,.3);border-top:2px solid var(--deep);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="bg-decor"></div>
+
+<a href="/" class="back-link">← Mapa</a>
+
+<div class="auth-card">
+  <div class="logo-wrap">
+    <div class="logo-icon">🏛️</div>
+    <div class="logo-title">Sobral Cultural</div>
+    <div class="logo-sub">Entre ou crie sua conta</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tabLogin" onclick="showTab('login')">Entrar</button>
+    <button class="tab" id="tabRegister" onclick="showTab('register')">Criar Conta</button>
+  </div>
+
+  <div id="msgBox" class="msg"></div>
+
+  <!-- ── LOGIN ── -->
+  <div id="formLogin">
+    <div class="fg"><label>E-mail</label><input id="lEmail" type="email" placeholder="seu@email.com" autocomplete="email"></div>
+    <div class="fg">
+      <label>Senha</label>
+      <div class="inp-wrap">
+        <input id="lPass" type="password" placeholder="Sua senha" autocomplete="current-password">
+        <button class="eye-btn" onclick="togglePwd('lPass',this)" type="button">👁️</button>
+      </div>
+    </div>
+    <a href="#" class="forgot-link" onclick="showForgot()">Esqueci minha senha</a>
+    <button class="btn-main" id="btnLogin" onclick="doLogin()">Entrar</button>
+    <div class="divider">ou continue com</div>
+    <div class="social-btns">
+      <button class="btn-social btn-google" onclick="doGoogle()">
+        <svg class="ico-google" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+        Continuar com Google
+      </button>
+      <button class="btn-social btn-facebook" onclick="doFacebook()">
+        <svg class="ico-facebook" viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12.073C24 5.406 18.627 0 12 0S0 5.406 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047v-2.66c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.874v2.277h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+        Continuar com Facebook
+      </button>
+    </div>
+  </div>
+
+  <!-- ── REGISTER ── -->
+  <div id="formRegister" style="display:none">
+    <div class="fg"><label>Nome Completo</label><input id="rName" type="text" placeholder="Seu nome" autocomplete="name"></div>
+    <div class="fg"><label>E-mail</label><input id="rEmail" type="email" placeholder="seu@email.com" autocomplete="email"></div>
+    <div class="fg">
+      <label>Senha</label>
+      <div class="inp-wrap">
+        <input id="rPass" type="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password" oninput="checkStrength(this.value)">
+        <button class="eye-btn" onclick="togglePwd('rPass',this)" type="button">👁️</button>
+      </div>
+      <div class="pwd-strength"><div class="pwd-strength-fill" id="strengthBar" style="width:0%"></div></div>
+    </div>
+    <div class="fg"><label>Confirmar Senha</label><input id="rPass2" type="password" placeholder="Repita a senha" autocomplete="new-password"></div>
+
+    <div class="check-row">
+      <input type="checkbox" id="termsCk">
+      <label for="termsCk">Li e concordo com os <a href="sobral_termos.html" target="_blank">Termos de Uso</a> e a <a href="#" onclick="showPrivacy()">Política de Privacidade</a></label>
+    </div>
+
+    <button class="btn-main" id="btnRegister" onclick="doRegister()">Criar Conta Gratuita</button>
+    <div class="divider">ou continue com</div>
+    <div class="social-btns">
+      <button class="btn-social btn-google" onclick="doGoogle()">
+        <svg class="ico-google" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+        Registrar com Google
+      </button>
+      <button class="btn-social btn-facebook" onclick="doFacebook()">
+        <svg class="ico-facebook" viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12.073C24 5.406 18.627 0 12 0S0 5.406 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047v-2.66c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.874v2.277h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+        Registrar com Facebook
+      </button>
+    </div>
+  </div>
+
+  <!-- ── FORGOT ── -->
+  <div id="formForgot" style="display:none">
+    <div style="font-size:13.5px;color:var(--muted);margin-bottom:16px;line-height:1.6">Informe seu e-mail e enviaremos um link para redefinir sua senha.</div>
+    <div class="fg"><label>E-mail</label><input id="fEmail" type="email" placeholder="seu@email.com"></div>
+    <button class="btn-main" onclick="doForgot()">Enviar Link de Recuperação</button>
+    <button style="width:100%;margin-top:10px;padding:11px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13.5px;transition:.15s" onclick="showTab('login')" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='transparent'">← Voltar ao Login</button>
+  </div>
+</div>
+
+<script>
+const SU='https://nrohpfggqcbscyoigpiz.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA';
+const supa=supabase.createClient(SU,SK);
+
+// redirect destination from URL param
+const redirect = new URLSearchParams(location.search).get('redirect') || '/';
+
+// Check if already logged in
+supa.auth.getSession().then(({data})=>{
+  if(data?.session) location.href=redirect;
+});
+
+function showTab(tab){
+  document.getElementById('tabLogin').classList.toggle('active',tab==='login');
+  document.getElementById('tabRegister').classList.toggle('active',tab==='register');
+  document.getElementById('formLogin').style.display=tab==='login'?'block':'none';
+  document.getElementById('formRegister').style.display=tab==='register'?'block':'none';
+  document.getElementById('formForgot').style.display='none';
+  clearMsg();
+}
+function showForgot(){
+  document.getElementById('formLogin').style.display='none';
+  document.getElementById('formForgot').style.display='block';
+  ['tabLogin','tabRegister'].forEach(t=>document.getElementById(t).classList.remove('active'));
+  clearMsg();
+}
+function showMsg(txt,type='error'){const m=document.getElementById('msgBox');m.textContent=txt;m.className='msg '+type;}
+function clearMsg(){const m=document.getElementById('msgBox');m.className='msg';m.textContent='';}
+function setLoading(btnId,loading){const b=document.getElementById(btnId);if(loading){b.disabled=true;b.innerHTML='<span class="loader"></span>Aguarde…';}else{b.disabled=false;b.textContent=b.id==='btnLogin'?'Entrar':'Criar Conta Gratuita';}}
+
+function togglePwd(id,btn){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.textContent=i.type==='password'?'👁️':'🙈';}
+
+function checkStrength(pwd){
+  const bar=document.getElementById('strengthBar');
+  let score=0;
+  if(pwd.length>=8)score++;if(pwd.length>=12)score++;
+  if(/[A-Z]/.test(pwd))score++;if(/[0-9]/.test(pwd))score++;if(/[^A-Za-z0-9]/.test(pwd))score++;
+  const pct=[0,20,40,65,85,100][score];
+  const col=['#666','#e53','#f90','#fa0','#4a4','#2d2'][score];
+  bar.style.width=pct+'%';bar.style.background=col;
+}
+
+async function doLogin(){
+  const email=document.getElementById('lEmail').value.trim();
+  const pass=document.getElementById('lPass').value;
+  if(!email||!pass){showMsg('Preencha e-mail e senha.');return;}
+  setLoading('btnLogin',true);
+  const{error}=await supa.auth.signInWithPassword({email,password:pass});
+  setLoading('btnLogin',false);
+  if(error){showMsg('Erro: '+error.message);return;}
+  showMsg('Login realizado! Redirecionando…','success');
+  setTimeout(()=>location.href=redirect,800);
+}
+
+async function doRegister(){
+  const name=document.getElementById('rName').value.trim();
+  const email=document.getElementById('rEmail').value.trim();
+  const pass=document.getElementById('rPass').value;
+  const pass2=document.getElementById('rPass2').value;
+  const terms=document.getElementById('termsCk').checked;
+  if(!name){showMsg('Informe seu nome.');return;}
+  if(!email||!/\S+@\S+\.\S+/.test(email)){showMsg('E-mail inválido.');return;}
+  if(pass.length<8){showMsg('Senha deve ter ao menos 8 caracteres.');return;}
+  if(pass!==pass2){showMsg('As senhas não coincidem.');return;}
+  if(!terms){showMsg('Você precisa aceitar os Termos de Uso.');return;}
+  setLoading('btnRegister',true);
+  const{error}=await supa.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
+  setLoading('btnRegister',false);
+  if(error){showMsg('Erro: '+error.message);return;}
+  showMsg('Conta criada! Verifique seu e-mail para confirmar o cadastro. ✉️','success');
+}
+
+async function doGoogle(){
+  const redirectUrl = redirect === 'index.html' ? location.origin + '/' : location.origin + '/' + redirect;
+  const{error}=await supa.auth.signInWithOAuth({provider:'google',options:{redirectTo: redirectUrl}});
+  if(error)showMsg('Erro Google: '+error.message);
+}
+
+async function doFacebook(){
+  const{error}=await supa.auth.signInWithOAuth({provider:'facebook',options:{redirectTo: redirectUrl}});
+  if(error)showMsg('Erro Facebook: '+error.message);
+}
+
+async function doForgot(){
+  const email=document.getElementById('fEmail').value.trim();
+  if(!email){showMsg('Informe seu e-mail.');return;}
+  const{error}=await supa.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/sobral_reset_senha.html'});
+  if(error){showMsg('Erro: '+error.message);return;}
+  showMsg('Link enviado! Verifique sua caixa de entrada. ✉️','success');
+}
+
+function showPrivacy(){alert('Política de Privacidade\n\nSeus dados (nome e e-mail) são utilizados exclusivamente para identificação na plataforma. Não compartilhamos dados com terceiros.');}
+
+// Enter key
+document.addEventListener('keydown',e=>{if(e.key==='Enter'){const active=document.querySelector('.tab.active');if(active?.id==='tabLogin')doLogin();else if(active?.id==='tabRegister')doRegister();}});
+</script>
+</body>
+</html>
