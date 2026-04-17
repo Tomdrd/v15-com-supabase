@@ -334,6 +334,7 @@ function navigate(view, id = null) {
   else if (view === 'list') main.innerHTML = renderList();
   else if (view === 'new') { main.innerHTML = renderForm(null); initFormExtras(); }
   else if (view === 'edit') { main.innerHTML = renderForm(id); initFormExtras(id); }
+  else if (view === 'messages') main.innerHTML = renderMessages();
   else if (view === 'backup') main.innerHTML = renderBackup();
   else if (view === 'moderation') main.innerHTML = renderModeration();
   else if (view === 'pages') main.innerHTML = renderPagesManager();
