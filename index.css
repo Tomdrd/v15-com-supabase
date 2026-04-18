@@ -158,3 +158,128 @@ header{position:fixed;top:0;left:0;right:0;z-index:2000;height:var(--H);backgrou
 @media(min-width:769px) and (max-width:1100px){.sidebar{width:270px}}
 @media(min-width:769px){.hbg{display:none!important}.hn{display:flex}.fabs{display:none}}
 @media(min-width:1025px){.sidebar{transform:none!important;position:relative!important}}
+/* ═══════════════════════════════════════════════
+   FEATURED CAROUSEL
+═══════════════════════════════════════════════ */
+.fcarousel{
+  position:fixed;top:var(--H);left:0;right:0;z-index:1100;
+  height:220px;overflow:hidden;
+  background:var(--deep);
+  border-bottom:1px solid rgba(200,135,26,.2);
+  box-shadow:0 8px 32px rgba(0,0,0,.5);
+}
+.fcar-track{
+  display:flex;height:100%;
+  will-change:transform;
+  transition:transform .45s cubic-bezier(.4,0,.2,1);
+  user-select:none;
+  -webkit-user-select:none;
+}
+.fcar-slide{
+  flex:0 0 100%;height:100%;position:relative;cursor:pointer;overflow:hidden;
+}
+.fcar-slide img{
+  width:100%;height:100%;object-fit:cover;
+  filter:brightness(.7);
+  transition:transform .6s ease,filter .4s;
+  pointer-events:none;
+}
+.fcar-slide:hover img{filter:brightness(.85);transform:scale(1.03)}
+.fcar-slide-ph{
+  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-size:56px;font-weight:800;
+}
+.fcar-grad{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(26,20,16,.92) 0%,rgba(26,20,16,.2) 55%,transparent 100%);
+  pointer-events:none;
+}
+.fcar-info{
+  position:absolute;bottom:0;left:0;right:0;padding:14px 18px;
+  pointer-events:none;
+}
+.fcar-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--ochre);color:var(--deep);
+  font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  padding:3px 9px;border-radius:20px;margin-bottom:7px;
+}
+.fcar-name{
+  font-family:'Playfair Display',serif;font-size:22px;font-weight:700;
+  color:#fff;line-height:1.15;text-shadow:0 2px 12px rgba(0,0,0,.6);
+  margin-bottom:3px;
+}
+.fcar-cat{
+  font-size:11px;color:rgba(245,237,216,.55);letter-spacing:.5px;text-transform:capitalize;
+}
+.fcar-dots{
+  position:absolute;bottom:10px;right:16px;
+  display:flex;gap:5px;align-items:center;
+}
+.fcar-dot{
+  width:5px;height:5px;border-radius:50%;
+  background:rgba(245,237,216,.35);
+  transition:all .3s;cursor:pointer;pointer-events:all;
+}
+.fcar-dot.act{
+  background:var(--ochre);width:18px;border-radius:3px;
+}
+/* adjust app body when carousel visible */
+body.has-carousel .app-body{
+  padding-top:calc(var(--H) + 220px);
+}
+
+/* ═══════════════════════════════════════════════
+   BOTTOM NAV (mobile)
+═══════════════════════════════════════════════ */
+.bnav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  z-index:1300;
+  background:rgba(26,20,16,.97);
+  backdrop-filter:blur(14px);
+  border-top:1px solid rgba(200,135,26,.2);
+  padding:0 4px env(safe-area-inset-bottom,0);
+  height:58px;
+  flex-direction:row;
+  align-items:stretch;
+  justify-content:space-around;
+}
+.bnav-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;flex:1;padding:6px 2px;
+  color:rgba(245,237,216,.4);font-size:10px;letter-spacing:.3px;
+  text-decoration:none;border:none;background:transparent;cursor:pointer;
+  font-family:'DM Sans',sans-serif;
+  transition:color .15s;
+  position:relative;
+}
+.bnav-item .bnav-ico{
+  width:20px;height:20px;stroke-width:1.8;
+}
+.bnav-item.active,
+.bnav-item:hover{color:var(--ochre)}
+.bnav-item.active::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:28px;height:2px;border-radius:0 0 2px 2px;
+  background:var(--ochre);
+}
+/* pulse on locate */
+.bnav-item.locating{color:var(--teal)}
+.bnav-item.locating .bnav-ico{animation:bp 1s infinite}
+
+/* stbar shifts when bnav visible */
+@media(max-width:768px){
+  .bnav{display:flex}
+  .stbar{bottom:58px}
+  .dp{padding-bottom:72px}
+  .fabs{display:none!important}
+  body.has-carousel .app-body{
+    padding-top:calc(var(--H) + 220px);
+    height:calc(100vh - 58px);
+  }
+  .sidebar{bottom:calc(32px + 58px)}
+}
+@media(min-width:769px){
+  .bnav{display:none!important}
+}

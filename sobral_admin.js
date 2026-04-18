@@ -40,7 +40,8 @@ function mapRow(r) {
     lat:r.lat, lng:r.lng, desc:r.description, address:r.address,
     horario:r.horario, entrada:r.entrada, photo:r.photo,
     blogTitle:r.blog_title, blogContent:r.blog_content,
-    blogAuthor:r.blog_author, blogDate:r.blog_date, createdAt:r.created_at };
+    blogAuthor:r.blog_author, blogDate:r.blog_date, createdAt:r.created_at,
+    isFeatured:!!r.is_featured };
 }
 
 function getSpots() { return _cache; }
@@ -94,7 +95,8 @@ async function saveSpotToSupabase(spot) {
       horario: spot.horario, entrada: spot.entrada, photo: photoUrl,
       blog_title: spot.blogTitle, blog_content: spot.blogContent,
       blog_author: spot.blogAuthor, blog_date: spot.blogDate || new Date().toISOString().split('T')[0],
-      created_at: spot.createdAt || new Date().toISOString()
+      created_at: spot.createdAt || new Date().toISOString(),
+      is_featured: spot.isFeatured || false
     };
     const { error } = await supa.from('spots').upsert(row, { onConflict: 'id' });
     if (error) throw error;
@@ -429,6 +431,13 @@ function renderForm(id) {
         <div class="form-row cols-2">
           <div class="form-group"><label>Horário</label><input id="f-horario" placeholder="Ex: Ter–Dom, 9h–18h" value="${s?.horario||''}"></div>
           <div class="form-group"><label>Entrada</label><input id="f-entrada" placeholder="Ex: Gratuita ou R$ 10,00" value="${s?.entrada||''}"></div>
+          <div class="form-group form-group-check">
+            <label class="check-label">
+              <input type="checkbox" id="f-featured" ${s?.isFeatured ? 'checked' : ''}>
+              <span class="check-box"></span>
+              <span>Exibir no carrossel de destaques</span>
+            </label>
+          </div>
         </div>
         <div class="form-group">
           <label>Descrição Curta <em>*</em> <span id="descCount" style="float:right;font-weight:400"></span></label>
@@ -611,7 +620,8 @@ async function saveForm() {
     blogContent: document.getElementById('blogEditor')?.innerHTML || '',
     blogAuthor:  document.getElementById('f-bauthor')?.value?.trim() || 'Equipe Sobral Cultural',
     blogDate:    new Date().toISOString().split('T')[0],
-    createdAt:   existing?.createdAt || new Date().toISOString()
+    createdAt:   existing?.createdAt || new Date().toISOString(),
+    isFeatured:  !!(document.getElementById('f-featured')?.checked)
   };
 
   const btn = document.querySelector('button[onclick="saveForm()"]');

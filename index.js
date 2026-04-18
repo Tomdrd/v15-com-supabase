@@ -2,7 +2,6 @@ const SU='https://nrohpfggqcbscyoigpiz.supabase.co';
 const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA';
 const supa = supabase.createClient(SU, SK);
 
-// Sem emojis nas labels de categoria
 const CL = {
   todos:     'Todos',
   religioso: 'Religioso',
@@ -21,6 +20,7 @@ const mr = r => ({
   type: r.type || 'spot',
   eventDate: r.event_date || null,
   eventEnd:  r.event_end  || null,
+  isFeatured: !!r.is_featured,
   blogTitle: r.blog_title, blogContent: r.blog_content,
   blogAuthor: r.blog_author, blogDate: r.blog_date
 });
@@ -33,7 +33,7 @@ const gs = () => SPOTS;
 
 function startRT() {
   supa.channel('mt').on('postgres_changes', { event: '*', schema: 'public', table: 'spots' }, async () => {
-    await loadSpots(); refreshM(); buildList();
+    await loadSpots(); refreshM(); buildList(); buildCarousel();
   }).subscribe();
 }
 
@@ -51,33 +51,15 @@ function initMap() {
   map.on('click', () => closeDetail());
 }
 
-// Marcador: gota colorida com ponto branco central — sem emoji
 const mkIco = (s, a = false) => {
   const z = a ? 50 : 42;
   return L.divIcon({
-    html: `<div style="
-      width:${z}px;height:${z}px;
-      background:${s.color};
-      border-radius:50% 50% 50% 0;
-      transform:rotate(-45deg);
-      display:flex;align-items:center;justify-content:center;
-      box-shadow:0 4px 14px rgba(0,0,0,.5)${a ? ',0 0 0 3px rgba(200,135,26,.9)' : ''};
-      border:2px solid rgba(255,255,255,.3)">
-        <div style="
-          width:${a ? 10 : 8}px;height:${a ? 10 : 8}px;
-          background:rgba(255,255,255,.9);
-          border-radius:50%;
-          transform:rotate(45deg)">
-        </div>
-    </div>`,
+    html: `<div style="width:${z}px;height:${z}px;background:${s.color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.5)${a ? ',0 0 0 3px rgba(200,135,26,.9)' : ''};border:2px solid rgba(255,255,255,.3)"><div style="width:${a ? 10 : 8}px;height:${a ? 10 : 8}px;background:rgba(255,255,255,.9);border-radius:50%;transform:rotate(45deg)"></div></div>`,
     className: '', iconSize: [z, z], iconAnchor: [z / 2, z], popupAnchor: [0, -z]
   });
 };
 
-const mkPopup = s => `
-  <div class="pp-title">${s.name}</div>
-  <div class="pp-sub">${CL[s.cat] || s.cat}</div>
-  <button class="pp-btn" onclick="openD('${s.id}')">Ver detalhes</button>`;
+const mkPopup = s => `<div class="pp-title">${s.name}</div><div class="pp-sub">${CL[s.cat] || s.cat}</div><button class="pp-btn" onclick="openD('${s.id}')">Ver detalhes</button>`;
 
 function placeM() {
   gs().forEach((s, i) => {
@@ -117,14 +99,10 @@ function buildList() {
   sl.innerHTML = f.map((s, i) => `
     <div class="sc" id="card-${s.id}" onclick="focusSpot('${s.id}')" style="animation-delay:${i * 35}ms">
       <div class="sc-thumb" style="background:${s.color}22">
-        ${s.photo
-          ? `<img src="${s.photo}" alt="${s.name}" loading="lazy">`
-          : `<div class="sc-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
+        ${s.photo ? `<img src="${s.photo}" alt="${s.name}" loading="lazy">` : `<div class="sc-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
       </div>
       <div class="sc-body">
-        <div class="sc-ic" style="background:${s.color}22">
-          <div class="sc-dot" style="background:${s.color}"></div>
-        </div>
+        <div class="sc-ic" style="background:${s.color}22"><div class="sc-dot" style="background:${s.color}"></div></div>
         <div class="sc-info">
           <div class="sc-name">${s.name}</div>
           <div class="sc-tag">${CL[s.cat] || s.cat}${s.type === 'event' && s.eventDate ? ' · ' + fmtEvtDate(s.eventDate, s.eventEnd) : ''}</div>
@@ -158,10 +136,7 @@ function openD(id) {
   ce.style.cssText = `background:${s.color}33;color:${s.color};border:1px solid ${s.color}66`;
   document.getElementById('dpDesc').textContent = s.desc;
   const evtBadge = s.type === 'event'
-    ? `<div style="background:rgba(200,135,26,.15);border:1px solid rgba(200,135,26,.4);border-radius:6px;padding:6px 12px;margin:8px 0;font-size:13px;color:#C8871A;display:inline-flex;align-items:center;gap:6px">
-        <i data-lucide="calendar" class="icon-xs"></i>
-        <strong>${fmtEvtDate(s.eventDate, s.eventEnd)}</strong>
-       </div>`
+    ? `<div style="background:rgba(200,135,26,.15);border:1px solid rgba(200,135,26,.4);border-radius:6px;padding:6px 12px;margin:8px 0;font-size:13px;color:#C8871A;display:inline-flex;align-items:center;gap:6px"><i data-lucide="calendar" class="icon-xs"></i><strong>${fmtEvtDate(s.eventDate, s.eventEnd)}</strong></div>`
     : '';
   document.getElementById('dpEvtBadge').innerHTML = evtBadge;
   const ds = uLat !== null ? `<span><i data-lucide="ruler" class="icon-xs"></i> <strong>${fd(d(uLat, uLng, s.lat, s.lng))}</strong></span>` : '';
@@ -181,6 +156,7 @@ function closeDetail() {
   document.getElementById('dp').classList.remove('open');
   document.getElementById('stbar').classList.remove('hidden');
 }
+
 function hlCard(id) {
   document.querySelectorAll('.sc').forEach(c => c.classList.remove('active'));
   const c = document.getElementById('card-' + id);
@@ -191,10 +167,13 @@ function hlCard(id) {
 function getUserLocation() {
   if (!navigator.geolocation) { toast('Geolocalização não suportada.', true); return; }
   const btn = document.getElementById('btnGeo');
+  const bnavGeo = document.querySelector('.bnav-item[data-page="geo"]');
   if (btn) btn.classList.add('locating');
+  if (bnavGeo) bnavGeo.classList.add('bnav-locating');
   navigator.geolocation.getCurrentPosition(p => {
     uLat = p.coords.latitude; uLng = p.coords.longitude;
     if (btn) { btn.classList.remove('locating'); btn.style.background = '#1B6B6B'; }
+    if (bnavGeo) { bnavGeo.classList.remove('bnav-locating'); bnavGeo.style.color = 'var(--teal)'; }
     if (uMk) uMk.remove();
     uMk = L.marker([uLat, uLng], {
       icon: L.divIcon({ html: '<div class="user-dot"></div>', className: '', iconSize: [14, 14], iconAnchor: [7, 7] })
@@ -206,6 +185,7 @@ function getUserLocation() {
     buildList();
   }, e => {
     if (btn) btn.classList.remove('locating');
+    if (bnavGeo) bnavGeo.classList.remove('bnav-locating');
     toast(e.code === 1 ? 'Permissão negada.' : 'Erro ao localizar.', true);
   }, { timeout: 10000, enableHighAccuracy: true });
 }
@@ -251,6 +231,139 @@ function toast(msg, err = false) {
   setTimeout(() => t.className = 'toast' + (err ? ' err' : ''), 3800);
 }
 
+/* ══════════════════════════════════════════
+   FEATURED CAROUSEL
+══════════════════════════════════════════ */
+let _carIdx = 0, _carItems = [], _carTimer = null;
+const _drag = { active: false, startX: 0, dx: 0 };
+
+function buildCarousel() {
+  const featured = SPOTS.filter(s => s.isFeatured);
+  const el = document.getElementById('fcarousel');
+  if (!featured.length) {
+    el.style.display = 'none';
+    document.body.classList.remove('has-carousel');
+    return;
+  }
+  _carItems = featured;
+  el.style.display = 'block';
+  document.body.classList.add('has-carousel');
+
+  const carouselEl = document.getElementById('fcarousel');
+  carouselEl.innerHTML = '<div class="fcar-track" id="fcarTrack"></div><div class="fcar-dots" id="fcarDots"></div>';
+
+  const track = document.getElementById('fcarTrack');
+  track.innerHTML = _carItems.map((s, i) => `
+    <div class="fcar-slide" data-i="${i}">
+      ${s.photo
+        ? `<img src="${s.photo}" alt="${s.name}" draggable="false">`
+        : `<div class="fcar-slide-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
+      <div class="fcar-grad"></div>
+      <div class="fcar-info">
+        <div class="fcar-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.86L12 17.77l-6.18 3.23L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Destaque</div>
+        <div class="fcar-name">${s.name}</div>
+        <div class="fcar-cat">${CL[s.cat] || s.cat}</div>
+      </div>
+    </div>
+  `).join('');
+
+  renderCarDots();
+  carGoTo(0);
+  carAutoplay();
+  initCarSwipe();
+}
+
+function renderCarDots() {
+  const dotsCont = document.getElementById('fcarDots');
+  if (!dotsCont) return;
+  dotsCont.innerHTML = _carItems.map((_, i) =>
+    `<div class="fcar-dot${i === _carIdx ? ' act' : ''}" onclick="carGoTo(${i})"></div>`
+  ).join('');
+}
+
+function carGoTo(i) {
+  _carIdx = ((i % _carItems.length) + _carItems.length) % _carItems.length;
+  const track = document.getElementById('fcarTrack');
+  if (track) track.style.transform = `translateX(-${_carIdx * 100}%)`;
+  renderCarDots();
+}
+
+function carAutoplay() {
+  clearInterval(_carTimer);
+  if (_carItems.length < 2) return;
+  _carTimer = setInterval(() => carGoTo(_carIdx + 1), 5000);
+}
+
+function initCarSwipe() {
+  const track = document.getElementById('fcarTrack');
+  if (!track) return;
+
+  track.addEventListener('pointerdown', e => {
+    _drag.active = true; _drag.startX = e.clientX; _drag.dx = 0;
+    track.style.transition = 'none';
+    track.setPointerCapture(e.pointerId);
+    clearInterval(_carTimer);
+  });
+
+  track.addEventListener('pointermove', e => {
+    if (!_drag.active) return;
+    _drag.dx = e.clientX - _drag.startX;
+    const base = -_carIdx * 100;
+    track.style.transform = `translateX(calc(${base}% + ${_drag.dx}px))`;
+  });
+
+  track.addEventListener('pointerup', e => {
+    if (!_drag.active) return;
+    const dx = _drag.dx;
+    // decide swipe vs tap BEFORE resetting state
+    track.style.transition = '';
+    if (dx < -50)     carGoTo(_carIdx + 1);
+    else if (dx > 50) carGoTo(_carIdx - 1);
+    else {
+      carGoTo(_carIdx);
+      // it was a tap — find which slide index is showing and open its post
+      if (Math.abs(dx) < 8) {
+        const s = _carItems[_carIdx];
+        if (s) {
+          window.location.href = `sobral_post.html?id=${s.id}`;
+        }
+      }
+    }
+    _drag.active = false; _drag.dx = 0;
+    carAutoplay();
+  });
+
+  track.addEventListener('pointercancel', () => {
+    if (!_drag.active) return;
+    track.style.transition = '';
+    carGoTo(_carIdx);
+    _drag.active = false; _drag.dx = 0;
+    carAutoplay();
+  });
+}
+
+/* ══════════════════════════════════════════
+   BOTTOM NAV AUTH
+══════════════════════════════════════════ */
+function updateBnavAuth(user) {
+  const el = document.getElementById('bnavAuth');
+  if (!el) return;
+  if (user) {
+    const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Eu';
+    const av   = user.user_metadata?.avatar_url || user.user_metadata?.picture || '';
+    el.innerHTML = `
+      <div style="width:22px;height:22px;border-radius:50%;background:var(--ochre);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--deep);overflow:hidden;flex-shrink:0">
+        ${av ? `<img src="${av}" style="width:100%;height:100%;object-fit:cover">` : name.charAt(0).toUpperCase()}
+      </div>
+      <span>${name.split(' ')[0]}</span>`;
+    el.onclick = () => { window.location.href = 'sobral_perfil.html'; };
+  } else {
+    el.innerHTML = `<i data-lucide="user" class="bnav-ico"></i><span>Perfil</span>`;
+    el.onclick = () => { window.location.href = 'sobral_login.html?redirect=/'; };
+    lucide.createIcons({ nodes: [el] });
+  }
+}
+
 /* ── AUTH ───────────────────────────────── */
 let CUR_USER = null, CUR_REACTIONS = [];
 
@@ -258,6 +371,7 @@ async function initAuth() {
   const { data: { session } } = await supa.auth.getSession();
   CUR_USER = session?.user || null;
   renderAuthChip();
+  updateBnavAuth(CUR_USER);
   if (CUR_USER) await loadUserReactions();
 }
 
@@ -268,27 +382,14 @@ function renderAuthChip() {
   if (CUR_USER) {
     const av   = CUR_USER.user_metadata?.avatar_url || CUR_USER.user_metadata?.picture || '';
     const name = CUR_USER.user_metadata?.full_name  || CUR_USER.email?.split('@')[0]    || 'Eu';
-    chip.innerHTML = `
-      <a href="sobral_perfil.html" class="user-chip">
-        <div class="uc-av">${av ? `<img src="${av}" alt="">` : name.charAt(0).toUpperCase()}</div>
-        <span>${name.split(' ')[0]}</span>
-      </a>`;
+    chip.innerHTML = `<a href="sobral_perfil.html" class="user-chip"><div class="uc-av">${av ? `<img src="${av}" alt="">` : name.charAt(0).toUpperCase()}</div><span>${name.split(' ')[0]}</span></a>`;
     if (drawerSection) drawerSection.innerHTML = `
-      <a href="sobral_perfil.html" class="drw-lnk">
-        <div class="drw-ic"><i data-lucide="user"></i></div> Meu Perfil
-      </a>
-      <a href="sobral_submeter.html" class="drw-lnk">
-        <div class="drw-ic"><i data-lucide="plus"></i></div> Sugerir Ponto ou Evento
-      </a>
-      <button class="drw-lnk" onclick="logoutMap();closeDrw()">
-        <div class="drw-ic"><i data-lucide="log-out"></i></div> Sair
-      </button>`;
+      <a href="sobral_perfil.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="user"></i></div> Meu Perfil</a>
+      <a href="sobral_submeter.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="plus"></i></div> Sugerir Ponto ou Evento</a>
+      <button class="drw-lnk" onclick="logoutMap();closeDrw()"><div class="drw-ic"><i data-lucide="log-out"></i></div> Sair</button>`;
   } else {
     chip.innerHTML = `<a href="sobral_login.html?redirect=/" class="btn-login">Entrar</a>`;
-    if (drawerSection) drawerSection.innerHTML = `
-      <a href="sobral_login.html?redirect=/" class="drw-lnk">
-        <div class="drw-ic"><i data-lucide="user"></i></div> Entrar / Criar Conta
-      </a>`;
+    if (drawerSection) drawerSection.innerHTML = `<a href="sobral_login.html?redirect=/" class="drw-lnk"><div class="drw-ic"><i data-lucide="user"></i></div> Entrar / Criar Conta</a>`;
   }
   lucide.createIcons();
 }
@@ -297,6 +398,7 @@ async function logoutMap() {
   await supa.auth.signOut();
   CUR_USER = null; CUR_REACTIONS = [];
   renderAuthChip();
+  updateBnavAuth(null);
   toast('Sessão encerrada.');
 }
 
@@ -317,27 +419,14 @@ async function renderReactionBtns(spotId) {
   const myLike  = CUR_REACTIONS.find(r => r.spot_id === String(spotId) && r.reaction === 'like');
   const myBeen  = CUR_REACTIONS.find(r => r.spot_id === String(spotId) && r.reaction === 'been');
   const myGoing = CUR_REACTIONS.find(r => r.spot_id === String(spotId) && r.reaction === 'going');
-
   if (!CUR_USER) {
-    el.innerHTML = `<div style="font-size:11.5px;color:rgba(245,237,216,.4)">
-      <a href="sobral_login.html?redirect=/" style="color:var(--ochre)">Entre</a> para curtir e marcar pontos
-    </div>`;
+    el.innerHTML = `<div style="font-size:11.5px;color:rgba(245,237,216,.4)"><a href="sobral_login.html?redirect=/" style="color:var(--ochre)">Entre</a> para curtir e marcar pontos</div>`;
     return;
   }
-
   el.innerHTML = `
-    <button class="rxn-btn ${myLike  ? 'active-like'  : ''}" onclick="toggleReaction('${spotId}','like')"  title="Gostei">
-      <i data-lucide="heart"    class="icon-sm"></i>
-      <span>Gostei</span>${likeCount  > 0 ? `<span class="rxn-count">${likeCount}</span>`  : ''}
-    </button>
-    <button class="rxn-btn ${myBeen  ? 'active-been'  : ''}" onclick="toggleReaction('${spotId}','been')"  title="Eu Fui">
-      <i data-lucide="check"    class="icon-sm"></i>
-      <span>Eu Fui</span>${beenCount  > 0 ? `<span class="rxn-count">${beenCount}</span>`  : ''}
-    </button>
-    <button class="rxn-btn ${myGoing ? 'active-going' : ''}" onclick="toggleReaction('${spotId}','going')" title="Eu Vou">
-      <i data-lucide="calendar" class="icon-sm"></i>
-      <span>Eu Vou</span>${goingCount > 0 ? `<span class="rxn-count">${goingCount}</span>` : ''}
-    </button>`;
+    <button class="rxn-btn ${myLike  ? 'active-like'  : ''}" onclick="toggleReaction('${spotId}','like')"  title="Gostei"><i data-lucide="heart"    class="icon-sm"></i><span>Gostei</span>${likeCount  > 0 ? `<span class="rxn-count">${likeCount}</span>`  : ''}</button>
+    <button class="rxn-btn ${myBeen  ? 'active-been'  : ''}" onclick="toggleReaction('${spotId}','been')"  title="Eu Fui"><i data-lucide="check"    class="icon-sm"></i><span>Eu Fui</span>${beenCount  > 0 ? `<span class="rxn-count">${beenCount}</span>`  : ''}</button>
+    <button class="rxn-btn ${myGoing ? 'active-going' : ''}" onclick="toggleReaction('${spotId}','going')" title="Eu Vou"><i data-lucide="calendar" class="icon-sm"></i><span>Eu Vou</span>${goingCount > 0 ? `<span class="rxn-count">${goingCount}</span>` : ''}</button>`;
   lucide.createIcons();
 }
 
@@ -362,6 +451,7 @@ async function toggleReaction(spotId, reaction) {
 window.addEventListener('load', async () => {
   await loadSpots();
   initMap();
+  buildCarousel();
   startRT();
   initAuth();
   lucide.createIcons();

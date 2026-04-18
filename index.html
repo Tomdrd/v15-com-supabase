@@ -76,6 +76,9 @@
   </div>
 </div>
 
+<!-- FEATURED CAROUSEL (inner markup injected by JS) -->
+<div class="fcarousel" id="fcarousel" style="display:none"></div>
+
 <div class="app-body">
   <div class="sidebar" id="sb">
     <div class="sb-hd">
@@ -130,21 +133,36 @@
   </div>
 </div>
 
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bnav" id="bnav">
+  <a href="/" class="bnav-item active" data-page="map">
+    <i data-lucide="map" class="bnav-ico"></i>
+    <span>Mapa</span>
+  </a>
+  <button class="bnav-item" data-page="list" onclick="toggleSbMob()">
+    <i data-lucide="layers" class="bnav-ico"></i>
+    <span>Pontos</span>
+  </button>
+  <button class="bnav-item" data-page="geo" onclick="getUserLocation()">
+    <i data-lucide="navigation" class="bnav-ico"></i>
+    <span>Localizar</span>
+  </button>
+  <a href="sobral_sobre.html" class="bnav-item" data-page="sobre">
+    <i data-lucide="info" class="bnav-ico"></i>
+    <span>Sobre</span>
+  </a>
+  <div class="bnav-item" id="bnavAuth" data-page="perfil">
+    <i data-lucide="user" class="bnav-ico"></i>
+    <span>Perfil</span>
+  </div>
+</nav>
+
 <div class="stbar" id="stbar">
   <span><i data-lucide="map-pin" class="icon-xs"></i> <strong id="cntVis">0</strong> pontos</span>
   <span><i data-lucide="map" class="icon-xs"></i> Sobral, CE</span>
   <span id="stGeo" style="display:none">
     <i data-lucide="navigation" class="icon-xs"></i> <strong>Localizado</strong>
   </span>
-</div>
-
-<div class="fabs">
-  <button class="fab fab-d" onclick="toggleSbMob()" title="Lista">
-    <i data-lucide="layers" class="icon-lg"></i>
-  </button>
-  <button class="fab fab-o" onclick="getUserLocation()" title="Localização">
-    <i data-lucide="navigation" class="icon-lg"></i>
-  </button>
 </div>
 
 <div class="toast" id="toast"></div>
