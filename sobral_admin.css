@@ -1,6 +1,6 @@
 :root{--ochre:#C8871A;--gold:#D4A843;--terra:#B54A2A;--deep:#1A1410;--mid:#251B12;--panel:#2E2118;--card:#382A1C;--cream:#F5EDD8;--muted:rgba(245,237,216,0.45);--border:rgba(200,135,26,0.2);--radius:12px;--teal:#1B6B6B;--green:#3C7828;--purple:#6440B4;--sidebar:260px}
 *{box-sizing:border-box;margin:0;padding:0}html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--cream)}a{color:inherit;text-decoration:none}
-.app{display:flex;height:100vh;overflow:hidden}.sidebar{width:var(--sidebar);flex-shrink:0;background:var(--mid);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}.main{flex:1;overflow-y:auto;background:var(--deep)}
+.app{display:flex;height:100vh;overflow:hidden}.sidebar{width:var(--sidebar);flex-shrink:0;background:var(--mid);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}.main{flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;background:var(--deep)}
 .sb-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border)}.sb-logo-top{display:flex;align-items:center;gap:10px;margin-bottom:4px}.sb-logo-img{width:38px;height:38px;object-fit:contain;border-radius:10px}.sb-logo h1{font-family:'Playfair Display',serif;font-size:16px;font-weight:800;line-height:1.1}.sb-logo span{font-size:10px;color:var(--ochre);letter-spacing:2px;text-transform:uppercase}
 .sb-nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:3px;overflow-y:auto}.nav-section{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;padding:12px 10px 6px}.nav-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;cursor:pointer;transition:all .15s;font-size:13.5px;font-weight:400;border:none;background:transparent;color:var(--cream);width:100%;text-align:left}.nav-btn:hover{background:rgba(200,135,26,.1);color:var(--gold)}.nav-btn.active{background:rgba(200,135,26,.15);color:var(--ochre);font-weight:500}.nav-btn .icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}.nav-btn .badge{margin-left:auto;background:var(--ochre);color:var(--deep);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
 .sb-footer{padding:16px;border-top:1px solid var(--border)}.sb-footer a{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);padding:8px 10px;border-radius:8px;transition:.15s}.sb-footer a:hover{background:rgba(255,255,255,.06);color:var(--cream)}
@@ -31,16 +31,17 @@
 .adm-hbg.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
 .mob-sb-back{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:800}
 @media(max-width:900px){
-  .app{position:relative}
+  .app{position:relative;flex-direction:column}
   .sidebar{position:fixed;top:0;left:0;bottom:0;width:260px;z-index:900;transform:translateX(-100%);transition:transform .3s}
   .sidebar.mob-open{transform:translateX(0)}
   .mob-sb-back{display:block}
   .adm-hbg{display:flex}
-  .adm-topbar{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:54px;background:var(--mid);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:700;width:100%}
+  .adm-topbar{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:54px;background:var(--mid);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:700;width:100%;flex-shrink:0}
   .adm-topbar h2{font-family:'Playfair Display',serif;font-size:15px;color:var(--cream)}
+  .main{flex:1;min-width:0;overflow-y:auto;overflow-x:hidden}
   .page-header{padding:20px 18px 0;flex-wrap:wrap;gap:10px}
   .page-actions{flex-wrap:wrap}
-  .page-content{padding:18px 18px 40px}
+  .page-content{padding:18px 14px 40px}
   .page-title h2{font-size:20px}
   .form-row.cols-2{grid-template-columns:1fr}
   .backup-area{grid-template-columns:1fr}
@@ -48,6 +49,13 @@
   .stats-row{grid-template-columns:1fr 1fr}
   #coordMap{height:220px}
   .blog-editor{min-height:200px}
+  .type-seg{flex-direction:column!important}
+}
+@media(max-width:520px){
+  .page-content{padding:14px 10px 40px}
+  .stats-row{grid-template-columns:1fr}
+  .page-header{gap:8px}
+  .form-section-body{padding:14px}
 }
 @media(min-width:901px){.adm-topbar{display:none!important}.sidebar{transform:none!important;position:relative!important}.mob-sb-back{display:none!important}}
 /* ── MESSAGES TABLE ── */

@@ -18,6 +18,9 @@ const mr = r => ({
   id: r.id, name: r.name, cat: r.cat, color: r.color,
   lat: r.lat, lng: r.lng, desc: r.description, address: r.address,
   horario: r.horario, entrada: r.entrada, photo: r.photo,
+  type: r.type || 'spot',
+  eventDate: r.event_date || null,
+  eventEnd:  r.event_end  || null,
   blogTitle: r.blog_title, blogContent: r.blog_content,
   blogAuthor: r.blog_author, blogDate: r.blog_date
 });
@@ -105,7 +108,10 @@ function refreshM() {
 /* ── LIST ───────────────────────────────── */
 function buildList() {
   const sl = document.getElementById('spotsList');
-  const f = gs().filter(s => (cat === 'todos' || s.cat === cat) && s.name.toLowerCase().includes(q.toLowerCase()));
+  const f = gs().filter(s => {
+    const catOk = cat === 'todos' ? true : cat === 'eventos' ? s.type === 'event' : (s.cat === cat && s.type !== 'event');
+    return catOk && s.name.toLowerCase().includes(q.toLowerCase());
+  });
   if (uLat !== null) f.sort((a, b) => d(uLat, uLng, a.lat, a.lng) - d(uLat, uLng, b.lat, b.lng));
   if (!f.length) { sl.innerHTML = '<div class="no-res">Nenhum ponto encontrado</div>'; updCnt(0); return; }
   sl.innerHTML = f.map((s, i) => `
@@ -121,7 +127,7 @@ function buildList() {
         </div>
         <div class="sc-info">
           <div class="sc-name">${s.name}</div>
-          <div class="sc-tag">${CL[s.cat] || s.cat}</div>
+          <div class="sc-tag">${CL[s.cat] || s.cat}${s.type === 'event' && s.eventDate ? ' · ' + fmtEvtDate(s.eventDate, s.eventEnd) : ''}</div>
         </div>
         ${uLat !== null ? `<div class="sc-dist">${fd(d(uLat, uLng, s.lat, s.lng))}</div>` : ''}
       </div>
@@ -151,6 +157,13 @@ function openD(id) {
   ce.textContent = CL[s.cat] || s.cat;
   ce.style.cssText = `background:${s.color}33;color:${s.color};border:1px solid ${s.color}66`;
   document.getElementById('dpDesc').textContent = s.desc;
+  const evtBadge = s.type === 'event'
+    ? `<div style="background:rgba(200,135,26,.15);border:1px solid rgba(200,135,26,.4);border-radius:6px;padding:6px 12px;margin:8px 0;font-size:13px;color:#C8871A;display:inline-flex;align-items:center;gap:6px">
+        <i data-lucide="calendar" class="icon-xs"></i>
+        <strong>${fmtEvtDate(s.eventDate, s.eventEnd)}</strong>
+       </div>`
+    : '';
+  document.getElementById('dpEvtBadge').innerHTML = evtBadge;
   const ds = uLat !== null ? `<span><i data-lucide="ruler" class="icon-xs"></i> <strong>${fd(d(uLat, uLng, s.lat, s.lng))}</strong></span>` : '';
   document.getElementById('dpMeta').innerHTML = `
     ${s.address ? `<span><i data-lucide="map-pin" class="icon-xs"></i> <strong>${s.address}</strong></span>` : ''}
@@ -204,6 +217,12 @@ function setCat(c) {
   buildList();
 }
 function filterSpots() { q = document.getElementById('searchInput').value; buildList(); }
+
+function fmtEvtDate(start, end) {
+  const fmt = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : null;
+  const s = fmt(start), e = fmt(end);
+  return (s && e) ? `${s} → ${e}` : (s || 'Data a confirmar');
+}
 
 /* ── DRAWER / SIDEBAR ───────────────────── */
 function toggleDrw() { ['hbg', 'drw', 'dov'].forEach(id => document.getElementById(id).classList.toggle('open')); }

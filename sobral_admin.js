@@ -87,6 +87,9 @@ async function saveSpotToSupabase(spot) {
     const row = {
       id: spot.id, name: spot.name, cat: spot.cat, emoji: '',
       color: spot.color, lat: spot.lat, lng: spot.lng,
+      type: spot.type || 'spot',
+      event_date: spot.event_date || null,
+      event_end: spot.event_end || null,
       description: spot.desc, address: spot.address,
       horario: spot.horario, entrada: spot.entrada, photo: photoUrl,
       blog_title: spot.blogTitle, blog_content: spot.blogContent,
@@ -389,6 +392,30 @@ function renderForm(id) {
         <span class="form-section-toggle">▾</span>
       </div>
       <div class="form-section-body">
+        <div class="form-row" style="margin-bottom:16px">
+          <div class="form-group">
+            <label>Tipo <em>*</em></label>
+            <div class="type-seg" style="display:flex;background:rgba(0,0,0,.25);border:1.5px solid rgba(200,135,26,.2);border-radius:10px;padding:4px;gap:4px;margin-top:4px">
+              <button type="button" id="tsBtnSpot"
+                onclick="selectTypeAdmin('spot')"
+                style="flex:1;padding:9px 12px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;transition:all .2s;background:${(!s||s.type!=='event')?'var(--ochre)':'transparent'};color:${(!s||s.type!=='event')?'var(--deep)':'var(--muted)'}">
+                Ponto Turístico
+              </button>
+              <button type="button" id="tsBtnEvent"
+                onclick="selectTypeAdmin('event')"
+                style="flex:1;padding:9px 12px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;transition:all .2s;background:${s?.type==='event'?'var(--ochre)':'transparent'};color:${s?.type==='event'?'var(--deep)':'var(--muted)'}">
+                Evento
+              </button>
+            </div>
+            <input type="hidden" id="f-type" value="${s?.type||'spot'}">
+          </div>
+        </div>
+        <div id="adminEventDates" style="display:${s?.type==='event'?'block':'none'}">
+          <div class="form-row cols-2">
+            <div class="form-group"><label>Data de Início <em>*</em></label><input id="f-date-start" type="date" value="${s?.event_date||''}"></div>
+            <div class="form-group"><label>Data de Fim</label><input id="f-date-end" type="date" value="${s?.event_end||''}"></div>
+          </div>
+        </div>
         <div class="form-row">
           <div class="form-group"><label>Nome <em>*</em></label><input id="f-name" placeholder="Ex: Teatro São João" value="${s?.name||''}"></div>
         </div>
@@ -566,8 +593,10 @@ async function saveForm() {
   const newId = isEdit ? editingId : crypto.randomUUID();
   let photoVal = (window._pendingPhoto !== undefined) ? window._pendingPhoto : (existing?.photo || null);
 
+  const fType = document.getElementById('f-type')?.value || 'spot';
   const spot = {
     id: newId, name,
+    type:    fType,
     cat:     document.getElementById('f-cat')?.value || 'cultura',
     color:   document.getElementById('f-color')?.value || '#1B6B6B',
     lat, lng,
@@ -576,6 +605,8 @@ async function saveForm() {
     horario: document.getElementById('f-horario')?.value?.trim() || '',
     entrada: document.getElementById('f-entrada')?.value?.trim() || '',
     photo:   photoVal,
+    event_date: fType === 'event' ? (document.getElementById('f-date-start')?.value || null) : null,
+    event_end:  fType === 'event' ? (document.getElementById('f-date-end')?.value || null) : null,
     blogTitle:   document.getElementById('f-btitle')?.value?.trim() || name,
     blogContent: document.getElementById('blogEditor')?.innerHTML || '',
     blogAuthor:  document.getElementById('f-bauthor')?.value?.trim() || 'Equipe Sobral Cultural',
@@ -589,6 +620,24 @@ async function saveForm() {
   if (btn) { btn.disabled=false; btn.innerHTML='<i data-lucide="save" class="icon-sm"></i> Salvar Ponto'; lucide.createIcons(); }
   if (ok) { window._pendingPhoto=undefined; coordPickerMap=null; coordMarker=null; showToast(`"${name}" salvo com sucesso!`, 'success'); setTimeout(()=>navigate('list'), 900); }
 }
+
+function selectTypeAdmin(type) {
+  const inp = document.getElementById('f-type');
+  if (inp) inp.value = type;
+  const btnSpot  = document.getElementById('tsBtnSpot');
+  const btnEvent = document.getElementById('tsBtnEvent');
+  if (btnSpot && btnEvent) {
+    btnSpot.style.background  = type === 'spot'  ? 'var(--ochre)' : 'transparent';
+    btnSpot.style.color       = type === 'spot'  ? 'var(--deep)'  : 'var(--muted)';
+    btnEvent.style.background = type === 'event' ? 'var(--ochre)' : 'transparent';
+    btnEvent.style.color      = type === 'event' ? 'var(--deep)'  : 'var(--muted)';
+  }
+  const el = document.getElementById('adminEventDates');
+  if (el) el.style.display = type === 'event' ? 'block' : 'none';
+}
+
+// mantido por compatibilidade
+function toggleEventDatesAdmin(type) { selectTypeAdmin(type); }
 
 // ══════════════════════════════════════════
 //  DELETAR
@@ -808,11 +857,11 @@ function renderModeration() {
 async function moderateSubmission(id, status, adminNote = '') {
   const sub = _submissions.find(s => s.id === id);
   if (!sub) return;
-  if (status === 'approved' && sub.type === 'spot') {
-    const spotRow = { id:sub.id, name:sub.name, cat:sub.cat, emoji:'', color:sub.color||'#C8871A', lat:sub.lat, lng:sub.lng, description:sub.description, address:sub.address, horario:sub.horario, entrada:sub.entrada, photo:sub.photo, blog_title:sub.name, blog_content:`<p>${sub.description||''}</p>`, blog_author:sub.profiles?.full_name||'Sobral Cultural', blog_date:new Date().toISOString().split('T')[0], created_at:new Date().toISOString() };
+  if (status === 'approved' && (sub.type === 'spot' || sub.type === 'event')) {
+    const spotRow = { id:sub.id, name:sub.name, cat:sub.cat, emoji:'', color:sub.color||'#C8871A', lat:sub.lat, lng:sub.lng, description:sub.description, address:sub.address, horario:sub.horario, entrada:sub.entrada, photo:sub.photo, type:sub.type||'spot', event_date:sub.event_date||null, event_end:sub.event_end||null, blog_title:sub.name, blog_content:`<p>${sub.description||''}</p>`, blog_author:sub.profiles?.full_name||'Sobral Cultural', blog_date:new Date().toISOString().split('T')[0], created_at:new Date().toISOString() };
     await supa.from('spots').upsert(spotRow, { onConflict: 'id' });
   }
-  if (status === 'rejected' && sub.status === 'approved' && sub.type === 'spot') {
+  if (status === 'rejected' && sub.status === 'approved' && (sub.type === 'spot' || sub.type === 'event')) {
     await supa.from('spots').delete().eq('id', sub.id);
   }
   await supa.from('submissions').update({ status, admin_note: adminNote, updated_at: new Date().toISOString() }).eq('id', id);
