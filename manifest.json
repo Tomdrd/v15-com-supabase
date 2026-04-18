@@ -1,0 +1,14 @@
+{
+  "name": "Sobral Cultural",
+  "short_name": "Sobral Cultural",
+  "description": "Explore os pontos turísticos, culturais e históricos de Sobral, Ceará.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1410",
+  "theme_color": "#c8871a",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/favicon.svg",  "sizes": "any",     "type": "image/svg+xml" }
+  ]
+}

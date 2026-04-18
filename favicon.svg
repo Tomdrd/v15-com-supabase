@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#1a1410"/>
+  <g stroke="#c8871a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- landmark icon centrado em 16,16 escala ~18px -->
+    <line x1="7" y1="25" x2="25" y2="25"/>
+    <line x1="9" y1="25" x2="9" y2="14"/>
+    <line x1="23" y1="25" x2="23" y2="14"/>
+    <line x1="13" y1="25" x2="13" y2="14"/>
+    <line x1="19" y1="25" x2="19" y2="14"/>
+    <polyline points="7,14 16,8 25,14"/>
+    <line x1="7" y1="14" x2="25" y2="14"/>
+  </g>
+</svg>

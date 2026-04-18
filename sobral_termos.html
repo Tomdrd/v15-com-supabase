@@ -1,40 +1,24 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <script src="head.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Termos de Uso — Sobral Cultural</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@400;500&family=Lora:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<style>
-:root{--ochre:#C8871A;--gold:#D4A843;--deep:#1A1410;--mid:#251B12;--panel:#2E2118;--cream:#F5EDD8;--muted:rgba(245,237,216,.55);--sand:#E8D4B0;--border:rgba(200,135,26,.2);--H:54px}
-*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--cream);min-height:100vh}
-.topbar{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--H);padding:0 20px;display:flex;align-items:center;justify-content:space-between;background:rgba(26,20,16,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
-.tb-logo{font-family:'Playfair Display',serif;font-size:16px;text-decoration:none;color:var(--cream)}.tb-logo em{color:var(--ochre);font-style:normal}
-.btn-back{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--cream);padding:7px 14px;border-radius:8px;font-size:13px;text-decoration:none;transition:.15s}
-.btn-back:hover{background:rgba(255,255,255,.12)}
-.hero{height:28vh;min-height:200px;background:linear-gradient(135deg,var(--mid),#2e2218);display:flex;align-items:center;justify-content:center;text-align:center;padding:80px 24px 32px;margin-top:var(--H)}
-.hero h1{font-family:'Playfair Display',serif;font-size:clamp(24px,5vw,40px);font-weight:800;margin-bottom:8px}
-.hero p{font-size:13.5px;color:var(--muted)}
-.content{max-width:780px;margin:0 auto;padding:48px 24px 80px}
-.content h2{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);margin:32px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.content h3{font-family:'Playfair Display',serif;font-size:18px;color:var(--ochre);margin:24px 0 8px}
-.content p{font-family:'Lora',serif;font-size:15.5px;line-height:1.8;color:var(--sand);margin-bottom:14px}
-.content ul{font-family:'Lora',serif;font-size:15.5px;line-height:1.8;color:var(--sand);margin:0 0 14px 24px}
-.content li{margin-bottom:6px}
-.content strong{color:var(--cream);font-weight:600}
-.content em{color:var(--muted)}
-.accept-box{background:var(--panel);border:1px solid rgba(200,135,26,.3);border-radius:14px;padding:24px;margin-top:36px;text-align:center}
-.accept-box p{font-size:13.5px;color:var(--muted);margin-bottom:16px}
-.btn-accept{display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:12px 28px;border-radius:10px;text-decoration:none;font-size:14px;font-weight:600;transition:.15s;border:none;cursor:pointer;font-family:'DM Sans',sans-serif}
-.btn-accept:hover{background:var(--gold)}
-.last-update{font-size:12px;color:var(--muted);text-align:center;margin-top:24px}
-</style>
+<link rel="stylesheet" href="sobral_termos.css">
 </head>
 <body>
 <div class="topbar">
-  <a href="index.html" class="tb-logo">🏛️ Sobral <em>Cultural</em></a>
-  <a href="javascript:history.back()" class="btn-back">← Voltar</a>
+  <a href="index.html" class="tb-logo">
+    <img src="logo.png" alt="Sobral Cultural" class="tb-logo-img">
+    <div class="tb-logo-text">
+      <span class="tb-logo-name"></span>
+      <span class="tb-logo-sub">Termos de Uso</span>
+    </div>
+  </a>
+  <a href="javascript:history.back()" class="btn-back"><i data-lucide="arrow-left"></i> Voltar</a>
 </div>
 <div class="hero">
   <div><h1>📋 Termos de Uso</h1><p>Leia com atenção antes de publicar conteúdo na plataforma</p></div>
@@ -42,15 +26,6 @@
 <div class="content" id="termsContent">
   <p style="text-align:center;color:var(--muted);padding:40px 0">Carregando termos…</p>
 </div>
-<script>
-const supa=supabase.createClient('https://nrohpfggqcbscyoigpiz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA');
-(async()=>{
-  const{data}=await supa.from('pages').select('content,updated_at').eq('id','termos').single();
-  const el=document.getElementById('termsContent');
-  if(data?.content){
-    el.innerHTML=data.content+`<div class="accept-box"><p>Ao criar uma conta, submeter eventos ou pontos turísticos, você concorda integralmente com estes termos.</p><button class="btn-accept" onclick="window.close();history.back()">✅ Li e Aceito os Termos</button></div><div class="last-update">Última atualização: ${new Date(data.updated_at).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})}</div>`;
-  }
-})();
-</script>
+<script src="sobral_termos.js"></script>
 </body>
 </html>

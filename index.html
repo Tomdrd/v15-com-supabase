@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <script src="head.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sobral Cultural — Mapa Turístico</title>
@@ -8,188 +9,40 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<style>
-:root{--ochre:#C8871A;--terra:#B54A2A;--cream:#F5EDD8;--deep:#1A1410;--mid:#2E2118;--teal:#1B6B6B;--gold:#D4A843;--H:60px}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--cream)}
-
-/* HEADER */
-header{position:fixed;top:0;left:0;right:0;z-index:2000;height:var(--H);background:rgba(26,20,16,.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,135,26,.25);display:flex;align-items:center;justify-content:space-between;padding:0 20px;gap:12px}
-.logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
-.logo-icon{width:36px;height:36px;background:var(--ochre);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;animation:pg 3s infinite}
-@keyframes pg{0%,100%{box-shadow:0 0 0 0 rgba(200,135,26,.4)}50%{box-shadow:0 0 0 7px rgba(200,135,26,0)}}
-.logo h1{font-family:'Playfair Display',serif;font-size:18px;font-weight:800;color:var(--cream);line-height:1}
-.logo-sub{font-size:10px;color:var(--ochre);letter-spacing:1.5px;text-transform:uppercase}
-.hn{display:flex;align-items:center;gap:6px}
-.nl{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;font-size:13px;color:rgba(245,237,216,.7);text-decoration:none;transition:.15s;border:1px solid transparent;white-space:nowrap}
-.nl:hover{background:rgba(200,135,26,.1);color:var(--cream);border-color:rgba(200,135,26,.2)}
-.btn-geo{display:flex;align-items:center;gap:6px;background:var(--terra);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;transition:.2s;white-space:nowrap}
-.btn-geo:hover{background:#c55530}
-.btn-geo.locating{background:var(--teal);animation:bp 1s infinite}
-@keyframes bp{0%,100%{opacity:1}50%{opacity:.6}}
-
-/* HAMBURGER */
-.hbg{display:none;flex-direction:column;gap:5px;width:40px;height:40px;background:rgba(255,255,255,.07);border:1px solid rgba(200,135,26,.2);border-radius:9px;cursor:pointer;padding:9px;justify-content:center;flex-shrink:0}
-.hbg span{display:block;height:2px;background:var(--cream);border-radius:2px;transition:all .3s}
-.hbg.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
-.hbg.open span:nth-child(2){opacity:0;transform:scaleX(0)}
-.hbg.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
-
-/* DRAWER */
-.dov{position:fixed;inset:0;top:var(--H);background:rgba(0,0,0,.55);z-index:1800;opacity:0;pointer-events:none;transition:opacity .3s}
-.dov.open{opacity:1;pointer-events:all}
-.drw{position:fixed;top:var(--H);right:0;bottom:0;width:270px;background:var(--mid);border-left:1px solid rgba(200,135,26,.2);z-index:1900;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow-y:auto}
-.drw.open{transform:translateX(0)}
-.drw-inner{padding:16px 14px}
-.drw-sec{font-size:10px;color:rgba(245,237,216,.35);letter-spacing:1.5px;text-transform:uppercase;padding:12px 10px 5px}
-.drw-lnk{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:9px;color:var(--cream);text-decoration:none;font-size:13.5px;transition:.15s;border:none;background:transparent;cursor:pointer;width:100%;text-align:left}
-.drw-lnk:hover,.drw-lnk.active{background:rgba(200,135,26,.12);color:var(--ochre)}
-.drw-ic{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
-
-/* LAYOUT */
-.app-body{display:flex;height:100vh;padding-top:var(--H);overflow:hidden}
-
-/* SIDEBAR */
-.sidebar{width:310px;flex-shrink:0;background:var(--mid);display:flex;flex-direction:column;overflow:hidden;border-right:1px solid rgba(200,135,26,.2);transition:transform .3s}
-.sb-hd{padding:14px 16px 12px;border-bottom:1px solid rgba(255,255,255,.06)}
-.sb-hd h2{font-family:'Playfair Display',serif;font-size:14px;color:var(--gold);margin-bottom:10px}
-.sbox{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(200,135,26,.2);border-radius:8px;padding:9px 13px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:.15s}
-.sbox:focus{border-color:var(--ochre)}
-.sbox::placeholder{color:rgba(245,237,216,.3)}
-.fps{display:flex;gap:5px;flex-wrap:wrap;padding:9px 16px;border-bottom:1px solid rgba(255,255,255,.06)}
-.pill{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid transparent;transition:.15s}
-.pill[data-cat="todos"]{background:var(--ochre);color:var(--deep);border-color:var(--ochre)}
-.pill[data-cat="religioso"]{background:rgba(100,60,180,.2);color:#b09ce8;border-color:rgba(100,60,180,.4)}
-.pill[data-cat="cultura"]{background:rgba(27,107,107,.2);color:#7ecece;border-color:rgba(27,107,107,.4)}
-.pill[data-cat="natureza"]{background:rgba(60,120,40,.2);color:#8ecb6e;border-color:rgba(60,120,40,.4)}
-.pill[data-cat="historico"]{background:rgba(181,74,42,.2);color:#e89e7e;border-color:rgba(181,74,42,.4)}
-.pill[data-cat="lazer"]{background:rgba(200,135,26,.2);color:#f0c060;border-color:rgba(200,135,26,.4)}
-.pill:not(.active){opacity:.5}
-.spl{flex:1;overflow-y:auto;padding:8px}.spl::-webkit-scrollbar{width:3px}.spl::-webkit-scrollbar-thumb{background:rgba(200,135,26,.3);border-radius:3px}
-.sc{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;margin-bottom:7px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;overflow:hidden;animation:ci .4s ease both}
-@keyframes ci{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
-.sc:hover,.sc.active{background:rgba(200,135,26,.1);border-color:rgba(200,135,26,.4);transform:translateX(3px)}
-.sc-thumb{height:70px;overflow:hidden}.sc-thumb img{width:100%;height:100%;object-fit:cover}.sc-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:26px;opacity:.35}
-.sc-body{padding:10px;display:flex;gap:9px;align-items:flex-start}
-.sc-ic{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.sc-info{flex:1;min-width:0}.sc-name{font-weight:500;font-size:12.5px;color:var(--cream);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sc-tag{font-size:10px;color:rgba(245,237,216,.4)}
-.sc-dist{font-size:10.5px;color:var(--ochre);flex-shrink:0}
-.no-res{text-align:center;padding:32px 14px;color:rgba(245,237,216,.3);font-size:12.5px}
-
-/* MAP */
-#map{flex:1;min-height:0}
-.leaflet-container{background:#1a1a2e!important;font-family:'DM Sans',sans-serif}
-
-/* DETAIL PANEL */
-.dp{position:fixed;bottom:0;left:0;right:0;padding:0 14px 14px;z-index:1500;background:linear-gradient(to top,var(--mid) 75%,transparent);transform:translateY(100%);transition:transform .35s cubic-bezier(.34,1.2,.64,1);pointer-events:none}
-.dp.open{transform:translateY(0);pointer-events:all}
-.dp-inner{background:var(--mid);border:1px solid rgba(200,135,26,.3);border-radius:16px;overflow:hidden;box-shadow:0 -14px 44px rgba(0,0,0,.6);max-width:680px;margin:0 auto}
-.dp-photo{height:130px;overflow:hidden;background:var(--deep)}.dp-photo img{width:100%;height:100%;object-fit:cover;filter:brightness(.85)}.dp-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px;opacity:.3}
-.dp-body{padding:14px 16px 16px;display:flex;gap:12px}
-.dp-emoji{font-size:30px;flex-shrink:0;padding-top:2px}
-.dp-cnt{flex:1;min-width:0}
-.dp-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;gap:8px}
-.dp-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--cream);line-height:1.2}
-.dp-cat{font-size:10px;padding:2px 8px;border-radius:10px;flex-shrink:0}
-.dp-desc{font-size:11.5px;color:rgba(245,237,216,.65);line-height:1.55;margin-bottom:10px}
-.dp-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.dp-meta span{font-size:11px;color:rgba(245,237,216,.4);display:flex;align-items:center;gap:3px}.dp-meta strong{color:var(--ochre)}
-.dp-acts{display:flex;gap:7px;flex-wrap:wrap}
-.btn-blog{display:inline-flex;align-items:center;gap:5px;background:var(--ochre);color:var(--deep);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;transition:.15s;border:none;cursor:pointer}
-.btn-blog:hover{background:var(--gold)}
-/* Reaction buttons */
-.rxn-btns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
-.rxn-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid transparent;background:rgba(255,255,255,.06);color:var(--cream);transition:all .15s;font-family:'DM Sans',sans-serif}
-.rxn-btn:hover{transform:translateY(-1px)}
-.rxn-btn.active-like{background:rgba(220,50,50,.15);border-color:rgba(220,50,50,.4);color:#f08080}
-.rxn-btn.active-been{background:rgba(60,120,40,.15);border-color:rgba(60,120,40,.4);color:#8ecb6e}
-.rxn-btn.active-going{background:rgba(200,135,26,.15);border-color:rgba(200,135,26,.4);color:var(--gold)}
-.rxn-btn:not(.active-like):not(.active-been):not(.active-going){border-color:rgba(255,255,255,.12)}
-.rxn-count{font-size:10px;opacity:.7}
-/* user chip in header */
-.user-chip{display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:8px;background:rgba(255,255,255,.07);border:1px solid rgba(200,135,26,.2);text-decoration:none;color:var(--cream);font-size:12.5px;transition:.15s}
-.user-chip:hover{background:rgba(200,135,26,.12)}
-.uc-av{width:24px;height:24px;border-radius:50%;background:var(--ochre);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--deep);flex-shrink:0;overflow:hidden}
-.uc-av img{width:100%;height:100%;object-fit:cover}
-.btn-login{display:inline-flex;align-items:center;gap:5px;background:var(--ochre);color:var(--deep);border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;transition:.15s;text-decoration:none}
-.btn-login:hover{background:var(--gold)}
-.btn-xd{background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.5);width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:.15s;flex-shrink:0}
-.btn-xd:hover{background:rgba(255,255,255,.16);color:#fff}
-
-/* STATS */
-.stbar{position:fixed;bottom:0;left:0;right:0;z-index:1200;background:rgba(26,20,16,.9);backdrop-filter:blur(8px);border-top:1px solid rgba(200,135,26,.15);padding:5px 16px;display:flex;gap:14px;align-items:center;font-size:11px;color:rgba(245,237,216,.35);transition:transform .3s}
-.stbar.hidden{transform:translateY(100%)}
-.stbar strong{color:var(--gold)}
-
-/* LOADING */
-#loading{position:fixed;inset:0;background:var(--deep);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .6s}
-#loading.fade{opacity:0;pointer-events:none}
-.lt{font-family:'Playfair Display',serif;font-size:32px;font-weight:800;color:var(--cream);animation:fi .8s ease both}
-.ls{font-size:12px;color:var(--ochre);letter-spacing:2.5px;text-transform:uppercase;animation:fi .8s .15s ease both}
-.lsp{width:44px;height:44px;border:3px solid rgba(200,135,26,.2);border-top:3px solid var(--ochre);border-radius:50%;animation:spin .9s linear infinite,fi .8s .3s ease both}
-@keyframes fi{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* MISC */
-.user-dot{width:14px;height:14px;background:#4fc3f7;border-radius:50%;border:2.5px solid #fff;animation:gp 2s infinite}
-@keyframes gp{0%,100%{box-shadow:0 0 0 5px rgba(79,195,247,.2)}50%{box-shadow:0 0 0 12px rgba(79,195,247,0)}}
-.leaflet-popup-content-wrapper{background:var(--mid)!important;border:1px solid rgba(200,135,26,.4)!important;border-radius:12px!important;box-shadow:0 8px 28px rgba(0,0,0,.6)!important;color:var(--cream)!important}
-.leaflet-popup-tip{background:var(--mid)!important}.leaflet-popup-close-button{color:var(--ochre)!important}
-.pp-title{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--cream);margin-bottom:3px}
-.pp-sub{font-size:11.5px;color:rgba(245,237,216,.45)}
-.pp-btn{margin-top:8px;display:block;background:var(--ochre);color:var(--deep);padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;width:100%;text-align:center;transition:.15s}
-.pp-btn:hover{background:var(--gold)}
-.toast{position:fixed;top:68px;right:14px;background:var(--mid);border:1px solid rgba(200,135,26,.4);color:var(--cream);padding:10px 15px;border-radius:9px;font-size:12.5px;z-index:9998;transform:translateX(120%);transition:transform .3s cubic-bezier(.34,1.2,.64,1);max-width:250px}
-.toast.show{transform:translateX(0)}.toast.err{border-color:rgba(181,74,42,.6)}
-
-/* MOBILE FABs */
-.fabs{position:fixed;bottom:36px;left:12px;z-index:1300;display:flex;flex-direction:column;gap:8px;align-items:center}
-.fab{width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 3px 12px rgba(0,0,0,.4);transition:.2s}
-.fab:hover{transform:scale(1.1)}
-.fab-o{background:var(--ochre);color:var(--deep)}
-.fab-d{background:var(--mid);color:var(--cream);border:1px solid rgba(200,135,26,.3)}
-
-/* SIDEBAR BACKDROP MOBILE */
-.sb-back{display:none;position:fixed;inset:0;top:var(--H);background:rgba(0,0,0,.5);z-index:1050}
-
-/* RESPONSIVE */
-@media(max-width:768px){
-  :root{--H:54px}
-  .hn{display:none}
-  .hbg{display:flex}
-  .sidebar{position:fixed;left:0;top:var(--H);bottom:32px;width:min(310px,100%);z-index:1100;transform:translateX(-100%)}
-  .sidebar.mob-open{transform:translateX(0)}
-  .sb-back{display:block}
-  .dp-photo{height:100px}
-  .dp-title{font-size:14.5px}
-  .fabs{display:flex}
-}
-@media(min-width:769px) and (max-width:1100px){.sidebar{width:270px}}
-@media(min-width:769px){.hbg{display:none!important}.hn{display:flex}.fabs{display:none}}
-@media(min-width:1025px){.sidebar{transform:none!important;position:relative!important}}
-</style>
+<link rel="stylesheet" href="index.css">
 </head>
 <body>
 
-<div id="loading"><div class="lt">Sobral Cultural</div><div class="ls">Ceará · Brasil</div><div class="lsp"></div></div>
+<div id="loading">
+  <div class="lt">Sobral Cultural</div>
+  <div class="ls">Ceará · Brasil</div>
+  <div class="lsp"></div>
+</div>
 
 <header>
-  <a href="/" class="logo">
-    <div class="logo-icon">🏛️</div>
-    <div><h1>Sobral Cultural</h1><div class="logo-sub">Mapa Turístico</div></div>
+  <a href="/" class="logo tb-logo">
+    <img src="logo.png" alt="Sobral Cultural" class="logo-img tb-logo-img">
+    <div class="tb-logo-text">
+      <span class="tb-logo-name"></span>
+      <span class="tb-logo-sub">Mapa Turístico</span>
+    </div>
   </a>
   <nav class="hn">
-    <a href="/" class="nl" style="color:var(--ochre)">🗺️ Mapa</a>
-    <a href="sobral_sobre.html" class="nl">ℹ️ Sobre</a>
-    <a href="sobral_contato.html" class="nl">✉️ Contato</a>
+    <a href="/" class="nl" style="color:var(--ochre)">Mapa</a>
+    <a href="sobral_sobre.html" class="nl">Sobre</a>
+    <a href="sobral_contato.html" class="nl">Contato</a>
     <button class="btn-geo" id="btnGeo" onclick="getUserLocation()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>
+      <i data-lucide="navigation" class="icon-sm"></i>
       Localização
     </button>
-    <a href="sobral_admin.html" class="nl" style="border-color:rgba(200,135,26,.25)">⚙️</a>
+    <a href="sobral_admin.html" class="nl" style="border-color:rgba(200,135,26,.25)" title="Admin">
+      <i data-lucide="settings" class="icon-sm"></i>
+    </a>
     <div id="authChip"></div>
   </nav>
-  <button class="hbg" id="hbg" onclick="toggleDrw()" aria-label="Menu"><span></span><span></span><span></span></button>
+  <button class="hbg" id="hbg" onclick="toggleDrw()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </header>
 
 <!-- MOBILE DRAWER -->
@@ -197,16 +50,28 @@ header{position:fixed;top:0;left:0;right:0;z-index:2000;height:var(--H);backgrou
 <div class="drw" id="drw">
   <div class="drw-inner">
     <div class="drw-sec">Navegação</div>
-    <a href="/" class="drw-lnk active"><div class="drw-ic">🗺️</div> Mapa Turístico</a>
-    <a href="sobral_sobre.html" class="drw-lnk"><div class="drw-ic">ℹ️</div> Sobre o Projeto</a>
-    <a href="sobral_contato.html" class="drw-lnk"><div class="drw-ic">✉️</div> Contato</a>
+    <a href="/" class="drw-lnk active">
+      <div class="drw-ic"><i data-lucide="map"></i></div> Mapa Turístico
+    </a>
+    <a href="sobral_sobre.html" class="drw-lnk">
+      <div class="drw-ic"><i data-lucide="info"></i></div> Sobre o Projeto
+    </a>
+    <a href="sobral_contato.html" class="drw-lnk">
+      <div class="drw-ic"><i data-lucide="mail"></i></div> Contato
+    </a>
     <div class="drw-sec">Ações</div>
-    <button class="drw-lnk" onclick="getUserLocation();closeDrw()"><div class="drw-ic">📍</div> Minha Localização</button>
+    <button class="drw-lnk" onclick="getUserLocation();closeDrw()">
+      <div class="drw-ic"><i data-lucide="map-pin"></i></div> Minha Localização
+    </button>
     <div class="drw-sec">Sistema</div>
-    <a href="sobral_admin.html" class="drw-lnk"><div class="drw-ic">⚙️</div> Painel Administrativo</a>
+    <a href="sobral_admin.html" class="drw-lnk">
+      <div class="drw-ic"><i data-lucide="settings"></i></div> Painel Administrativo
+    </a>
     <div class="drw-sec">Minha Conta</div>
     <div id="drawerAuthSection">
-      <a href="sobral_login.html?redirect=/" class="drw-lnk"><div class="drw-ic">👤</div> Entrar / Criar Conta</a>
+      <a href="sobral_login.html?redirect=/" class="drw-lnk">
+        <div class="drw-ic"><i data-lucide="user"></i></div> Entrar / Criar Conta
+      </a>
     </div>
   </div>
 </div>
@@ -214,16 +79,16 @@ header{position:fixed;top:0;left:0;right:0;z-index:2000;height:var(--H);backgrou
 <div class="app-body">
   <div class="sidebar" id="sb">
     <div class="sb-hd">
-      <h2>✦ Pontos Turísticos</h2>
+      <h2>Pontos Turísticos</h2>
       <input class="sbox" id="searchInput" placeholder="Buscar ponto turístico…" oninput="filterSpots()">
     </div>
     <div class="fps">
-      <div class="pill active" data-cat="todos" onclick="setCat('todos')">Todos</div>
-      <div class="pill" data-cat="religioso" onclick="setCat('religioso')">⛪</div>
-      <div class="pill" data-cat="cultura" onclick="setCat('cultura')">🎭</div>
-      <div class="pill" data-cat="historico" onclick="setCat('historico')">🏛️</div>
-      <div class="pill" data-cat="natureza" onclick="setCat('natureza')">🌿</div>
-      <div class="pill" data-cat="lazer" onclick="setCat('lazer')">🎡</div>
+      <div class="pill active" data-cat="todos"     onclick="setCat('todos')">Todos</div>
+      <div class="pill"        data-cat="religioso"  onclick="setCat('religioso')">Religioso</div>
+      <div class="pill"        data-cat="cultura"    onclick="setCat('cultura')">Cultura</div>
+      <div class="pill"        data-cat="historico"  onclick="setCat('historico')">Histórico</div>
+      <div class="pill"        data-cat="natureza"   onclick="setCat('natureza')">Natureza</div>
+      <div class="pill"        data-cat="lazer"      onclick="setCat('lazer')">Lazer</div>
     </div>
     <div class="spl" id="spotsList"></div>
   </div>
@@ -235,17 +100,25 @@ header{position:fixed;top:0;left:0;right:0;z-index:2000;height:var(--H);backgrou
       <div class="dp-inner">
         <div class="dp-photo" id="dpPhoto"></div>
         <div class="dp-body">
-          <div class="dp-emoji" id="dpEmoji">🏛️</div>
           <div class="dp-cnt">
             <div class="dp-hdr">
-              <div><div class="dp-title" id="dpTitle">—</div><div class="dp-cat" id="dpCat"></div></div>
-              <button class="btn-xd" onclick="closeDetail()">✕</button>
+              <div>
+                <div class="dp-title" id="dpTitle">—</div>
+                <div class="dp-cat"   id="dpCat"></div>
+              </div>
+              <button class="btn-xd" onclick="closeDetail()">
+                <i data-lucide="x" class="icon-sm"></i>
+              </button>
             </div>
             <div class="dp-desc" id="dpDesc"></div>
             <div class="dp-meta" id="dpMeta"></div>
             <div class="dp-acts">
-              <a id="dpLink" href="#" target="_blank" class="btn-blog">📰 Ver Post Completo →</a>
-              <a href="sobral_submeter.html" class="btn-blog" style="background:rgba(255,255,255,.08);color:var(--cream)" id="dpSubmitLink">➕ Sugerir</a>
+              <a id="dpLink" href="#" target="_blank" class="btn-blog">
+                <i data-lucide="file-text" class="icon-sm"></i> Ver Post
+              </a>
+              <a href="sobral_submeter.html" class="btn-blog btn-blog-ghost" id="dpSubmitLink">
+                <i data-lucide="plus" class="icon-sm"></i> Sugerir
+              </a>
             </div>
             <div class="rxn-btns" id="rxnBtns"></div>
           </div>
@@ -256,213 +129,24 @@ header{position:fixed;top:0;left:0;right:0;z-index:2000;height:var(--H);backgrou
 </div>
 
 <div class="stbar" id="stbar">
-  <span>📍 <strong id="cntVis">0</strong> pontos</span>
-  <span>🗺️ Sobral, CE</span>
-  <span id="stGeo" style="display:none">🔵 <strong>Localizado</strong></span>
+  <span><i data-lucide="map-pin" class="icon-xs"></i> <strong id="cntVis">0</strong> pontos</span>
+  <span><i data-lucide="map" class="icon-xs"></i> Sobral, CE</span>
+  <span id="stGeo" style="display:none">
+    <i data-lucide="navigation" class="icon-xs"></i> <strong>Localizado</strong>
+  </span>
 </div>
 
 <div class="fabs">
-  <button class="fab fab-d" onclick="toggleSbMob()" title="Lista">☰</button>
-  <button class="fab fab-o" onclick="getUserLocation()" title="Localização">📍</button>
+  <button class="fab fab-d" onclick="toggleSbMob()" title="Lista">
+    <i data-lucide="layers" class="icon-lg"></i>
+  </button>
+  <button class="fab fab-o" onclick="getUserLocation()" title="Localização">
+    <i data-lucide="navigation" class="icon-lg"></i>
+  </button>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script>
-const SU='https://nrohpfggqcbscyoigpiz.supabase.co';
-const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA';
-const supa=supabase.createClient(SU,SK);
-const CL={todos:'Todos',religioso:'⛪ Religioso',cultura:'🎭 Cultura',historico:'🏛️ Histórico',natureza:'🌿 Natureza',lazer:'🎡 Lazer'};
-let SPOTS=[],map,cat='todos',q='',markers={},uMk=null,uLat=null,uLng=null;
-
-const mr=r=>({id:r.id,name:r.name,cat:r.cat,emoji:r.emoji,color:r.color,lat:r.lat,lng:r.lng,desc:r.description,address:r.address,horario:r.horario,entrada:r.entrada,photo:r.photo,blogTitle:r.blog_title,blogContent:r.blog_content,blogAuthor:r.blog_author,blogDate:r.blog_date});
-async function loadSpots(){const{data}=await supa.from('spots').select('*').order('created_at',{ascending:true});SPOTS=(data||[]).map(mr);}
-const gs=()=>SPOTS;
-function startRT(){supa.channel('mt').on('postgres_changes',{event:'*',schema:'public',table:'spots'},async()=>{await loadSpots();refreshM();buildList();}).subscribe();}
-
-/* MAP */
-function initMap(){
-  map=L.map('map',{center:[-3.688,-40.3497],zoom:14});
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OSM © CARTO',maxZoom:19,subdomains:'abcd'}).addTo(map);
-  buildList();placeM();
-  setTimeout(()=>{const b=Object.values(markers).map(m=>m.getLatLng());if(b.length)map.fitBounds(L.latLngBounds(b).pad(.15));},300);
-  map.on('click',()=>closeDetail());
-}
-const mkIco=(s,a=false)=>{const z=a?50:42;return L.divIcon({html:`<div style="width:${z}px;height:${z}px;background:${s.color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.5)${a?',0 0 0 3px rgba(200,135,26,.9)':''};border:2px solid rgba(255,255,255,.3)"><span style="transform:rotate(45deg);font-size:${a?20:17}px">${s.emoji}</span></div>`,className:'',iconSize:[z,z],iconAnchor:[z/2,z],popupAnchor:[0,-z]});};
-function placeM(){gs().forEach((s,i)=>{const m=L.marker([s.lat,s.lng],{icon:mkIco(s)});m.bindPopup(`<div class="pp-title">${s.emoji} ${s.name}</div><div class="pp-sub">${CL[s.cat]||s.cat}</div><button class="pp-btn" onclick="openD('${s.id}')">Ver detalhes ↓</button>`,{maxWidth:210});m.on('click',()=>{openD(s.id);hlCard(s.id);});setTimeout(()=>{m.addTo(map);markers[s.id]=m;},i*70);});updCnt();}
-function refreshM(){const ids=new Set(gs().map(s=>s.id));Object.keys(markers).forEach(id=>{if(!ids.has(id)){if(map.hasLayer(markers[id]))markers[id].remove();delete markers[id];}});gs().forEach((s,i)=>{if(!markers[s.id]){const m=L.marker([s.lat,s.lng],{icon:mkIco(s)});m.bindPopup(`<div class="pp-title">${s.emoji} ${s.name}</div><div class="pp-sub">${CL[s.cat]||s.cat}</div><button class="pp-btn" onclick="openD('${s.id}')">Ver detalhes ↓</button>`,{maxWidth:210});m.on('click',()=>{openD(s.id);hlCard(s.id);});setTimeout(()=>{if(map){m.addTo(map);markers[s.id]=m;}},i*40);}});updCnt();}
-
-/* LIST */
-function buildList(){
-  const sl=document.getElementById('spotsList');
-  const f=gs().filter(s=>(cat==='todos'||s.cat===cat)&&s.name.toLowerCase().includes(q.toLowerCase()));
-  if(uLat!==null)f.sort((a,b)=>d(uLat,uLng,a.lat,a.lng)-d(uLat,uLng,b.lat,b.lng));
-  if(!f.length){sl.innerHTML='<div class="no-res">Nenhum ponto encontrado 🔍</div>';updCnt(0);return;}
-  sl.innerHTML=f.map((s,i)=>`
-    <div class="sc" id="card-${s.id}" onclick="focusSpot('${s.id}')" style="animation-delay:${i*35}ms">
-      <div class="sc-thumb" style="background:${s.color}22">${s.photo?`<img src="${s.photo}" alt="${s.name}" loading="lazy">`:`<div class="sc-ph">${s.emoji}</div>`}</div>
-      <div class="sc-body">
-        <div class="sc-ic" style="background:${s.color}22;color:${s.color}">${s.emoji}</div>
-        <div class="sc-info"><div class="sc-name">${s.name}</div><div class="sc-tag">${CL[s.cat]||s.cat}</div></div>
-        ${uLat!==null?`<div class="sc-dist">${fd(d(uLat,uLng,s.lat,s.lng))}</div>`:''}
-      </div>
-    </div>`).join('');
-  updCnt(f.length);
-  gs().forEach(s=>{if(!markers[s.id])return;if(f.find(x=>x.id===s.id)){if(!map.hasLayer(markers[s.id]))markers[s.id].addTo(map);}else{if(map.hasLayer(markers[s.id]))markers[s.id].remove();}});
-}
-function focusSpot(id){
-  const s=gs().find(x=>x.id===id);if(!s)return;
-  map.flyTo([s.lat,s.lng],17,{duration:1.2});
-  setTimeout(()=>{if(markers[id])markers[id].openPopup();},1300);
-  openD(id);hlCard(id);closeSbMob();
-}
-function openD(id){
-  const s=gs().find(x=>String(x.id)===String(id));if(!s)return;
-  document.getElementById('dpPhoto').innerHTML=s.photo?`<img src="${s.photo}" alt="${s.name}">`:`<div class="dp-ph">${s.emoji}</div>`;
-  document.getElementById('dpEmoji').textContent=s.emoji;
-  document.getElementById('dpTitle').textContent=s.name;
-  const ce=document.getElementById('dpCat');ce.textContent=CL[s.cat]||s.cat;ce.style.cssText=`background:${s.color}33;color:${s.color};border:1px solid ${s.color}66`;
-  document.getElementById('dpDesc').textContent=s.desc;
-  const ds=uLat!==null?`<span>📏 <strong>${fd(d(uLat,uLng,s.lat,s.lng))}</strong></span>`:'';
-  document.getElementById('dpMeta').innerHTML=`<span>📍 <strong>${s.address||''}</strong></span><span>🕐 <strong>${s.horario||''}</strong></span><span>🎫 <strong>${s.entrada||''}</strong></span>${ds}`;
-  document.getElementById('dpLink').href=`sobral_post.html?id=${s.id}`;
-  document.getElementById('dp').classList.add('open');
-  document.getElementById('stbar').classList.add('hidden');
-  renderReactionBtns(s.id);
-}
-function closeDetail(){document.getElementById('dp').classList.remove('open');document.getElementById('stbar').classList.remove('hidden');}
-function hlCard(id){document.querySelectorAll('.sc').forEach(c=>c.classList.remove('active'));const c=document.getElementById('card-'+id);if(c){c.classList.add('active');c.scrollIntoView({behavior:'smooth',block:'nearest'});}}
-
-/* GEO */
-function getUserLocation(){
-  if(!navigator.geolocation){toast('Geolocalização não suportada.',true);return;}
-  const btn=document.getElementById('btnGeo');if(btn)btn.classList.add('locating');
-  navigator.geolocation.getCurrentPosition(p=>{
-    uLat=p.coords.latitude;uLng=p.coords.longitude;
-    if(btn){btn.classList.remove('locating');btn.style.background='#1B6B6B';}
-    if(uMk)uMk.remove();
-    uMk=L.marker([uLat,uLng],{icon:L.divIcon({html:'<div class="user-dot"></div>',className:'',iconSize:[14,14],iconAnchor:[7,7]})}).addTo(map);
-    uMk.bindPopup('<div class="pp-title">📍 Você está aqui</div>');
-    map.flyTo([uLat,uLng],15,{duration:1.5});
-    document.getElementById('stGeo').style.display='flex';
-    toast('📍 Localizado! Lista por proximidade.');buildList();
-  },e=>{if(btn)btn.classList.remove('locating');toast(e.code===1?'Permissão negada.':'Erro ao localizar.',true);},{timeout:10000,enableHighAccuracy:true});
-}
-
-/* FILTERS */
-function setCat(c){cat=c;document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.cat===c));buildList();}
-function filterSpots(){q=document.getElementById('searchInput').value;buildList();}
-
-/* DRAWER */
-function toggleDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id).classList.toggle('open'));}
-function closeDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id).classList.remove('open'));}
-function toggleSbMob(){document.getElementById('sb').classList.toggle('mob-open');document.getElementById('sbBack').style.display=document.getElementById('sb').classList.contains('mob-open')?'block':'none';}
-function closeSbMob(){document.getElementById('sb').classList.remove('mob-open');document.getElementById('sbBack').style.display='none';}
-
-/* UTILS */
-function d(a,b,c,e){const R=6371e3,dL=(c-a)*Math.PI/180,dN=(e-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
-function fd(m){return m<1000?`${Math.round(m)}m`:`${(m/1e3).toFixed(1)}km`;}
-function updCnt(n){document.getElementById('cntVis').textContent=n!==undefined?n:gs().length;}
-function toast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(err?' err':'');setTimeout(()=>t.className='toast'+(err?' err':''),3800);}
-
-// ── AUTH STATE ────────────────────────────
-let CUR_USER = null, CUR_REACTIONS = [];
-
-async function initAuth() {
-  const { data: { session } } = await supa.auth.getSession();
-  CUR_USER = session?.user || null;
-  renderAuthChip();
-  if (CUR_USER) await loadUserReactions();
-}
-
-function renderAuthChip() {
-  const chip = document.getElementById('authChip');
-  const drawerSection = document.getElementById('drawerAuthSection');
-  if (!chip) return;
-  if (CUR_USER) {
-    const av = CUR_USER.user_metadata?.avatar_url || CUR_USER.user_metadata?.picture || '';
-    const name = CUR_USER.user_metadata?.full_name || CUR_USER.email?.split('@')[0] || 'Eu';
-    chip.innerHTML = `<a href="sobral_perfil.html" class="user-chip"><div class="uc-av">${av ? `<img src="${av}" alt="">` : name.charAt(0).toUpperCase()}</div><span>${name.split(' ')[0]}</span></a>`;
-    if (drawerSection) drawerSection.innerHTML = `
-      <a href="sobral_perfil.html" class="drw-lnk"><div class="drw-ic">👤</div> Meu Perfil</a>
-      <a href="sobral_submeter.html" class="drw-lnk"><div class="drw-ic">➕</div> Sugerir Ponto ou Evento</a>
-      <button class="drw-lnk" onclick="logoutMap();closeDrw()"><div class="drw-ic">🚪</div> Sair</button>`;
-  } else {
-    chip.innerHTML = `<a href="sobral_login.html?redirect=/" class="btn-login">👤 Entrar</a>`;
-    if (drawerSection) drawerSection.innerHTML = `<a href="sobral_login.html?redirect=/" class="drw-lnk"><div class="drw-ic">👤</div> Entrar / Criar Conta</a>`;
-  }
-}
-
-async function logoutMap() {
-  await supa.auth.signOut();
-  CUR_USER = null; CUR_REACTIONS = [];
-  renderAuthChip();
-  toast('Sessão encerrada.');
-}
-
-async function loadUserReactions() {
-  if (!CUR_USER) { CUR_REACTIONS = []; return; }
-  const { data } = await supa.from('reactions').select('*').eq('user_id', CUR_USER.id);
-  CUR_REACTIONS = data || [];
-}
-
-// ── REACTIONS ─────────────────────────────
-async function renderReactionBtns(spotId) {
-  const el = document.getElementById('rxnBtns');
-  if (!el) return;
-
-  // get counts for this spot
-  const { data: counts } = await supa.from('reactions').select('reaction').eq('spot_id', String(spotId));
-  const likeCount  = (counts||[]).filter(r=>r.reaction==='like').length;
-  const beenCount  = (counts||[]).filter(r=>r.reaction==='been').length;
-  const goingCount = (counts||[]).filter(r=>r.reaction==='going').length;
-
-  // user's reactions
-  const myLike  = CUR_REACTIONS.find(r=>r.spot_id===String(spotId)&&r.reaction==='like');
-  const myBeen  = CUR_REACTIONS.find(r=>r.spot_id===String(spotId)&&r.reaction==='been');
-  const myGoing = CUR_REACTIONS.find(r=>r.spot_id===String(spotId)&&r.reaction==='going');
-
-  if (!CUR_USER) {
-    el.innerHTML = `<div style="font-size:11.5px;color:rgba(245,237,216,.4)"><a href="sobral_login.html?redirect=/" style="color:var(--ochre)">Entre</a> para curtir e marcar pontos</div>`;
-    return;
-  }
-
-  el.innerHTML = `
-    <button class="rxn-btn ${myLike?'active-like':''}" onclick="toggleReaction('${spotId}','like')" title="Gostei">
-      ❤️ <span>Gostei</span>${likeCount>0?`<span class="rxn-count">${likeCount}</span>`:''}
-    </button>
-    <button class="rxn-btn ${myBeen?'active-been':''}" onclick="toggleReaction('${spotId}','been')" title="Eu Fui">
-      ✅ <span>Eu Fui</span>${beenCount>0?`<span class="rxn-count">${beenCount}</span>`:''}
-    </button>
-    <button class="rxn-btn ${myGoing?'active-going':''}" onclick="toggleReaction('${spotId}','going')" title="Eu Vou">
-      📅 <span>Eu Vou</span>${goingCount>0?`<span class="rxn-count">${goingCount}</span>`:''}
-    </button>`;
-}
-
-async function toggleReaction(spotId, reaction) {
-  if (!CUR_USER) { toast('Entre para reagir aos pontos!', true); return; }
-  const existing = CUR_REACTIONS.find(r => r.spot_id===String(spotId) && r.reaction===reaction);
-  if (existing) {
-    await supa.from('reactions').delete().eq('id', existing.id);
-    CUR_REACTIONS = CUR_REACTIONS.filter(r => r.id !== existing.id);
-    toast(reaction==='like'?'❤️ Removido':reaction==='been'?'✅ Removido':'📅 Removido');
-  } else {
-    const { data } = await supa.from('reactions').insert({ user_id: CUR_USER.id, spot_id: String(spotId), reaction, spot_type:'spot' }).select().single();
-    if (data) CUR_REACTIONS.push(data);
-    toast(reaction==='like'?'❤️ Gostei!':reaction==='been'?'✅ Marcado como Eu Fui!':'📅 Marcado como Eu Vou!');
-  }
-  renderReactionBtns(spotId);
-}
-
-window.addEventListener('load', async () => {
-  await loadSpots();
-  initMap();
-  startRT();
-  initAuth();
-  const l = document.getElementById('loading');
-  l.classList.add('fade');
-  setTimeout(() => l.remove(), 700);
-});
-</script>
+<script src="index.js"></script>
 </body>
 </html>

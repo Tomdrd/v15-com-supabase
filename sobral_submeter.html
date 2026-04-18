@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <script src="head.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Submeter Conteúdo — Sobral Cultural</title>
@@ -8,106 +9,21 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<style>
-:root{--ochre:#C8871A;--gold:#D4A843;--terra:#B54A2A;--deep:#1A1410;--mid:#251B12;--panel:#2E2118;--cream:#F5EDD8;--muted:rgba(245,237,216,.55);--teal:#1B6B6B;--border:rgba(200,135,26,.2);--H:56px}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--cream)}
-
-.topbar{position:fixed;top:0;left:0;right:0;z-index:1000;height:var(--H);padding:0 20px;display:flex;align-items:center;justify-content:space-between;background:rgba(26,20,16,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);gap:12px}
-.tb-logo{display:flex;align-items:center;gap:8px;text-decoration:none;flex-shrink:0}.tb-logo span{font-family:'Playfair Display',serif;font-size:16px;color:var(--cream)}.tb-logo em{color:var(--ochre);font-style:normal}
-.btn-back{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--cream);padding:7px 14px;border-radius:8px;font-size:13px;text-decoration:none;transition:.15s}.btn-back:hover{background:rgba(255,255,255,.12)}
-.user-chip{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
-.user-avatar{width:30px;height:30px;border-radius:50%;background:var(--ochre);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--deep);flex-shrink:0;overflow:hidden}.user-avatar img{width:100%;height:100%;object-fit:cover}
-
-.hero{background:linear-gradient(135deg,var(--mid),#1a2e1a);padding:calc(var(--H) + 32px) 24px 32px;text-align:center;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(200,135,26,.12),transparent 60%)}
-.hero h1{font-family:'Playfair Display',serif;font-size:clamp(24px,5vw,40px);font-weight:800;color:var(--cream);margin-bottom:8px;position:relative;z-index:1}
-.hero p{font-size:14px;color:var(--muted);position:relative;z-index:1}
-
-.page-wrap{max-width:760px;margin:0 auto;padding:36px 20px 80px}
-
-/* TYPE SELECTOR */
-.type-sel{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
-.type-opt{background:var(--panel);border:2px solid var(--border);border-radius:14px;padding:20px;cursor:pointer;transition:all .2s;text-align:center}
-.type-opt:hover{border-color:rgba(200,135,26,.4)}.type-opt.selected{border-color:var(--ochre);background:rgba(200,135,26,.08)}
-.type-opt .to-icon{font-size:32px;margin-bottom:8px}
-.type-opt .to-name{font-weight:600;font-size:15px;margin-bottom:4px}
-.type-opt .to-desc{font-size:12px;color:var(--muted);line-height:1.4}
-
-/* FORM */
-.form-section{background:var(--panel);border:1px solid var(--border);border-radius:14px;margin-bottom:16px;overflow:hidden}
-.fs-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
-.fs-header h3{font-size:14px;font-weight:600;flex:1}.fs-icon{font-size:18px}.fs-toggle{font-size:18px;color:var(--muted);transition:.2s}
-.form-section.collapsed .fs-body{display:none}.form-section.collapsed .fs-toggle{transform:rotate(-90deg)}
-.fs-body{padding:20px}
-.form-row{display:grid;gap:14px;margin-bottom:14px}.form-row.c2{grid-template-columns:1fr 1fr}
-.fg{display:flex;flex-direction:column;gap:6px}
-label{font-size:12px;font-weight:500;color:var(--muted)}label em{color:var(--terra);font-style:normal}
-input,select,textarea{background:rgba(255,255,255,.06);border:1.5px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:13.5px;outline:none;transition:.15s;width:100%}
-input:focus,select:focus,textarea:focus{border-color:var(--ochre);background:rgba(200,135,26,.06)}
-input::placeholder,textarea::placeholder{color:rgba(245,237,216,.25)}
-select option{background:var(--panel);color:var(--cream)}
-textarea{resize:vertical;min-height:90px;line-height:1.55}
-.helper{font-size:11.5px;color:var(--muted);margin-top:3px}
-
-#coordMap{height:260px;border-radius:10px;overflow:hidden;border:1.5px solid var(--border)}
-.coord-hint{font-size:12px;color:var(--muted);margin-top:8px}
-
-/* EMOJI */
-.emoji-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.emoji-opt{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:19px;cursor:pointer;border:2px solid transparent;background:rgba(255,255,255,.06);transition:.15s}
-.emoji-opt:hover,.emoji-opt.sel{border-color:var(--ochre);background:rgba(200,135,26,.15)}
-
-/* DROP */
-.drop-zone{border:2px dashed rgba(200,135,26,.3);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:.2s;position:relative;background:rgba(200,135,26,.03)}
-.drop-zone:hover,.drop-zone.drag-over{border-color:var(--ochre);background:rgba(200,135,26,.08)}
-.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
-.drop-zone-icon{font-size:32px;margin-bottom:8px;opacity:.6}
-.drop-zone p{font-size:13.5px;color:var(--muted)}.drop-zone small{font-size:12px;color:rgba(245,237,216,.3)}
-.photo-preview{position:relative;border-radius:12px;overflow:hidden}.photo-preview img{width:100%;max-height:240px;object-fit:cover;display:block}
-.photo-preview-actions{position:absolute;top:10px;right:10px}
-
-/* TERMS */
-.terms-box{background:rgba(200,135,26,.06);border:1px solid rgba(200,135,26,.3);border-radius:12px;padding:16px 18px}
-.terms-box h4{font-size:13.5px;font-weight:600;color:var(--cream);margin-bottom:8px}
-.terms-scroll{max-height:160px;overflow-y:auto;font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;padding-right:4px}
-.terms-scroll::-webkit-scrollbar{width:3px}.terms-scroll::-webkit-scrollbar-thumb{background:rgba(200,135,26,.3);border-radius:3px}
-.terms-scroll h3{color:var(--ochre);font-size:12.5px;margin:10px 0 4px}
-.terms-scroll p{margin-bottom:6px}
-.check-row{display:flex;align-items:flex-start;gap:9px}
-.check-row input[type=checkbox]{width:16px;height:16px;margin-top:2px;accent-color:var(--ochre);flex-shrink:0;cursor:pointer}
-.check-row label{font-size:13px;color:var(--muted);cursor:pointer;line-height:1.5}.check-row label a{color:var(--ochre)}
-
-/* SUBMIT */
-.btn-submit{width:100%;padding:14px;border-radius:10px;background:var(--ochre);color:var(--deep);border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
-.btn-submit:hover{background:var(--gold);transform:translateY(-1px);box-shadow:0 4px 16px rgba(200,135,26,.4)}
-.btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
-
-/* SUCCESS */
-.success-screen{text-align:center;padding:60px 20px;background:var(--panel);border:1px solid rgba(60,120,40,.4);border-radius:16px}
-.success-icon{font-size:56px;margin-bottom:16px}
-.success-title{font-family:'Playfair Display',serif;font-size:26px;margin-bottom:10px}
-.success-msg{font-size:14px;color:var(--muted);line-height:1.7;max-width:440px;margin:0 auto 24px}
-.btn-a{display:inline-flex;align-items:center;gap:6px;padding:11px 22px;border-radius:10px;text-decoration:none;font-size:13.5px;font-weight:600;transition:.15s;margin:5px}
-.btn-primary-a{background:var(--ochre);color:var(--deep)}.btn-primary-a:hover{background:var(--gold)}
-.btn-secondary-a{background:rgba(255,255,255,.07);color:var(--cream);border:1px solid var(--border)}.btn-secondary-a:hover{background:rgba(255,255,255,.12)}
-
-.loader{display:inline-block;width:16px;height:16px;border:2px solid rgba(26,20,16,.3);border-top:2px solid var(--deep);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-.err-msg{font-size:13px;color:#e89e7e;background:rgba(181,74,42,.1);border:1px solid rgba(181,74,42,.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:none}
-.err-msg.show{display:block}
-
-@media(max-width:600px){.type-sel{grid-template-columns:1fr}.form-row.c2{grid-template-columns:1fr}.hero{padding-bottom:24px}}
-</style>
+<link rel="stylesheet" href="sobral_submeter.css">
 </head>
 <body>
 
 <div class="topbar">
-  <a href="index.html" class="tb-logo"><span>🏛️ Sobral <em>Cultural</em></span></a>
+  <a href="index.html" class="tb-logo">
+    <img src="logo.png" alt="Sobral Cultural" class="tb-logo-img">
+    <div class="tb-logo-text">
+      <span class="tb-logo-name"></span>
+      <span class="tb-logo-sub">Submeter</span>
+    </div>
+  </a>
   <div style="display:flex;gap:8px;align-items:center">
     <div class="user-chip"><div class="user-avatar" id="userAvatar">?</div><span id="userName" style="display:none"></span></div>
-    <a href="sobral_perfil.html" class="btn-back">👤 Meu Perfil</a>
+    <a href="sobral_perfil.html" class="btn-back"><i data-lucide="user"></i> Meu Perfil</a>
   </div>
 </div>
 
@@ -239,140 +155,6 @@ textarea{resize:vertical;min-height:90px;line-height:1.55}
   </div>
 </div>
 
-<script>
-const SU='https://nrohpfggqcbscyoigpiz.supabase.co';
-const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA';
-const supa=supabase.createClient(SU,SK);
-const EMOJIS=['📍','🏛️','⛪','🎭','🎨','🌿','⛰️','🏞️','🛒','🏰','🎓','⚽','🎪','🎡','🌊','🎶','🍽️','🏖️','🌺','💒','📅','🎠'];
-
-let USER=null, selectedType='spot', coordMap=null, coordMarker=null, pendingPhoto=null;
-
-async function init(){
-  const{data:{session}}=await supa.auth.getSession();
-  if(!session){location.href='sobral_login.html?redirect=sobral_submeter.html';return;}
-  USER=session.user;
-  const av=USER.user_metadata?.avatar_url||USER.user_metadata?.picture;
-  const avEl=document.getElementById('userAvatar');
-  if(av)avEl.innerHTML=`<img src="${av}" alt="">`;
-  else avEl.textContent=(USER.user_metadata?.full_name||USER.email||'?').charAt(0).toUpperCase();
-  initMap();
-  loadTerms();
-}
-
-async function loadTerms(){
-  const{data}=await supa.from('pages').select('content').eq('id','termos').single();
-  const el=document.getElementById('termsScroll');
-  if(data?.content){
-    const tmp=document.createElement('div');tmp.innerHTML=data.content;
-    el.innerHTML=tmp.innerText.substring(0,800)+'… <a href="sobral_termos.html" target="_blank" style="color:var(--ochre)">Ler completo</a>';
-  }
-}
-
-function initMap(){
-  setTimeout(()=>{
-    coordMap=L.map('coordMap',{center:[-3.688,-40.3497],zoom:14});
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OSM © CARTO',subdomains:'abcd',maxZoom:19}).addTo(coordMap);
-    coordMap.on('click',e=>{
-      document.getElementById('fLat').value=e.latlng.lat.toFixed(6);
-      document.getElementById('fLng').value=e.latlng.lng.toFixed(6);
-      if(coordMarker)coordMarker.setLatLng(e.latlng);
-      else{coordMarker=L.marker(e.latlng,{draggable:true}).addTo(coordMap);coordMarker.on('dragend',()=>{const p=coordMarker.getLatLng();document.getElementById('fLat').value=p.lat.toFixed(6);document.getElementById('fLng').value=p.lng.toFixed(6);});}
-    });
-  },100);
-}
-
-function selectType(type){
-  selectedType=type;
-  document.getElementById('typeSpot').classList.toggle('selected',type==='spot');
-  document.getElementById('typeEvent').classList.toggle('selected',type==='event');
-  document.getElementById('eventDates').style.display=type==='event'?'block':'none';
-}
-
-function toggleSec(name){
-  document.getElementById('sec-'+name).classList.toggle('collapsed');
-}
-
-function pickEmoji(e){
-  document.getElementById('fEmoji').value=e;
-  document.querySelectorAll('.emoji-opt').forEach(el=>el.classList.remove('sel'));
-  event.target.classList.add('sel');
-}
-
-function updDesc(){
-  const v=document.getElementById('fDesc').value;
-  document.getElementById('descCnt').textContent=`${v.length}/400`;
-}
-
-// PHOTO
-async function handlePhoto(file){
-  if(!file||!file.type.startsWith('image/')){showErr('Escolha uma imagem válida.');return;}
-  if(file.size>5*1024*1024){showErr('Imagem muito grande (máx. 5MB).');return;}
-  const compressed=await compressImage(file);
-  pendingPhoto=compressed;
-  document.getElementById('photoArea').innerHTML=`<div class="photo-preview"><img src="${compressed}" alt="Preview"><div class="photo-preview-actions"><button class="btn-secondary" style="background:rgba(0,0,0,.5);color:#fff;border:none;padding:6px 12px;border-radius:7px;cursor:pointer;font-size:12px" onclick="removePhoto()">🗑️ Remover</button></div></div>`;
-}
-async function compressImage(file,maxW=900,q=0.78){return new Promise(r=>{const rd=new FileReader();rd.onload=e=>{const img=new Image();img.onload=()=>{const ratio=Math.min(maxW/img.width,1);const c=document.createElement('canvas');c.width=img.width*ratio;c.height=img.height*ratio;c.getContext('2d').drawImage(img,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',q));};img.src=e.target.result;};rd.readAsDataURL(file);});}
-function removePhoto(){pendingPhoto=null;document.getElementById('photoArea').innerHTML=`<div class="drop-zone" id="dropZone"><input type="file" accept="image/*" onchange="handlePhoto(this.files[0])"><div class="drop-zone-icon">📤</div><p>Arraste ou clique para enviar uma foto</p><small>JPG, PNG, WEBP — máximo 5 MB</small></div>`;}
-
-// SUBMIT
-async function submitForm(){
-  const name=document.getElementById('fName').value.trim();
-  const lat=parseFloat(document.getElementById('fLat').value);
-  const lng=parseFloat(document.getElementById('fLng').value);
-  const desc=document.getElementById('fDesc').value.trim();
-  const terms=document.getElementById('termsCk').checked;
-
-  if(!name){showErr('Informe o nome do local ou evento.');return;}
-  if(!desc||desc.length<20){showErr('Descrição muito curta (mínimo 20 caracteres).');return;}
-  if(!lat||!lng){showErr('Marque a localização no mapa clicando sobre ele.');return;}
-  if(!terms){showErr('Você precisa aceitar os Termos de Uso para enviar.');return;}
-
-  const btn=document.getElementById('btnSubmit'),txt=document.getElementById('btnTxt');
-  btn.disabled=true;txt.innerHTML='<span class="loader"></span>Enviando…';
-
-  // upload photo if any
-  let photoUrl=null;
-  if(pendingPhoto){
-    const path=`submissions/${USER.id}/${Date.now()}.jpg`;
-    const res=await fetch(pendingPhoto);const blob=await res.blob();
-    const{data,error:upErr}=await supa.storage.from('spots-photos').upload(path,blob,{contentType:'image/jpeg',upsert:true});
-    if(!upErr){const{data:ud}=supa.storage.from('spots-photos').getPublicUrl(path);photoUrl=ud.publicUrl;}
-  }
-
-  const row={
-    user_id:USER.id,type:selectedType,status:'pending',
-    name,cat:document.getElementById('fCat').value,
-    emoji:document.getElementById('fEmoji').value,
-    color:'#C8871A',
-    lat,lng,description:desc,
-    address:document.getElementById('fAddress').value.trim(),
-    horario:document.getElementById('fHorario').value.trim(),
-    entrada:document.getElementById('fEntrada').value.trim(),
-    photo:photoUrl,
-    event_date:selectedType==='event'?document.getElementById('fDateStart').value||null:null,
-    event_end:selectedType==='event'?document.getElementById('fDateEnd').value||null:null,
-    terms_agreed:true
-  };
-
-  const{error}=await supa.from('submissions').insert(row);
-  if(error){btn.disabled=false;txt.innerHTML='📤 Enviar para Aprovação';showErr('Erro ao enviar: '+error.message);return;}
-
-  document.getElementById('formWrap').style.display='none';
-  document.getElementById('successScreen').style.display='block';
-}
-
-function showErr(msg){const e=document.getElementById('errMsg');e.textContent=msg;e.classList.add('show');e.scrollIntoView({behavior:'smooth',block:'nearest'});setTimeout(()=>e.classList.remove('show'),5000);}
-
-// drag-drop
-document.addEventListener('DOMContentLoaded',()=>{
-  const dz=document.getElementById('dropZone');
-  if(!dz)return;
-  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
-  dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
-  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f)handlePhoto(f);});
-});
-
-window.onload=init;
-</script>
+<script src="sobral_submeter.js"></script>
 </body>
 </html>
