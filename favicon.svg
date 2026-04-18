@@ -1,13 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="8" fill="#1a1410"/>
-  <g stroke="#c8871a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    <!-- landmark icon centrado em 16,16 escala ~18px -->
-    <line x1="7" y1="25" x2="25" y2="25"/>
-    <line x1="9" y1="25" x2="9" y2="14"/>
-    <line x1="23" y1="25" x2="23" y2="14"/>
-    <line x1="13" y1="25" x2="13" y2="14"/>
-    <line x1="19" y1="25" x2="19" y2="14"/>
-    <polyline points="7,14 16,8 25,14"/>
-    <line x1="7" y1="14" x2="25" y2="14"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="50.7999mm" height="50.8mm" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 328.26 328.26"
+ xmlns:xlink="http://www.w3.org/1999/xlink"
+ xmlns:xodm="http://www.corel.com/coreldraw/odm/2003">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .fil0 {fill:#FF6600}
+    .fil1 {fill:white}
+   ]]>
+  </style>
+ </defs>
+ <g id="Camada_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <g id="_2005163145360">
+   <rect class="fil0" x="-0" y="-0" width="328.26" height="328.26" rx="75.47" ry="75.47"/>
+   <path class="fil1" d="M164.13 57.41c54.64,0 99.35,44.71 99.35,99.35l0 89.06 -42.07 0 0 -89.33c0,-31.58 -25.84,-57.41 -57.41,-57.41l-0 0c-31.58,0 -57.41,25.84 -57.41,57.41l0 89.33 -41.79 0 0 -89.06c0,-54.64 44.71,-99.35 99.35,-99.35z"/>
   </g>
+ </g>
 </svg>
