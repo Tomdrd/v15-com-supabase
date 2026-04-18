@@ -17,7 +17,7 @@
 
 <div class="auth-card">
   <div class="logo-wrap">
-    <div class="logo-icon">🏛️</div>
+    <div class="logo-icon"><i data-lucide="landmark" style="width:44px;height:44px;stroke-width:1.2"></i></div>
     <div class="logo-title">Sobral Cultural</div>
     <div class="logo-sub">Entre ou crie sua conta</div>
   </div>
@@ -36,7 +36,7 @@
       <label>Senha</label>
       <div class="inp-wrap">
         <input id="lPass" type="password" placeholder="Sua senha" autocomplete="current-password">
-        <button class="eye-btn" onclick="togglePwd('lPass',this)" type="button">👁️</button>
+        <button class="eye-btn" onclick="togglePwd('lPass',this)" type="button"><i data-lucide="eye" class="icon-sm"></i></button>
       </div>
     </div>
     <a href="#" class="forgot-link" onclick="showForgot()">Esqueci minha senha</a>
@@ -62,7 +62,7 @@
       <label>Senha</label>
       <div class="inp-wrap">
         <input id="rPass" type="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password" oninput="checkStrength(this.value)">
-        <button class="eye-btn" onclick="togglePwd('rPass',this)" type="button">👁️</button>
+        <button class="eye-btn" onclick="togglePwd('rPass',this)" type="button"><i data-lucide="eye" class="icon-sm"></i></button>
       </div>
       <div class="pwd-strength"><div class="pwd-strength-fill" id="strengthBar" style="width:0%"></div></div>
     </div>

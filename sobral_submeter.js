@@ -15,6 +15,13 @@ async function init(){
   else avEl.textContent=(USER.user_metadata?.full_name||USER.email||'?').charAt(0).toUpperCase();
   initMap();
   loadTerms();
+  buildEmojiGrid();
+}
+
+function buildEmojiGrid(){
+  const grid=document.getElementById('emojiGrid');
+  if(!grid) return;
+  grid.innerHTML=EMOJIS.map(e=>`<div class="emoji-opt" onclick="pickEmoji('${e}')" title="${e}">${e}</div>`).join('');
 }
 
 async function loadTerms(){
@@ -67,10 +74,10 @@ async function handlePhoto(file){
   if(file.size>5*1024*1024){showErr('Imagem muito grande (máx. 5MB).');return;}
   const compressed=await compressImage(file);
   pendingPhoto=compressed;
-  document.getElementById('photoArea').innerHTML=`<div class="photo-preview"><img src="${compressed}" alt="Preview"><div class="photo-preview-actions"><button class="btn-secondary" style="background:rgba(0,0,0,.5);color:#fff;border:none;padding:6px 12px;border-radius:7px;cursor:pointer;font-size:12px" onclick="removePhoto()">🗑️ Remover</button></div></div>`;
+  document.getElementById('photoArea').innerHTML=`<div class="photo-preview"><img src="${compressed}" alt="Preview"><div class="photo-preview-actions"><button class="btn-secondary" style="background:rgba(0,0,0,.5);color:#fff;border:none;padding:6px 12px;border-radius:7px;cursor:pointer;font-size:12px" onclick="removePhoto()"><i data-lucide="trash-2" style="width:12px;height:12px;pointer-events:none"></i> Remover</button></div></div>`;
 }
 async function compressImage(file,maxW=900,q=0.78){return new Promise(r=>{const rd=new FileReader();rd.onload=e=>{const img=new Image();img.onload=()=>{const ratio=Math.min(maxW/img.width,1);const c=document.createElement('canvas');c.width=img.width*ratio;c.height=img.height*ratio;c.getContext('2d').drawImage(img,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',q));};img.src=e.target.result;};rd.readAsDataURL(file);});}
-function removePhoto(){pendingPhoto=null;document.getElementById('photoArea').innerHTML=`<div class="drop-zone" id="dropZone"><input type="file" accept="image/*" onchange="handlePhoto(this.files[0])"><div class="drop-zone-icon">📤</div><p>Arraste ou clique para enviar uma foto</p><small>JPG, PNG, WEBP — máximo 5 MB</small></div>`;}
+function removePhoto(){pendingPhoto=null;document.getElementById('photoArea').innerHTML=`<div class="drop-zone" id="dropZone"><input type="file" accept="image/*" onchange="handlePhoto(this.files[0])"><div class="drop-zone-icon"><i data-lucide="upload-cloud" style="width:40px;height:40px;stroke-width:1"></i></div><p>Arraste ou clique para enviar uma foto</p><small>JPG, PNG, WEBP — máximo 5 MB</small></div>`;lucide?.createIcons();}
 
 // SUBMIT
 async function submitForm(){
@@ -113,7 +120,7 @@ async function submitForm(){
   };
 
   const{error}=await supa.from('submissions').insert(row);
-  if(error){btn.disabled=false;txt.innerHTML='📤 Enviar para Aprovação';showErr('Erro ao enviar: '+error.message);return;}
+  if(error){btn.disabled=false;txt.innerHTML='<i data-lucide="send" class="icon-sm" style="pointer-events:none"></i> Enviar para Aprovação';showErr('Erro ao enviar: '+error.message);return;}
 
   document.getElementById('formWrap').style.display='none';
   document.getElementById('successScreen').style.display='block';

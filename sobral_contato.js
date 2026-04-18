@@ -24,7 +24,7 @@ async function sendContact(){
 
   const{error}=await supa.from('contacts').insert({name,email,phone,subject,message});
   if(error){
-    btn.disabled=false;txt.textContent='✉️ Enviar Mensagem';
+    btn.disabled=false;txt.innerHTML='<i data-lucide="send" style="width:14px;height:14px;pointer-events:none"></i> Enviar Mensagem';lucide?.createIcons();
     showErr('Erro ao enviar: '+error.message);return;
   }
   document.getElementById('formCard').style.display='none';

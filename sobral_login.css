@@ -5,7 +5,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 
 /* BG */
 .bg-decor{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
-.bg-decor::before{content:'🏛️';position:absolute;font-size:400px;opacity:.025;top:-60px;right:-80px;transform:rotate(-10deg);line-height:1}
+.bg-decor::before{content:'';position:absolute;font-size:400px;opacity:.025;top:-60px;right:-80px;transform:rotate(-10deg);line-height:1}
 .bg-decor::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 80%,rgba(200,135,26,.08),transparent 60%)}
 
 /* CARD */

@@ -28,7 +28,7 @@ function showMsg(txt,type='error'){const m=document.getElementById('msgBox');m.t
 function clearMsg(){const m=document.getElementById('msgBox');m.className='msg';m.textContent='';}
 function setLoading(btnId,loading){const b=document.getElementById(btnId);if(loading){b.disabled=true;b.innerHTML='<span class="loader"></span>Aguarde…';}else{b.disabled=false;b.textContent=b.id==='btnLogin'?'Entrar':'Criar Conta Gratuita';}}
 
-function togglePwd(id,btn){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.textContent=i.type==='password'?'👁️':'🙈';}
+function togglePwd(id,btn){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.innerHTML=i.type==='text'?'<i data-lucide="eye" style="width:16px;height:16px;pointer-events:none"></i>':'<i data-lucide="eye-off" style="width:16px;height:16px;pointer-events:none"></i>';lucide?.createIcons();}
 
 function checkStrength(pwd){
   const bar=document.getElementById('strengthBar');
@@ -67,7 +67,7 @@ async function doRegister(){
   const{error}=await supa.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
   setLoading('btnRegister',false);
   if(error){showMsg('Erro: '+error.message);return;}
-  showMsg('Conta criada! Verifique seu e-mail para confirmar o cadastro. ✉️','success');
+  showMsg('Conta criada! Verifique seu e-mail para confirmar o cadastro.','success');
 }
 
 async function doGoogle(){
@@ -86,7 +86,7 @@ async function doForgot(){
   if(!email){showMsg('Informe seu e-mail.');return;}
   const{error}=await supa.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/sobral_reset_senha.html'});
   if(error){showMsg('Erro: '+error.message);return;}
-  showMsg('Link enviado! Verifique sua caixa de entrada. ✉️','success');
+  showMsg('Link enviado! Verifique sua caixa de entrada.','success');
 }
 
 function showPrivacy(){alert('Política de Privacidade\n\nSeus dados (nome e e-mail) são utilizados exclusivamente para identificação na plataforma. Não compartilhamos dados com terceiros.');}
