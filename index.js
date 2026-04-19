@@ -241,7 +241,6 @@ function toast(msg, err = false) {
    FEATURED CAROUSEL
 ══════════════════════════════════════════ */
 let _carIdx = 0, _carItems = [], _carTimer = null;
-const _drag = { active: false, startX: 0, dx: 0 };
 
 function buildCarousel() {
   const featured = SPOTS.filter(s => s.isFeatured);
@@ -301,50 +300,69 @@ function carAutoplay() {
 }
 
 function initCarSwipe() {
-  const track = document.getElementById('fcarTrack');
-  if (!track) return;
+  const el = document.getElementById('fcarousel');
+  if (!el) return;
 
-  track.addEventListener('pointerdown', e => {
-    _drag.active = true; _drag.startX = e.clientX; _drag.dx = 0;
-    track.style.transition = 'none';
-    track.setPointerCapture(e.pointerId);
+  let startX = 0, startY = 0, dx = 0, dragging = false, lockAxis = null;
+
+  el.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    startX = t.clientX; startY = t.clientY;
+    dx = 0; dragging = true; lockAxis = null;
+    const track = document.getElementById('fcarTrack');
+    if (track) track.style.transition = 'none';
     clearInterval(_carTimer);
-  });
+  }, { passive: true });
 
-  track.addEventListener('pointermove', e => {
-    if (!_drag.active) return;
-    _drag.dx = e.clientX - _drag.startX;
-    const base = -_carIdx * 100;
-    track.style.transform = `translateX(calc(${base}% + ${_drag.dx}px))`;
-  });
+  el.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    const t = e.touches[0];
+    const curDx = t.clientX - startX;
+    const curDy = t.clientY - startY;
 
-  track.addEventListener('pointerup', e => {
-    if (!_drag.active) return;
-    const dx = _drag.dx;
-    // decide swipe vs tap BEFORE resetting state
-    track.style.transition = '';
-    if (dx < -50)     carGoTo(_carIdx + 1);
-    else if (dx > 50) carGoTo(_carIdx - 1);
-    else {
-      carGoTo(_carIdx);
-      // it was a tap — find which slide index is showing and open its post
-      if (Math.abs(dx) < 8) {
-        const s = _carItems[_carIdx];
-        if (s) {
-          window.location.href = `sobral_post.html?id=${s.id}`;
-        }
-      }
+    if (!lockAxis) {
+      lockAxis = Math.abs(curDx) > Math.abs(curDy) ? 'x' : 'y';
     }
-    _drag.active = false; _drag.dx = 0;
+    if (lockAxis !== 'x') return;
+
+    e.preventDefault();
+    dx = curDx;
+    const track = document.getElementById('fcarTrack');
+    if (track) {
+      const base = -_carIdx * 100;
+      track.style.transform = `translateX(calc(${base}% + ${dx}px))`;
+    }
+  }, { passive: false });
+
+  el.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    const track = document.getElementById('fcarTrack');
+    if (track) track.style.transition = '';
+
+    if (lockAxis === 'x') {
+      if (dx < -40)      carGoTo(_carIdx + 1);
+      else if (dx > 40)  carGoTo(_carIdx - 1);
+      else               carGoTo(_carIdx);
+    }
+    dx = 0; lockAxis = null;
     carAutoplay();
   });
 
-  track.addEventListener('pointercancel', () => {
-    if (!_drag.active) return;
-    track.style.transition = '';
-    carGoTo(_carIdx);
-    _drag.active = false; _drag.dx = 0;
+  el.addEventListener('touchcancel', () => {
+    dragging = false; dx = 0; lockAxis = null;
+    const track = document.getElementById('fcarTrack');
+    if (track) { track.style.transition = ''; carGoTo(_carIdx); }
     carAutoplay();
+  });
+
+  // tap no slide abre o post (apenas quando não foi swipe)
+  el.addEventListener('click', e => {
+    if (Math.abs(dx) > 5) return;
+    const slide = e.target.closest('.fcar-slide');
+    if (!slide) return;
+    const s = _carItems[_carIdx];
+    if (s) window.location.href = `sobral_post.html?id=${s.id}`;
   });
 }
 
