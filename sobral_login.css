@@ -44,11 +44,7 @@ input::placeholder{color:rgba(245,237,216,.25)}
 .btn-social:hover{background:rgba(255,255,255,.1);transform:translateY(-1px)}
 .btn-google{border-color:rgba(234,67,53,.4)}
 .btn-google:hover{background:rgba(234,67,53,.08)}
-.btn-facebook{border-color:rgba(24,119,242,.4)}
-.btn-facebook:hover{background:rgba(24,119,242,.08)}
-
-/* SOCIAL ICONS inline SVG */
-.ico-google,.ico-facebook{width:20px;height:20px;flex-shrink:0}
+.ico-google{width:20px;height:20px;flex-shrink:0}
 
 /* FORGOT */
 .forgot-link{display:block;text-align:right;font-size:12px;color:var(--ochre);text-decoration:none;margin-top:-8px;margin-bottom:14px}

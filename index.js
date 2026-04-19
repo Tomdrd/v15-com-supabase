@@ -26,8 +26,14 @@ const mr = r => ({
 });
 
 async function loadSpots() {
-  const { data } = await supa.from('spots').select('*').order('created_at', { ascending: true });
+  const { data, error } = await supa.from('spots').select('*').order('created_at', { ascending: true });
+  if (error) {
+    console.error('loadSpots:', error.message);
+    toast('Erro ao carregar os pontos turísticos. Tente recarregar a página.', true);
+    return false;
+  }
   SPOTS = (data || []).map(mr);
+  return true;
 }
 const gs = () => SPOTS;
 
@@ -449,7 +455,17 @@ async function toggleReaction(spotId, reaction) {
 
 /* ── BOOT ───────────────────────────────── */
 window.addEventListener('load', async () => {
-  await loadSpots();
+  const ok = await loadSpots();
+  if (!ok) {
+    // mantém a tela de loading e mostra erro — não inicializa o mapa
+    const l = document.getElementById('loading');
+    l.querySelector('.lsp').style.display = 'none';
+    const err = document.createElement('div');
+    err.style.cssText = 'font-size:13px;color:#e55;margin-top:8px;text-align:center;max-width:260px;line-height:1.5';
+    err.textContent = 'Não foi possível carregar os dados. Verifique sua conexão e recarregue a página.';
+    l.appendChild(err);
+    return;
+  }
   initMap();
   buildCarousel();
   startRT();
