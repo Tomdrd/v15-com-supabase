@@ -27,20 +27,43 @@
   // ── Open Graph ────────────────────────────────────────
   const OG_IMAGE = 'https://raw.githubusercontent.com/Tomdrd/v15-com-supabase/main/tumb.jpg';
 
+  // og:image, og:url e campos estáticos podem ser injetados imediatamente
   meta({ property: 'og:site_name',    content: 'Sobral Cultural' });
   meta({ property: 'og:type',         content: 'website' });
-  meta({ property: 'og:title',        content: document.title || 'Sobral Cultural — Mapa Turístico' });
-  meta({ property: 'og:description',  content: 'Explore os pontos turísticos, culturais e históricos de Sobral, Ceará.' });
   meta({ property: 'og:image',        content: OG_IMAGE });
   meta({ property: 'og:image:width',  content: '1200' });
   meta({ property: 'og:image:height', content: '630' });
   meta({ property: 'og:url',          content: window.location.href });
+  meta({ property: 'og:description',  content: 'Explore os pontos turísticos, culturais e históricos de Sobral, Ceará.' });
 
-  // ── Twitter Card ──────────────────────────────────────
-  meta({ name: 'twitter:card',        content: 'summary_large_image' });
-  meta({ name: 'twitter:title',       content: document.title || 'Sobral Cultural — Mapa Turístico' });
-  meta({ name: 'twitter:description', content: 'Explore os pontos turísticos, culturais e históricos de Sobral, Ceará.' });
-  meta({ name: 'twitter:image',       content: OG_IMAGE });
+  // og:title e twitter:title precisam do <title> da página — lê após DOM pronto
+  const ogTitle     = document.createElement('meta');
+  const twTitle     = document.createElement('meta');
+  const twCard      = document.createElement('meta');
+  const twDesc      = document.createElement('meta');
+  const twImage     = document.createElement('meta');
+  ogTitle.setAttribute('property', 'og:title');
+  twTitle.setAttribute('name', 'twitter:title');
+  twCard.setAttribute('name',  'twitter:card');        twCard.setAttribute('content',  'summary_large_image');
+  twDesc.setAttribute('name',  'twitter:description'); twDesc.setAttribute('content',  'Explore os pontos turísticos, culturais e históricos de Sobral, Ceará.');
+  twImage.setAttribute('name', 'twitter:image');       twImage.setAttribute('content', OG_IMAGE);
+  head.appendChild(ogTitle);
+  head.appendChild(twCard);
+  head.appendChild(twTitle);
+  head.appendChild(twDesc);
+  head.appendChild(twImage);
+
+  function applyOgTitle() {
+    const title = document.title || 'Sobral Cultural — Mapa Turístico';
+    ogTitle.setAttribute('content', title);
+    twTitle.setAttribute('content', title);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyOgTitle);
+  } else {
+    applyOgTitle();
+  }
 
   // ── Meta description ─────────────────────────────────
   if (!document.querySelector('meta[name="description"]')) {

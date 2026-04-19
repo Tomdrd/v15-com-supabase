@@ -372,6 +372,7 @@ function updateBnavAuth(user) {
 
 /* ── AUTH ───────────────────────────────── */
 let CUR_USER = null, CUR_REACTIONS = [];
+let REACTION_COUNTS = {}; // cache: { spotId: { like: N, been: N, going: N } }
 
 async function initAuth() {
   const { data: { session } } = await supa.auth.getSession();
@@ -432,13 +433,30 @@ async function loadUserReactions() {
 async function renderReactionBtns(spotId) {
   const el = document.getElementById('rxnBtns');
   if (!el) return;
-  const { data: counts } = await supa.from('reactions').select('reaction').eq('spot_id', String(spotId));
-  const likeCount  = (counts || []).filter(r => r.reaction === 'like').length;
-  const beenCount  = (counts || []).filter(r => r.reaction === 'been').length;
-  const goingCount = (counts || []).filter(r => r.reaction === 'going').length;
+
+  // loading state — mostra skeleton enquanto busca
+  el.innerHTML = `
+    <div style="display:flex;gap:8px;opacity:.35;pointer-events:none">
+      <div style="height:32px;width:72px;border-radius:8px;background:rgba(245,237,216,.15)"></div>
+      <div style="height:32px;width:72px;border-radius:8px;background:rgba(245,237,216,.15)"></div>
+      <div style="height:32px;width:72px;border-radius:8px;background:rgba(245,237,216,.15)"></div>
+    </div>`;
+
+  // usa cache se disponível; só vai ao banco na primeira abertura do spot
+  if (!REACTION_COUNTS[spotId]) {
+    const { data: counts } = await supa.from('reactions').select('reaction').eq('spot_id', String(spotId));
+    REACTION_COUNTS[spotId] = {
+      like:  (counts || []).filter(r => r.reaction === 'like').length,
+      been:  (counts || []).filter(r => r.reaction === 'been').length,
+      going: (counts || []).filter(r => r.reaction === 'going').length,
+    };
+  }
+
+  const { like: likeCount, been: beenCount, going: goingCount } = REACTION_COUNTS[spotId];
   const myLike  = CUR_REACTIONS.find(r => r.spot_id === String(spotId) && r.reaction === 'like');
   const myBeen  = CUR_REACTIONS.find(r => r.spot_id === String(spotId) && r.reaction === 'been');
   const myGoing = CUR_REACTIONS.find(r => r.spot_id === String(spotId) && r.reaction === 'going');
+
   if (!CUR_USER) {
     el.innerHTML = `<div style="font-size:11.5px;color:rgba(245,237,216,.4)"><a href="sobral_login.html?redirect=/" style="color:var(--ochre)">Entre</a> para curtir e marcar pontos</div>`;
     return;
@@ -456,12 +474,16 @@ async function toggleReaction(spotId, reaction) {
   if (existing) {
     await supa.from('reactions').delete().eq('id', existing.id);
     CUR_REACTIONS = CUR_REACTIONS.filter(r => r.id !== existing.id);
+    // atualiza cache local
+    if (REACTION_COUNTS[spotId]) REACTION_COUNTS[spotId][reaction] = Math.max(0, REACTION_COUNTS[spotId][reaction] - 1);
     toast(reaction === 'like' ? 'Gostei removido' : reaction === 'been' ? 'Eu Fui removido' : 'Eu Vou removido');
   } else {
     const { data } = await supa.from('reactions').insert({
       user_id: CUR_USER.id, spot_id: String(spotId), reaction, spot_type: 'spot'
     }).select().single();
     if (data) CUR_REACTIONS.push(data);
+    // atualiza cache local
+    if (REACTION_COUNTS[spotId]) REACTION_COUNTS[spotId][reaction] += 1;
     toast(reaction === 'like' ? 'Gostei!' : reaction === 'been' ? 'Marcado como Eu Fui!' : 'Marcado como Eu Vou!');
   }
   renderReactionBtns(spotId);
