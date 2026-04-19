@@ -381,7 +381,7 @@ async function initAuth() {
   if (CUR_USER) await loadUserReactions();
 }
 
-function renderAuthChip() {
+async function renderAuthChip() {
   const chip = document.getElementById('authChip');
   const drawerSection = document.getElementById('drawerAuthSection');
   if (!chip) return;
@@ -393,9 +393,23 @@ function renderAuthChip() {
       <a href="sobral_perfil.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="user"></i></div> Meu Perfil</a>
       <a href="sobral_submeter.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="plus"></i></div> Sugerir Ponto ou Evento</a>
       <button class="drw-lnk" onclick="logoutMap();closeDrw()"><div class="drw-ic"><i data-lucide="log-out"></i></div> Sair</button>`;
+    // verifica papel de admin na tabela profiles
+    const { data: prof } = await supa.from('profiles').select('role').eq('id', CUR_USER.id).single();
+    const isAdmin = prof?.role === 'admin';
+    const adminLink     = document.getElementById('adminLink');
+    const drawerAdminLink = document.getElementById('drawerAdminLink');
+    const drawerAdminSec  = document.getElementById('drawerAdminSec');
+    if (adminLink)      adminLink.style.display      = isAdmin ? '' : 'none';
+    if (drawerAdminLink) drawerAdminLink.style.display = isAdmin ? '' : 'none';
+    if (drawerAdminSec)  drawerAdminSec.style.display  = isAdmin ? '' : 'none';
   } else {
     chip.innerHTML = `<a href="sobral_login.html?redirect=/" class="btn-login">Entrar</a>`;
     if (drawerSection) drawerSection.innerHTML = `<a href="sobral_login.html?redirect=/" class="drw-lnk"><div class="drw-ic"><i data-lucide="user"></i></div> Entrar / Criar Conta</a>`;
+    // garante que links do admin ficam ocultos ao deslogar
+    ['adminLink','drawerAdminLink','drawerAdminSec'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
   }
   lucide.createIcons();
 }

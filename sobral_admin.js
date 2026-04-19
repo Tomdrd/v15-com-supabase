@@ -34,6 +34,7 @@ const COLORS = ['#1B6B6B','#6440B4','#B54A2A','#3C7828','#C8871A','#1A5F8B','#8B
 //  CACHE + LEITURA
 // ══════════════════════════════════════════
 let _cache = [];
+let _pendingPhoto = null; // foto pendente de upload (era window._pendingPhoto)
 
 function mapRow(r) {
   return { id:r.id, name:r.name, cat:r.cat, color:r.color,
@@ -80,10 +81,10 @@ function updateBadge() {
 async function saveSpotToSupabase(spot) {
   try {
     let photoUrl = spot.photo;
-    if (window._pendingPhoto && window._pendingPhoto.startsWith('data:')) {
+    if (_pendingPhoto && _pendingPhoto.startsWith('data:')) {
       showToast('Enviando foto ao Supabase Storage…', 'info');
-      photoUrl = await uploadPhoto(spot.id, window._pendingPhoto);
-      window._pendingPhoto = undefined;
+      photoUrl = await uploadPhoto(spot.id, _pendingPhoto);
+      _pendingPhoto = undefined;
     }
     const row = {
       id: spot.id, name: spot.name, cat: spot.cat, emoji: '',
@@ -578,7 +579,7 @@ async function handlePhoto(file) {
   if (file.size > 5*1024*1024) { showToast('Imagem muito grande. Máximo 5 MB.', 'error'); return; }
   showToast('Comprimindo imagem…', 'info');
   const compressed = await compressImage(file);
-  window._pendingPhoto = compressed;
+  _pendingPhoto = compressed;
   document.getElementById('photoArea').innerHTML = renderPhotoPreview(compressed);
   document.getElementById('photoInfo').textContent = `Foto processada (~${Math.round(compressed.length*.75/1024)} KB) — será enviada ao Storage`;
   lucide.createIcons();
@@ -586,7 +587,7 @@ async function handlePhoto(file) {
 async function compressImage(file, maxW=900, quality=0.78) {
   return new Promise(r => { const reader = new FileReader(); reader.onload = e => { const img = new Image(); img.onload = () => { const ratio = Math.min(maxW/img.width,1); const c = document.createElement('canvas'); c.width = img.width*ratio; c.height = img.height*ratio; c.getContext('2d').drawImage(img,0,0,c.width,c.height); r(c.toDataURL('image/jpeg',quality)); }; img.src = e.target.result; }; reader.readAsDataURL(file); });
 }
-function removePhoto() { window._pendingPhoto = null; document.getElementById('photoArea').innerHTML = renderDropZone(); setupDropZone(); lucide.createIcons(); }
+function removePhoto() { _pendingPhoto = null; document.getElementById('photoArea').innerHTML = renderDropZone(); setupDropZone(); lucide.createIcons(); }
 
 // ══════════════════════════════════════════
 //  SALVAR FORMULÁRIO
@@ -600,7 +601,7 @@ async function saveForm() {
 
   const isEdit = !!editingId, existing = isEdit ? getSpots().find(s => s.id===editingId) : null;
   const newId = isEdit ? editingId : crypto.randomUUID();
-  let photoVal = (window._pendingPhoto !== undefined) ? window._pendingPhoto : (existing?.photo || null);
+  let photoVal = (_pendingPhoto !== undefined) ? _pendingPhoto : (existing?.photo || null);
 
   const fType = document.getElementById('f-type')?.value || 'spot';
   const spot = {
@@ -628,7 +629,7 @@ async function saveForm() {
   if (btn) { btn.disabled=true; btn.textContent='Salvando…'; }
   const ok = await saveSpotToSupabase(spot);
   if (btn) { btn.disabled=false; btn.innerHTML='<i data-lucide="save" class="icon-sm"></i> Salvar Ponto'; lucide.createIcons(); }
-  if (ok) { window._pendingPhoto=undefined; coordPickerMap=null; coordMarker=null; showToast(`"${name}" salvo com sucesso!`, 'success'); setTimeout(()=>navigate('list'), 900); }
+  if (ok) { _pendingPhoto=undefined; coordPickerMap=null; coordMarker=null; showToast(`"${name}" salvo com sucesso!`, 'success'); setTimeout(()=>navigate('list'), 900); }
 }
 
 function selectTypeAdmin(type) {

@@ -35,7 +35,7 @@
       <i data-lucide="navigation" class="icon-sm"></i>
       Localização
     </button>
-    <a href="sobral_admin.html" class="nl" style="border-color:rgba(200,135,26,.25)" title="Admin">
+    <a href="sobral_admin.html" class="nl" id="adminLink" style="display:none;border-color:rgba(200,135,26,.25)" title="Admin">
       <i data-lucide="settings" class="icon-sm"></i>
     </a>
     <div id="authChip"></div>
@@ -63,8 +63,8 @@
     <button class="drw-lnk" onclick="getUserLocation();closeDrw()">
       <div class="drw-ic"><i data-lucide="map-pin"></i></div> Minha Localização
     </button>
-    <div class="drw-sec">Sistema</div>
-    <a href="sobral_admin.html" class="drw-lnk">
+    <div class="drw-sec" id="drawerAdminSec" style="display:none">Sistema</div>
+    <a href="sobral_admin.html" class="drw-lnk" id="drawerAdminLink" style="display:none">
       <div class="drw-ic"><i data-lucide="settings"></i></div> Painel Administrativo
     </a>
     <div class="drw-sec">Minha Conta</div>
