@@ -28,7 +28,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--cream);
 @keyframes fi{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
 /* LAYOUT */
-.page-wrap{max-width:1000px;margin:0 auto;padding:52px 24px 80px;display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:start}
+.page-wrap{max-width:1200px;margin:0 auto;padding:52px 24px 80px;display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:start}
 
 /* FORM */
 .form-card{background:var(--panel);border:1px solid rgba(200,135,26,.2);border-radius:16px;padding:32px}

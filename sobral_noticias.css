@@ -46,7 +46,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--cream);
 .search-meta{font-size:12px;color:rgba(245,237,216,.3);white-space:nowrap}
 
 /* GRID */
-.page-wrap{max-width:1000px;margin:0 auto;padding:32px 24px 80px}
+.page-wrap{max-width:1200px;margin:0 auto;padding:32px 24px 80px}
 .news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:40px}
 
 /* CARD */
