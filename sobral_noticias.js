@@ -99,7 +99,7 @@ function renderGrid() {
   empty.style.display = 'none';
 
   grid.innerHTML = filtered.map((n, i) => `
-    <div class="news-card" onclick="openDetail(${JSON.stringify(n.id)})"
+    <div class="news-card" onclick="openDetail('${n.id}')"
          style="animation-delay:${i * 0.05}s">
 
       ${n.image_url ? `
