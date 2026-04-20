@@ -160,22 +160,48 @@ supa.auth.onAuthStateChange((_ev, sess) => {
 
 /* ── SUPABASE ────────────────────────────────────────────────────────────── */
 async function carregarRanking() {
+  // Busca todos os scores e filtra o melhor por jogador no cliente
   const { data: scores } = await supa
     .from('game_scores')
     .select('user_id, score, correct, total, played_at')
     .order('score', { ascending: false })
-    .limit(50);
+    .limit(200);
   if (!scores || scores.length === 0) return [];
 
-  const ids = [...new Set(scores.map(s => s.user_id))];
+  // Mantém apenas o melhor score de cada jogador (DISTINCT ON user_id)
+  const seen = new Set();
+  const melhores = scores.filter(s => {
+    if (seen.has(s.user_id)) return false;
+    seen.add(s.user_id);
+    return true;
+  });
+
+  const ids = melhores.map(s => s.user_id);
   const { data: perfis } = await supa
     .from('profiles')
     .select('id, full_name, avatar_url')
     .in('id', ids);
 
+  // Busca metadados do auth para pegar avatar do Google OAuth se não tiver no perfil
   const pm = {};
   (perfis || []).forEach(p => { pm[p.id] = p; });
-  return scores.map(s => ({ ...s, perfil: pm[s.user_id] || null }));
+
+  // Para o usuário logado, prioriza avatar do metadata do Google
+  const { data: { user: authUser } } = await supa.auth.getUser().catch(() => ({ data: { user: null } }));
+  if (authUser) {
+    const googleAvatar = authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture;
+    if (googleAvatar && pm[authUser.id]) {
+      pm[authUser.id] = { ...pm[authUser.id], avatar_url: pm[authUser.id].avatar_url || googleAvatar };
+    } else if (googleAvatar && !pm[authUser.id]) {
+      pm[authUser.id] = {
+        id: authUser.id,
+        full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Jogador',
+        avatar_url: googleAvatar
+      };
+    }
+  }
+
+  return melhores.map(s => ({ ...s, perfil: pm[s.user_id] || null }));
 }
 
 async function carregarMeuHistorico() {
@@ -456,7 +482,7 @@ function renderQuestao() {
   const total = quiz.perguntas.length;
   const pct = Math.round((quiz.idx / total) * 100);
   const letras = ['A','B','C','D'];
-  const CIRC = 138.2; // 2π × 22
+  const CIRC = 113.1; // 2π × 18
 
   const streakHtml = quiz.streak >= 2
     ? `<div class="streak-badge show ${quiz.streak >= 3 ? 'fire' : ''}">
@@ -477,8 +503,8 @@ function renderQuestao() {
         ${streakHtml}
         <div class="quiz-timer-wrap">
           <svg class="quiz-timer-svg" viewBox="0 0 44 44">
-            <circle class="timer-bg" cx="22" cy="22" r="22"/>
-            <circle class="timer-arc" id="timerArc" cx="22" cy="22" r="22"
+            <circle class="timer-bg" cx="22" cy="22" r="18"/>
+            <circle class="timer-arc" id="timerArc" cx="22" cy="22" r="18"
               style="stroke-dashoffset:0"/>
           </svg>
           <div class="quiz-timer-num" id="timerNum">${TEMPO_POR_QUESTAO}</div>
@@ -522,7 +548,7 @@ function iniciarTimer() {
   quiz.tempoRestante = TEMPO_POR_QUESTAO;
   quiz.respondeu = false;
   clearInterval(timerInterval);
-  const CIRC = 138.2;
+  const CIRC = 113.1;
 
   timerInterval = setInterval(() => {
     quiz.tempoRestante--;

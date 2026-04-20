@@ -168,7 +168,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--cream);
 .quiz-timer-wrap{position:relative;width:52px;height:52px;flex-shrink:0}
 .quiz-timer-svg{position:absolute;inset:0;transform:rotate(-90deg)}
 .timer-bg{fill:none;stroke:rgba(255,255,255,.06);stroke-width:3}
-.timer-arc{fill:none;stroke:var(--ochre);stroke-width:3;stroke-linecap:round;stroke-dasharray:138.2;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear,stroke .3s}
+.timer-arc{fill:none;stroke:var(--ochre);stroke-width:3;stroke-linecap:round;stroke-dasharray:113.1;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear,stroke .3s}
 .timer-arc.warn{stroke:var(--terra)}
 .quiz-timer-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:16px;font-weight:800;color:var(--cream);transition:color .3s}
 .quiz-timer-num.warn{color:var(--terra)}
