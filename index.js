@@ -65,7 +65,7 @@ const mkIco = (s, a = false) => {
   });
 };
 
-const mkPopup = s => `<div class="pp-title">${s.name}</div><div class="pp-sub">${CL[s.cat] || s.cat}</div><button class="pp-btn" onclick="openD('${s.id}')">Ver detalhes</button>`;
+const mkPopup = s => `<div class="pp-title">${s.name}</div><div class="pp-sub">${CL[s.cat] || s.cat}</div>`;
 
 function placeM() {
   gs().forEach((s, i) => {

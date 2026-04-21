@@ -106,7 +106,7 @@
     <div id="map" style="flex:1"></div>
     <div class="dp" id="dp">
       <div class="dp-inner">
-        <div class="dp-photo" id="dpPhoto"></div>
+        <div class="dp-photo" id="dpPhoto" style="cursor:pointer" onclick="window.location.href=document.getElementById('dpLink').href"></div>
         <div class="dp-body">
           <div class="dp-cnt">
             <div class="dp-hdr">
@@ -122,7 +122,7 @@
             <div class="dp-desc" id="dpDesc"></div>
             <div class="dp-meta" id="dpMeta"></div>
             <div class="dp-acts">
-              <a id="dpLink" href="#" target="_blank" class="btn-blog">
+              <a id="dpLink" href="#" class="btn-blog">
                 <i data-lucide="file-text" class="icon-sm"></i> Ver Post
               </a>
               <a href="sobral_submeter.html" class="btn-blog btn-blog-ghost" id="dpSubmitLink">

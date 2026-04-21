@@ -79,8 +79,8 @@ header{position:fixed;top:0;left:0;right:0;z-index:2000;height:var(--H);backgrou
 .dp-body{padding:14px 16px 16px;display:flex;gap:12px}
 .dp-cnt{flex:1;min-width:0}
 .dp-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;gap:8px}
-.dp-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--cream);line-height:1.2}
-.dp-cat{font-size:10px;padding:2px 8px;border-radius:10px;flex-shrink:0}
+.dp-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--cream);line-height:1.2;margin-bottom:6px}
+.dp-cat{font-size:10px;padding:2px 8px;border-radius:10px;flex-shrink:0;display:inline-block;width:fit-content}
 .dp-desc{font-size:11.5px;color:rgba(245,237,216,.65);line-height:1.55;margin-bottom:10px}
 .dp-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.dp-meta span{font-size:11px;color:rgba(245,237,216,.4);display:flex;align-items:center;gap:3px}.dp-meta strong{color:var(--ochre)}
 .dp-acts{display:flex;gap:7px;flex-wrap:wrap}
@@ -163,7 +163,7 @@ header{position:fixed;top:0;left:0;right:0;z-index:2000;height:var(--H);backgrou
 ═══════════════════════════════════════════════ */
 .fcarousel{
   position:fixed;top:var(--H);left:0;right:0;z-index:1100;
-  height:220px;overflow:hidden;
+  height:clamp(220px,28vh,380px);overflow:hidden;
   background:var(--deep);
   border-bottom:1px solid rgba(200,135,26,.2);
   box-shadow:0 8px 32px rgba(0,0,0,.5);
@@ -227,7 +227,7 @@ header{position:fixed;top:0;left:0;right:0;z-index:2000;height:var(--H);backgrou
 }
 /* adjust app body when carousel visible */
 body.has-carousel .app-body{
-  padding-top:calc(var(--H) + 220px);
+  padding-top:calc(var(--H) + clamp(220px,28vh,380px));
 }
 
 /* ═══════════════════════════════════════════════
@@ -276,7 +276,7 @@ body.has-carousel .app-body{
   .dp{padding-bottom:72px}
   .fabs{display:none!important}
   body.has-carousel .app-body{
-    padding-top:calc(var(--H) + 220px);
+    padding-top:calc(var(--H) + clamp(220px,28vh,380px));
     height:calc(100vh - 58px);
   }
   .sidebar{bottom:calc(32px + 58px)}
