@@ -17,6 +17,8 @@ const CAT_ICON = {
 
 let SPOTS = [], map, cat = 'todos', q = '', markers = {}, uMk = null, uLat = null, uLng = null;
 let _geoWatchId = null;
+let _lastGeoListLat = null, _lastGeoListLng = null, _lastGeoListTs = 0;
+let _suppressListAnimationNextBuild = false;
 const GEO_PREF_KEY = 'sc_geo_persistent_enabled';
 const GEO_LAST_KEY = 'sc_geo_last_position';
 
@@ -117,6 +119,8 @@ function refreshM() {
 /* ── LIST ───────────────────────────────────────────────────────────────── */
 function buildList() {
   const sl = document.getElementById('spotsList');
+  const disableAnim = _suppressListAnimationNextBuild;
+  _suppressListAnimationNextBuild = false;
   const f = gs().filter(s => {
     const catOk = cat === 'todos' ? true : cat === 'eventos' ? s.type === 'event' : (s.cat === cat && s.type !== 'event');
     return catOk && s.name.toLowerCase().includes(q.toLowerCase());
@@ -124,7 +128,7 @@ function buildList() {
   if (uLat !== null) f.sort((a, b) => d(uLat, uLng, a.lat, a.lng) - d(uLat, uLng, b.lat, b.lng));
   if (!f.length) { sl.innerHTML = '<div class="no-res">Nenhum ponto encontrado</div>'; updCnt(0); return; }
   sl.innerHTML = f.map((s, i) => `
-    <div class="sc" id="card-${s.id}" onclick="focusSpot('${s.id}')" style="animation-delay:${i * 35}ms">
+    <div class="sc" id="card-${s.id}" onclick="focusSpot('${s.id}')" style="${disableAnim ? 'animation:none;' : `animation-delay:${i * 35}ms;`}">
       <div class="sc-thumb" style="background:${s.color}22">
         ${s.photo ? `<img src="${s.photo}" alt="${s.name}" loading="lazy">` : `<div class="sc-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
       </div>
@@ -285,7 +289,17 @@ function applyUserLocation(pos, { focus = false, notify = false } = {}) {
   uMk.bindPopup('<div class="pp-title">Você está aqui</div>');
   if (focus) map.flyTo([uLat, uLng], 15, { duration: prefersReducedMotion() ? 0.01 : 1.5 });
   document.getElementById('stGeo').style.display = 'flex';
-  buildList();
+  // Evita "recarregar" a lista no mobile a cada pequena variação do GPS.
+  const now = Date.now();
+  const moved = (_lastGeoListLat === null || _lastGeoListLng === null) ? Infinity : d(_lastGeoListLat, _lastGeoListLng, uLat, uLng);
+  const shouldRefreshList = focus || moved >= 60 || (now - _lastGeoListTs) >= 30000;
+  if (shouldRefreshList) {
+    if (!focus) _suppressListAnimationNextBuild = true;
+    buildList();
+    _lastGeoListLat = uLat;
+    _lastGeoListLng = uLng;
+    _lastGeoListTs = now;
+  }
   if (notify) toast('Localização ativa e persistente.');
 }
 
