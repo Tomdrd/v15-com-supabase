@@ -3,6 +3,7 @@ const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6I
 const supa=supabase.createClient(SU,SK);
 const CL={todos:'Todos',religioso:'Religioso',cultura:'Cultura',historico:'Histórico',natureza:'Natureza',lazer:'Lazer'};
 const CC={religioso:'#6440B4',cultura:'#1B6B6B',historico:'#B54A2A',natureza:'#3C7828',lazer:'#C8871A'};
+const GEO_LAST_KEY='sc_geo_last_position';
 
 window.addEventListener('scroll',()=>{const d=document.documentElement;document.getElementById('pgf').style.width=(d.scrollTop/(d.scrollHeight-d.clientHeight)*100)+'%';});
 function toggleDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id).classList.toggle('open'));}
@@ -37,10 +38,6 @@ async function renderPage(){
     <div class="layout">
       <article class="article">
         <div class="article-body">${s.blogContent||`<p>${s.desc||''}</p>`}</div>
-        <div class="art-footer">
-          <div class="av">${s.emoji}</div>
-          <div><div class="av-name">${s.blogAuthor||'Equipe Sobral Cultural'}</div><div class="av-date">${ds||'Publicado recentemente'} · Sobral, Ceará</div></div>
-        </div>
 
         <!-- REACTIONS -->
         <div style="margin-top:28px;padding:20px;background:var(--panel);border:1px solid var(--border);border-radius:14px">
@@ -60,11 +57,11 @@ async function renderPage(){
             <div class="ir"><div class="ir-ico"><i data-lucide="layers" class="icon-sm"></i></div><div><div class="ir-lbl">Categoria</div><div class="ir-val">${cl}</div></div></div>
           </div>
         </div>
-        ${s.lat&&s.lng?`<div class="mc"><div class="mc-hd"><h3><i data-lucide="map-pin" class="icon-sm"></i> Localização</h3></div><div id="miniMap"></div></div>`:''}
+        ${s.lat&&s.lng?`<div class="mc"><div class="mc-hd"><h3><i data-lucide="map-pin" class="icon-sm"></i> Localização</h3></div><div id="miniMap"></div><div class="loc-tools"><div class="loc-links"><a id="locGoogleMaps" class="loc-link" target="_blank" rel="noopener noreferrer"><i data-lucide="map" class="icon-sm"></i>Google Maps</a><a id="locUber" class="loc-link" target="_blank" rel="noopener noreferrer"><i data-lucide="car-taxi-front" class="icon-sm"></i>Uber</a><a id="locWaze" class="loc-link" target="_blank" rel="noopener noreferrer"><i data-lucide="navigation" class="icon-sm"></i>Waze</a></div><div id="locRouteInfo" class="loc-route-info"><i data-lucide="route" class="icon-xs"></i> Calculando rota...</div></div></div>`:''}
         ${rel&&rel.length?`<div class="rc"><h3>Veja Também</h3>${rel.map(x=>`<a href="sobral_post.html?id=${x.id}" class="ri"><div class="ri-em" style="background:${x.color||'#1B6B6B'}22">${x.emoji}</div><div><div class="ri-name">${x.name}</div><div class="ri-cat">${CL[x.cat]||x.cat}</div></div></a>`).join('')}</div>`:'' }
       </div>
     </div>`;
-  if(s.lat&&s.lng){setTimeout(()=>{const mm=L.map('miniMap',{center:[s.lat,s.lng],zoom:15,zoomControl:false,dragging:false,scrollWheelZoom:false});L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OSM © CARTO',subdomains:'abcd',maxZoom:19}).addTo(mm);const ico=L.divIcon({html:`<div style="width:34px;height:34px;background:${cc};border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.4);box-shadow:0 4px 12px rgba(0,0,0,.4)"><span style="transform:rotate(45deg);font-size:15px">${s.emoji}</span></div>`,className:'',iconSize:[34,34],iconAnchor:[17,34]});L.marker([s.lat,s.lng],{icon:ico}).addTo(mm);},200);}
+  if(s.lat&&s.lng){setTimeout(()=>initPostLocation(s,cc),200);}
   lucide?.createIcons();
   // load reactions
   initReactions(s.id);
@@ -72,6 +69,89 @@ async function renderPage(){
 function renderNF(){document.getElementById('root').innerHTML=`<div class="nf"><div style="margin-bottom:16px"><i data-lucide="map" style="width:60px;height:60px;stroke-width:1;opacity:.5"></i></div><h2>Ponto não encontrado</h2><p>Este ponto turístico não existe ou foi removido.</p><a href="index.html" class="btn-nf">← Voltar ao Mapa</a></div>`;lucide?.createIcons();}
 function sharePost(){if(navigator.share)navigator.share({title:document.title,url:location.href}).catch(()=>copyLink());else copyLink();}
 function copyLink(){navigator.clipboard?.writeText(location.href).then(()=>alert('Link copiado! ✓'));}
+
+function fd(m){return m<1000?`${Math.round(m)}m`:`${(m/1e3).toFixed(1)}km`;}
+function fmtDuration(seconds){const min=Math.round(seconds/60);if(min<60)return`${min} min`;const h=Math.floor(min/60),mm=min%60;return mm?`${h}h ${mm}min`:`${h}h`;}
+
+async function fetchOsrmRoute(origin,destination,profile){
+  const src=`${origin.lng},${origin.lat}`,dst=`${destination.lng},${destination.lat}`;
+  const q=new URLSearchParams({overview:'full',geometries:'geojson',alternatives:'false',steps:'false'});
+  const res=await fetch(`https://router.project-osrm.org/route/v1/${profile}/${src};${dst}?${q.toString()}`);
+  if(!res.ok) throw new Error(`OSRM ${profile} ${res.status}`);
+  const json=await res.json();
+  if(!json?.routes?.length) return null;
+  const r=json.routes[0];
+  return{distance:r.distance,duration:r.duration,geometry:r.geometry};
+}
+
+function getSavedOrLivePosition(){
+  const saved=localStorage.getItem(GEO_LAST_KEY);
+  if(saved){
+    try{const p=JSON.parse(saved);if(Number.isFinite(p.lat)&&Number.isFinite(p.lng))return Promise.resolve({lat:p.lat,lng:p.lng});}catch(_){}
+  }
+  if(!navigator.geolocation) return Promise.resolve(null);
+  return new Promise(resolve=>{
+    navigator.geolocation.getCurrentPosition(
+      p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),
+      ()=>resolve(null),
+      {enableHighAccuracy:true,timeout:8000,maximumAge:15000}
+    );
+  });
+}
+
+function buildGoogleMapsUrl(dest,origin){
+  const p=new URLSearchParams({api:'1',destination:`${dest.lat},${dest.lng}`,travelmode:'driving'});
+  if(origin) p.set('origin',`${origin.lat},${origin.lng}`);
+  return`https://www.google.com/maps/dir/?${p.toString()}`;
+}
+function buildUberUrl(dest,name,origin){
+  const p=new URLSearchParams({action:'setPickup','dropoff[latitude]':String(dest.lat),'dropoff[longitude]':String(dest.lng),'dropoff[nickname]':name||'Destino'});
+  if(origin){p.set('pickup[latitude]',String(origin.lat));p.set('pickup[longitude]',String(origin.lng));p.set('pickup[my_location]','false');}
+  else p.set('pickup','my_location');
+  return`https://m.uber.com/ul/?${p.toString()}`;
+}
+function buildWazeUrl(dest){return`https://waze.com/ul?ll=${dest.lat},${dest.lng}&navigate=yes`;}
+
+async function initPostLocation(s,cc){
+  const mm=L.map('miniMap',{center:[s.lat,s.lng],zoom:15,zoomControl:false,dragging:false,scrollWheelZoom:false});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OSM © CARTO',subdomains:'abcd',maxZoom:19}).addTo(mm);
+  const ico=L.divIcon({html:`<div style="width:34px;height:34px;background:${cc};border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.4);box-shadow:0 4px 12px rgba(0,0,0,.4)"><span style="transform:rotate(45deg);font-size:15px">${s.emoji}</span></div>`,className:'',iconSize:[34,34],iconAnchor:[17,34]});
+  L.marker([s.lat,s.lng],{icon:ico}).addTo(mm);
+
+  const origin=await getSavedOrLivePosition();
+  document.getElementById('locGoogleMaps').href=buildGoogleMapsUrl({lat:s.lat,lng:s.lng},origin);
+  document.getElementById('locUber').href=buildUberUrl({lat:s.lat,lng:s.lng},s.name,origin);
+  document.getElementById('locWaze').href=buildWazeUrl({lat:s.lat,lng:s.lng});
+
+  const infoEl=document.getElementById('locRouteInfo');
+  if(!origin||!infoEl){
+    if(infoEl) infoEl.innerHTML='<i data-lucide="navigation" class="icon-xs"></i> Ative sua localização para ver tempo de rota';
+    lucide?.createIcons();
+    return;
+  }
+  const userMk=L.marker([origin.lat,origin.lng],{icon:L.divIcon({html:'<div class="post-user-dot"></div>',className:'',iconSize:[14,14],iconAnchor:[7,7]})}).addTo(mm);
+  userMk.bindPopup('<div class="pp-title">Você está aqui</div>');
+
+  const [walkRes,driveRes]=await Promise.allSettled([
+    fetchOsrmRoute(origin,{lat:s.lat,lng:s.lng},'foot'),
+    fetchOsrmRoute(origin,{lat:s.lat,lng:s.lng},'driving')
+  ]);
+  const walk=walkRes.status==='fulfilled'?walkRes.value:null;
+  const drive=driveRes.status==='fulfilled'?driveRes.value:null;
+  if(!walk&&!drive){
+    infoEl.innerHTML='<i data-lucide="route-off" class="icon-xs"></i> Rota indisponível no momento';
+    lucide?.createIcons();
+    return;
+  }
+  const pick=drive||walk;
+  const latlngs=pick.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+  L.polyline(latlngs,{color:'#C8871A',weight:4,opacity:.9,dashArray:drive?null:'6 6'}).addTo(mm);
+  mm.fitBounds(L.latLngBounds([[origin.lat,origin.lng],[s.lat,s.lng]]).pad(.2));
+  const walkTxt=walk?`a pé ${fmtDuration(walk.duration)}`:null;
+  const driveTxt=drive?`carro ${fmtDuration(drive.duration)}`:null;
+  infoEl.innerHTML=`<i data-lucide="route" class="icon-xs"></i> <strong>${[walkTxt,driveTxt].filter(Boolean).join(' · ')}</strong> <em>(${fd((drive||walk).distance)})</em>`;
+  lucide?.createIcons();
+}
 
 // ── AUTH + REACTIONS ──────────────────────
 let CUR_USER = null, CUR_REACTIONS = [], CURRENT_SPOT_ID = null;

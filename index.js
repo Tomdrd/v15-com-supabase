@@ -16,6 +16,9 @@ const CAT_ICON = {
 };
 
 let SPOTS = [], map, cat = 'todos', q = '', markers = {}, uMk = null, uLat = null, uLng = null;
+let _geoWatchId = null;
+const GEO_PREF_KEY = 'sc_geo_persistent_enabled';
+const GEO_LAST_KEY = 'sc_geo_last_position';
 
 const mr = r => ({
   id: r.id, name: r.name, cat: r.cat, color: r.color,
@@ -53,7 +56,7 @@ function initMap() {
     const b = Object.values(markers).map(m => m.getLatLng());
     if (b.length) map.fitBounds(L.latLngBounds(b).pad(.15));
   }, 300);
-  map.on('click', () => closeDetail());
+  map.on('click', () => closeDetail(false));
 
   // ── Deep link: abre painel se ?id=xxx na URL ──────────────────────────
   const urlId = new URLSearchParams(location.search).get('id');
@@ -88,7 +91,7 @@ function placeM() {
   gs().forEach(s => {
     const m = L.marker([s.lat, s.lng], { icon: mkIco(s) });
     m.bindPopup(mkPopup(s), { maxWidth: 210 });
-    m.on('click', () => { openD(s.id); hlCard(s.id); });
+    m.on('click', () => focusSpot(s.id));
     m.addTo(map);
     markers[s.id] = m;
   });
@@ -104,7 +107,7 @@ function refreshM() {
     if (!markers[s.id]) {
       const m = L.marker([s.lat, s.lng], { icon: mkIco(s) });
       m.bindPopup(mkPopup(s), { maxWidth: 210 });
-      m.on('click', () => { openD(s.id); hlCard(s.id); });
+      m.on('click', () => focusSpot(s.id));
       if (map) { m.addTo(map); markers[s.id] = m; }
     }
   });
@@ -145,8 +148,10 @@ function buildList() {
 function focusSpot(id) {
   const s = gs().find(x => x.id === id); if (!s) return;
   hideCarouselSmooth(() => {
-    map.flyTo([s.lat, s.lng], 17, { duration: 1.2 });
-    setTimeout(() => { if (markers[id]) markers[id].openPopup(); }, 1300);
+    const flyDuration = prefersReducedMotion() ? 0.01 : 1.2;
+    const popupDelay = prefersReducedMotion() ? 60 : 1300;
+    map.flyTo([s.lat, s.lng], 17, { duration: flyDuration });
+    setTimeout(() => { if (markers[id]) markers[id].openPopup(); }, popupDelay);
     openD(id); hlCard(id); closeSbMob();
   });
 }
@@ -205,13 +210,9 @@ function openD(id) {
     : '';
   document.getElementById('dpEvtBadge').innerHTML = evtBadge;
 
-  // distância com raio visual no mapa
+  // card enxuto: evita repetição com a página de post
   const ds = uLat !== null ? `<span><i data-lucide="ruler" class="icon-xs"></i> <strong>${fd(d(uLat, uLng, s.lat, s.lng))}</strong></span>` : '';
-  document.getElementById('dpMeta').innerHTML = `
-    ${s.address ? `<span><i data-lucide="map-pin" class="icon-xs"></i> <strong>${s.address}</strong></span>` : ''}
-    ${s.horario  ? `<span><i data-lucide="clock"   class="icon-xs"></i> <strong>${s.horario}</strong></span>`  : ''}
-    ${s.entrada  ? `<span><i data-lucide="ticket"  class="icon-xs"></i> <strong>${s.entrada}</strong></span>`  : ''}
-    ${ds}`;
+  document.getElementById('dpMeta').innerHTML = ds;
 
   document.getElementById('dpLink').href = `sobral_post.html?id=${s.id}`;
 
@@ -224,14 +225,17 @@ function openD(id) {
   dp.classList.add('open');
   document.getElementById('stbar').classList.add('hidden');
   lucide.createIcons();
+  // mostra o raio sempre que houver localização ativa (com ou sem login)
+  showRadius(s.id);
   renderReactionBtns(s.id);
 }
 
-function closeDetail() {
+function closeDetail(showCarousel = true) {
   document.getElementById('dp').classList.remove('open', 'expanded');
   document.getElementById('dp').style.transform = '';
   document.getElementById('stbar').classList.remove('hidden');
   history.replaceState(null, '', location.pathname);
+  if (showCarousel) showCarouselSmooth();
 }
 
 // ── Compartilhamento ───────────────────────────────────────────────────────
@@ -246,6 +250,7 @@ function shareSpot(s) {
   }
 }
 
+
 function hlCard(id) {
   document.querySelectorAll('.sc').forEach(c => c.classList.remove('active'));
   const c = document.getElementById('card-' + id);
@@ -255,29 +260,77 @@ function hlCard(id) {
 /* ── GEO ────────────────────────────────────────────────────────────────── */
 let _radiusCircle = null;
 
-function getUserLocation() {
-  if (!navigator.geolocation) { toast('Geolocalização não suportada.', true); return; }
+function setGeoUiState(enabled, locating = false) {
   const btn = document.getElementById('btnGeo');
   const bnavGeo = document.querySelector('.bnav-item[data-page="geo"]');
-  if (btn) btn.classList.add('locating');
-  if (bnavGeo) bnavGeo.classList.add('bnav-locating');
+  if (btn) {
+    btn.classList.toggle('locating', locating);
+    btn.style.background = enabled ? '#1B6B6B' : '';
+  }
+  if (bnavGeo) {
+    bnavGeo.classList.toggle('bnav-locating', locating);
+    bnavGeo.style.color = enabled ? 'var(--teal)' : '';
+  }
+}
+
+function applyUserLocation(pos, { focus = false, notify = false } = {}) {
+  uLat = pos.coords.latitude;
+  uLng = pos.coords.longitude;
+  localStorage.setItem(GEO_LAST_KEY, JSON.stringify({ lat: uLat, lng: uLng, ts: Date.now() }));
+  if (uMk) uMk.remove();
+  if (_radiusCircle) { _radiusCircle.remove(); _radiusCircle = null; }
+  uMk = L.marker([uLat, uLng], {
+    icon: L.divIcon({ html: '<div class="user-dot"></div>', className: '', iconSize: [14, 14], iconAnchor: [7, 7] })
+  }).addTo(map);
+  uMk.bindPopup('<div class="pp-title">Você está aqui</div>');
+  if (focus) map.flyTo([uLat, uLng], 15, { duration: prefersReducedMotion() ? 0.01 : 1.5 });
+  document.getElementById('stGeo').style.display = 'flex';
+  buildList();
+  if (notify) toast('Localização ativa e persistente.');
+}
+
+function startPersistentGeoWatch() {
+  if (!navigator.geolocation || _geoWatchId !== null) return;
+  _geoWatchId = navigator.geolocation.watchPosition(
+    pos => {
+      applyUserLocation(pos, { focus: false, notify: false });
+      setGeoUiState(true, false);
+    },
+    e => {
+      setGeoUiState(false, false);
+      if (e.code === 1) {
+        localStorage.removeItem(GEO_PREF_KEY);
+        if (_geoWatchId !== null) { navigator.geolocation.clearWatch(_geoWatchId); _geoWatchId = null; }
+      }
+    },
+    { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+  );
+}
+
+function restorePersistentGeo() {
+  try {
+    const saved = localStorage.getItem(GEO_LAST_KEY);
+    if (saved && map) {
+      const p = JSON.parse(saved);
+      if (Number.isFinite(p.lat) && Number.isFinite(p.lng)) {
+        applyUserLocation({ coords: { latitude: p.lat, longitude: p.lng } }, { focus: false, notify: false });
+      }
+    }
+  } catch (_) {}
+  if (localStorage.getItem(GEO_PREF_KEY) === '1') startPersistentGeoWatch();
+}
+
+function getUserLocation() {
+  if (!navigator.geolocation) { toast('Geolocalização não suportada.', true); return; }
+  setGeoUiState(false, true);
   navigator.geolocation.getCurrentPosition(p => {
-    uLat = p.coords.latitude; uLng = p.coords.longitude;
-    if (btn) { btn.classList.remove('locating'); btn.style.background = '#1B6B6B'; }
-    if (bnavGeo) { bnavGeo.classList.remove('bnav-locating'); bnavGeo.style.color = 'var(--teal)'; }
-    if (uMk) uMk.remove();
-    if (_radiusCircle) { _radiusCircle.remove(); _radiusCircle = null; }
-    uMk = L.marker([uLat, uLng], {
-      icon: L.divIcon({ html: '<div class="user-dot"></div>', className: '', iconSize: [14, 14], iconAnchor: [7, 7] })
-    }).addTo(map);
-    uMk.bindPopup('<div class="pp-title">Você está aqui</div>');
-    map.flyTo([uLat, uLng], 15, { duration: 1.5 });
-    document.getElementById('stGeo').style.display = 'flex';
-    toast('Localizado! Lista ordenada por proximidade.');
-    buildList();
+    localStorage.setItem(GEO_PREF_KEY, '1');
+    applyUserLocation(p, { focus: true, notify: true });
+    setGeoUiState(true, false);
+    startPersistentGeoWatch();
   }, e => {
-    if (btn) btn.classList.remove('locating');
-    if (bnavGeo) bnavGeo.classList.remove('bnav-locating');
+    setGeoUiState(false, false);
+    if (e.code === 1) localStorage.removeItem(GEO_PREF_KEY);
     toast(e.code === 1 ? 'Permissão negada.' : 'Erro ao localizar.', true);
   }, { timeout: 10000, enableHighAccuracy: true });
 }
@@ -351,6 +404,7 @@ function toast(msg, err = false) {
 ══════════════════════════════════════════════════════════════════════════ */
 let _carIdx = 0, _carItems = [], _carTimer = null;
 let _carouselHiddenByInteraction = false;
+const prefersReducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function buildCarousel() {
   const featured = SPOTS.filter(s => s.isFeatured);
@@ -409,12 +463,27 @@ function hideCarouselSmooth(afterHide) {
   _carouselHiddenByInteraction = true;
   clearInterval(_carTimer);
   el.classList.add('is-hiding');
+  const transitionMs = prefersReducedMotion() ? 0 : 320;
   setTimeout(() => {
     el.style.display = 'none';
     document.body.classList.remove('has-carousel');
     el.classList.remove('is-hiding');
     if (typeof afterHide === 'function') afterHide();
-  }, 320);
+  }, transitionMs);
+}
+
+function showCarouselSmooth() {
+  const el = document.getElementById('fcarousel');
+  const hasFeaturedItems = _carItems.length > 0;
+  const isAlreadyVisible = document.body.classList.contains('has-carousel') && el && el.style.display !== 'none';
+  if (!el || !hasFeaturedItems || isAlreadyVisible) return;
+
+  _carouselHiddenByInteraction = false;
+  el.style.display = 'block';
+  document.body.classList.add('has-carousel');
+  el.classList.add('is-showing');
+  requestAnimationFrame(() => el.classList.remove('is-showing'));
+  carAutoplay();
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -504,8 +573,6 @@ async function renderReactionBtns(spotId) {
     <button class="rxn-btn ${myBeen?'active-been':''}"  onclick="toggleReaction('${spotId}','been')"  title="Eu Fui"><i data-lucide="check"    class="icon-sm"></i><span>Eu Fui</span>${bc>0?`<span class="rxn-count">${bc}</span>`:''}</button>
     <button class="rxn-btn ${myGoing?'active-going':''}" onclick="toggleReaction('${spotId}','going')" title="Eu Vou"><i data-lucide="calendar" class="icon-sm"></i><span>Eu Vou</span>${gc>0?`<span class="rxn-count">${gc}</span>`:''}</button>`;
   lucide.createIcons();
-  // mostra raio de distância no mapa ao abrir o painel
-  showRadius(spotId);
 }
 
 async function toggleReaction(spotId, reaction) {
@@ -543,6 +610,7 @@ window.addEventListener('load', async () => {
   initAuth();
   initDpDrag();
   lucide.createIcons();
+  restorePersistentGeo();
   const l = document.getElementById('loading');
   l.classList.add('fade');
   setTimeout(() => l.remove(), 700);
