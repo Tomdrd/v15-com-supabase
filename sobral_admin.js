@@ -275,7 +275,7 @@ function renderDashboard() {
       ${Object.entries(bycat).map(([k,v]) => `
         <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 20px;min-width:130px">
           <div style="margin-bottom:6px;color:var(--ochre)"><i data-lucide="${CAT_ICONS[k]||'map-pin'}" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.5"></i></div>
-          <div style="font-size:24px;font-family:'Playfair Display',serif;font-weight:800;color:var(--cream)">${v}</div>
+          <div style="font-size:24px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;color:var(--cream)">${v}</div>
           <div style="font-size:12px;color:var(--muted)">${CAT_LABELS[k]||k}</div>
         </div>`).join('')}
     </div>
@@ -401,12 +401,12 @@ function renderForm(id) {
             <div class="type-seg" style="display:flex;background:rgba(0,0,0,.25);border:1.5px solid rgba(200,135,26,.2);border-radius:10px;padding:4px;gap:4px;margin-top:4px">
               <button type="button" id="tsBtnSpot"
                 onclick="selectTypeAdmin('spot')"
-                style="flex:1;padding:9px 12px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;transition:all .2s;background:${(!s||s.type!=='event')?'var(--ochre)':'transparent'};color:${(!s||s.type!=='event')?'var(--deep)':'var(--muted)'}">
+                style="flex:1;padding:9px 12px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:500;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;background:${(!s||s.type!=='event')?'var(--ochre)':'transparent'};color:${(!s||s.type!=='event')?'var(--deep)':'var(--muted)'}">
                 Ponto Turístico
               </button>
               <button type="button" id="tsBtnEvent"
                 onclick="selectTypeAdmin('event')"
-                style="flex:1;padding:9px 12px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;transition:all .2s;background:${s?.type==='event'?'var(--ochre)':'transparent'};color:${s?.type==='event'?'var(--deep)':'var(--muted)'}">
+                style="flex:1;padding:9px 12px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:500;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;background:${s?.type==='event'?'var(--ochre)':'transparent'};color:${s?.type==='event'?'var(--deep)':'var(--muted)'}">
                 Evento
               </button>
             </div>

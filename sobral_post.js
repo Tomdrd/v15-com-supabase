@@ -99,7 +99,7 @@ async function renderReactions(spotId) {
   const myBeen  = CUR_USER && CUR_REACTIONS.find(r=>r.reaction==='been');
   const myGoing = CUR_USER && CUR_REACTIONS.find(r=>r.reaction==='going');
 
-  const btnStyle = (active, color) => `display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;font-size:13.5px;font-weight:500;cursor:pointer;border:1.5px solid;transition:all .15s;font-family:'DM Sans',sans-serif;${active ? `background:${color}22;border-color:${color}88;color:${color}` : 'background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);color:var(--cream)'}`;
+  const btnStyle = (active, color) => `display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;font-size:13.5px;font-weight:500;cursor:pointer;border:1.5px solid;transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif;${active ? `background:${color}22;border-color:${color}88;color:${color}` : 'background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);color:var(--cream)'}`;
 
   if (!CUR_USER) {
     el.innerHTML = `<div style="text-align:center;padding:8px 0">
