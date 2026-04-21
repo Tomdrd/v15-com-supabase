@@ -96,3 +96,12 @@ textarea{resize:vertical;min-height:80px}
 .drw a,.drw button{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:9px;color:var(--cream);text-decoration:none;font-size:13.5px;transition:.15s;border:none;background:transparent;cursor:pointer;width:100%;text-align:left}.drw a:hover,.drw button:hover{background:rgba(200,135,26,.12);color:var(--ochre)}
 @media(max-width:600px){.tb-nav{display:none}.hbg{display:flex}.profile-inner{flex-direction:column;align-items:flex-start;gap:16px}.profile-stats{gap:14px}.cards-grid{grid-template-columns:1fr}}
 @media(min-width:601px){.hbg{display:none!important}.tb-nav{display:flex}}
+/* ── Meu Mapa / Roteiro ─────────────────────── */
+.route-item{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px 14px;text-decoration:none;transition:.15s}
+.route-item:hover{border-color:rgba(200,135,26,.4)}
+.route-num{width:26px;height:26px;border-radius:50%;background:rgba(200,135,26,.15);border:1px solid rgba(200,135,26,.3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--ochre);flex-shrink:0}
+.route-thumb{width:44px;height:44px;border-radius:8px;overflow:hidden;flex-shrink:0}
+.route-thumb img{width:100%;height:100%;object-fit:cover}
+.route-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;flex-shrink:0}
+.route-badge.been{background:rgba(76,175,130,.15);color:#4CAF82;border:1px solid rgba(76,175,130,.3)}
+.route-badge.going{background:rgba(200,135,26,.15);color:var(--ochre);border:1px solid rgba(200,135,26,.3)}

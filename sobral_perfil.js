@@ -3,11 +3,13 @@ const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6I
 const supa=supabase.createClient(SU,SK);
 const CAT_LABELS={todos:'Todos',religioso:'Religioso',cultura:'Cultura',historico:'Histórico',natureza:'Natureza',lazer:'Lazer'};
 const REACTION_LABELS={like:'Gostei',been:'Eu Fui',going:'Eu Vou'};
+const CAT_COLORS={religioso:'#9B8EC4',cultura:'#C8871A',historico:'#7B9E6B',natureza:'#4CAF82',lazer:'#E07B54'};
 
-let USER=null, PROFILE=null, SUBS=[], REACTIONS=[], SPOTS_MAP={}, currentTab='submissions';
+let USER=null,PROFILE=null,SUBS=[],REACTIONS=[],SPOTS_MAP={},currentTab='submissions';
+let profileMap=null;
 
-function toggleDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id).classList.toggle('open'));}
-function closeDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id).classList.remove('open'));}
+function toggleDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id)?.classList.toggle('open'));}
+function closeDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id)?.classList.remove('open'));}
 function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type==='ok'?'ok':type==='err'?'err':'');setTimeout(()=>t.className='toast',3800);}
 
 async function init(){
@@ -15,7 +17,6 @@ async function init(){
   if(!session){location.href='sobral_login.html?redirect=sobral_perfil.html';return;}
   USER=session.user;
 
-  // load profile
   const[{data:prof},{data:subs},{data:reacts}]=await Promise.all([
     supa.from('profiles').select('*').eq('id',USER.id).single(),
     supa.from('submissions').select('*').eq('user_id',USER.id).order('created_at',{ascending:false}),
@@ -25,13 +26,11 @@ async function init(){
   SUBS=subs||[];
   REACTIONS=reacts||[];
 
-  // busca nomes/emojis dos pontos referenciados pelas reactions
   const ids=[...new Set(REACTIONS.map(r=>r.spot_id).filter(Boolean))];
   if(ids.length){
-    const{data:spots}=await supa.from('spots').select('id,name,emoji').in('id',ids);
+    const{data:spots}=await supa.from('spots').select('id,name,cat,color,lat,lng,photo').in('id',ids);
     if(spots) spots.forEach(s=>{SPOTS_MAP[s.id]=s;});
   }
-
   renderPage();
 }
 
@@ -47,9 +46,7 @@ function renderPage(){
     <div class="profile-hero">
       <div class="profile-inner">
         <div class="avatar-wrap">
-          ${avatarSrc
-            ? `<div class="avatar"><img src="${avatarSrc}" alt="${name}"></div>`
-            : `<div class="avatar-placeholder">${name.charAt(0).toUpperCase()}</div>`}
+          ${avatarSrc?`<div class="avatar"><img src="${avatarSrc}" alt="${name}"></div>`:`<div class="avatar-placeholder">${name.charAt(0).toUpperCase()}</div>`}
           <div class="role-badge ${isAdmin?'admin':''}">${isAdmin?'Admin':'Usuário'}</div>
         </div>
         <div class="profile-info">
@@ -70,10 +67,11 @@ function renderPage(){
 
     <div class="profile-tabs">
       <div class="profile-tabs-inner">
-        <button class="ptab ${currentTab==='submissions'?'active':''}" onclick="showTab('submissions')"><i data-lucide="map-pin" style="width:14px;height:14px;pointer-events:none"></i> Minhas Submissões</button>
+        <button class="ptab ${currentTab==='submissions'?'active':''}" onclick="showTab('submissions')"><i data-lucide="map-pin" style="width:14px;height:14px;pointer-events:none"></i> Submissões</button>
         <button class="ptab ${currentTab==='likes'?'active':''}" onclick="showTab('likes')"><i data-lucide="heart" style="width:14px;height:14px;pointer-events:none"></i> Gostei</button>
         <button class="ptab ${currentTab==='been'?'active':''}" onclick="showTab('been')"><i data-lucide="check-circle" style="width:14px;height:14px;pointer-events:none"></i> Eu Fui</button>
         <button class="ptab ${currentTab==='going'?'active':''}" onclick="showTab('going')"><i data-lucide="calendar" style="width:14px;height:14px;pointer-events:none"></i> Eu Vou</button>
+        <button class="ptab ${currentTab==='mymap'?'active':''}" onclick="showTab('mymap')"><i data-lucide="map" style="width:14px;height:14px;pointer-events:none"></i> Meu Mapa</button>
         <button class="ptab ${currentTab==='settings'?'active':''}" onclick="showTab('settings')"><i data-lucide="settings" style="width:14px;height:14px;pointer-events:none"></i> Configurações</button>
       </div>
     </div>
@@ -84,7 +82,15 @@ function renderPage(){
   lucide?.createIcons();
 }
 
-function showTab(tab){currentTab=tab;document.querySelectorAll('.ptab').forEach(b=>b.classList.toggle('active',b.textContent.includes(tab==='submissions'?'Submissões':tab==='likes'?'Gostei':tab==='been'?'Fui':tab==='going'?'Vou':'Configurações')));renderTab(tab);}
+function showTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('active'));
+  const labels={submissions:'Submissões',likes:'Gostei',been:'Fui',going:'Vou',mymap:'Mapa',settings:'Configurações'};
+  document.querySelectorAll('.ptab').forEach(b=>{
+    if(b.textContent.trim().includes(labels[tab])) b.classList.add('active');
+  });
+  renderTab(tab);
+}
 
 function renderTab(tab){
   const c=document.getElementById('tabContent');
@@ -92,13 +98,96 @@ function renderTab(tab){
   else if(tab==='likes') c.innerHTML=renderReactions('like');
   else if(tab==='been') c.innerHTML=renderReactions('been');
   else if(tab==='going') c.innerHTML=renderReactions('going');
+  else if(tab==='mymap'){ c.innerHTML=renderMyMap(); initProfileMap(); }
   else if(tab==='settings') c.innerHTML=renderSettings();
   lucide?.createIcons();
 }
 
+/* ── Meu Mapa ─────────────────────────────────────────────────────────── */
+function renderMyMap(){
+  const beenSpots  = REACTIONS.filter(r=>r.reaction==='been').map(r=>SPOTS_MAP[r.spot_id]).filter(Boolean);
+  const goingSpots = REACTIONS.filter(r=>r.reaction==='going').map(r=>SPOTS_MAP[r.spot_id]).filter(Boolean);
+  const allSpots   = [...new Map([...beenSpots,...goingSpots].map(s=>[s.id,s])).values()];
+
+  if(!allSpots.length) return `<div class="empty">
+    <div class="empty-icon"><i data-lucide="map" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div>
+    <h3>Nenhum ponto no seu roteiro</h3>
+    <p>Marque lugares como "Eu Fui" ou "Eu Vou" no mapa para criar seu roteiro pessoal.</p>
+    <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="map" style="width:14px;height:14px;pointer-events:none"></i> Explorar o Mapa</a>
+  </div>`;
+
+  const beenIds  = new Set(beenSpots.map(s=>s.id));
+  const goingIds = new Set(goingSpots.map(s=>s.id));
+
+  const legend = `
+    <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div style="width:12px;height:12px;border-radius:50%;background:#4CAF82;flex-shrink:0"></div>Eu Fui (${beenSpots.length})</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div style="width:12px;height:12px;border-radius:50%;background:#C8871A;flex-shrink:0"></div>Eu Vou (${goingSpots.length})</div>
+    </div>`;
+
+  const routeList = allSpots.map((s,i)=>`
+    <a href="index.html?id=${s.id}" class="route-item">
+      <div class="route-num">${i+1}</div>
+      <div class="route-thumb" style="background:${s.color||'#888'}22">
+        ${s.photo?`<img src="${s.photo}" alt="${s.name}" loading="lazy">`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:${s.color||'#888'}">${s.name.charAt(0)}</div>`}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13.5px;color:var(--cream);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.name}</div>
+        <div style="font-size:11px;color:var(--muted)">${CAT_LABELS[s.cat]||s.cat}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        ${beenIds.has(s.id)?`<span class="route-badge been">Fui</span>`:''}
+        ${goingIds.has(s.id)?`<span class="route-badge going">Vou</span>`:''}
+      </div>
+    </a>`).join('');
+
+  return `
+    ${legend}
+    <div id="profileMap" style="height:320px;border-radius:14px;overflow:hidden;margin-bottom:20px;border:1px solid rgba(200,135,26,.2)"></div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:500">Roteiro (${allSpots.length} ponto${allSpots.length!==1?'s':''})</div>
+    <div style="display:flex;flex-direction:column;gap:8px">${routeList}</div>`;
+}
+
+function initProfileMap(){
+  setTimeout(()=>{
+    const el=document.getElementById('profileMap');
+    if(!el) return;
+    if(profileMap){ profileMap.remove(); profileMap=null; }
+
+    profileMap=L.map('profileMap',{center:[-3.688,-40.3497],zoom:13,zoomControl:true});
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OSM © CARTO',maxZoom:19,subdomains:'abcd'}).addTo(profileMap);
+
+    const beenSpots  = REACTIONS.filter(r=>r.reaction==='been').map(r=>SPOTS_MAP[r.spot_id]).filter(Boolean);
+    const goingSpots = REACTIONS.filter(r=>r.reaction==='going').map(r=>SPOTS_MAP[r.spot_id]).filter(Boolean);
+    const beenIds    = new Set(beenSpots.map(s=>s.id));
+    const allSpots   = [...new Map([...beenSpots,...goingSpots].map(s=>[s.id,s])).values()];
+
+    const bounds=[];
+    allSpots.forEach((s,i)=>{
+      const color=beenIds.has(s.id)?'#4CAF82':'#C8871A';
+      const m=L.marker([s.lat,s.lng],{
+        icon:L.divIcon({
+          html:`<div style="width:32px;height:32px;background:${color};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;border:2px solid rgba(255,255,255,.4);box-shadow:0 2px 8px rgba(0,0,0,.4)">${i+1}</div>`,
+          className:'',iconSize:[32,32],iconAnchor:[16,16]
+        })
+      }).addTo(profileMap);
+      m.bindPopup(`<div class="pp-title">${s.name}</div><div class="pp-sub"><a href="index.html?id=${s.id}" style="color:var(--ochre)">Ver no mapa →</a></div>`);
+      bounds.push([s.lat,s.lng]);
+    });
+
+    // linha conectando os pontos em ordem (roteiro)
+    if(bounds.length>1){
+      L.polyline(bounds,{color:'rgba(200,135,26,.4)',weight:2,dashArray:'5 5'}).addTo(profileMap);
+    }
+
+    if(bounds.length) profileMap.fitBounds(L.latLngBounds(bounds).pad(.2));
+  },100);
+}
+
+/* ── Submissões ──────────────────────────────────────────────────────────── */
 function renderSubmissions(){
   if(!SUBS.length) return `<div class="empty"><div class="empty-icon"><i data-lucide="map-pin" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div><h3>Nenhuma submissão ainda</h3><p>Envie um ponto turístico ou evento para que ele apareça no mapa!</p><a href="sobral_submeter.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="plus" style="width:14px;height:14px;pointer-events:none"></i> Submeter Ponto ou Evento</a></div>`;
-  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><div style="font-size:14px;color:var(--muted)">${SUBS.length} submissão${SUBS.length!==1?'s':''}</div><a href="sobral_submeter.html" class="btn btn-primary btn-sm"><i data-lucide="plus" style="width:12px;height:12px;pointer-events:none"></i> Nova Submissão</a></div>
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><div style="font-size:14px;color:var(--muted)">${SUBS.length} submissão${SUBS.length!==1?'s':''}</div><a href="sobral_submeter.html" class="btn btn-primary btn-sm"><i data-lucide="plus" style="width:12px;height:12px;pointer-events:none"></i> Nova</a></div>
   <div class="cards-grid">${SUBS.map(s=>`
     <div class="sub-card">
       <div class="sub-photo">
@@ -109,7 +198,7 @@ function renderSubmissions(){
         <div class="sub-name">${s.emoji||''} ${s.name}</div>
         <div class="sub-meta">${CAT_LABELS[s.cat]||s.cat} · ${s.type==='event'?'Evento':'Ponto Turístico'}<br>${new Date(s.created_at).toLocaleDateString('pt-BR')}
         ${s.status==='rejected'&&s.admin_note?`<br><span style="color:#e89e7e;font-size:11px">Motivo: ${s.admin_note}</span>`:''}
-        ${s.status==='approved'?`<br><a href="sobral_post.html?id=${s.id}" style="color:var(--ochre);font-size:11px" target="_blank">Ver publicado →</a>`:''}
+        ${s.status==='approved'?`<br><a href="sobral_post.html?id=${s.id}" style="color:var(--ochre);font-size:11px">Ver publicado →</a>`:''}
         </div>
         <div class="sub-actions">
           ${s.status!=='approved'?`<a href="sobral_submeter.html?edit=${s.id}" class="btn btn-sm btn-secondary"><i data-lucide="pencil" style="width:13px;height:13px;pointer-events:none"></i></a>`:''}
@@ -119,19 +208,21 @@ function renderSubmissions(){
     </div>`).join('')}</div>`;
 }
 
+/* ── Reações ─────────────────────────────────────────────────────────────── */
 function renderReactions(type){
   const items=REACTIONS.filter(r=>r.reaction===type);
   const label=REACTION_LABELS[type];
   if(!items.length) return `<div class="empty"><div class="empty-icon">${type==='like'?'<i data-lucide="heart" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i>':type==='been'?'<i data-lucide="check-circle" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i>':'<i data-lucide="calendar" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i>'}</div><h3>Nenhum local aqui ainda</h3><p>Explore o mapa e marque lugares que você ${type==='like'?'gostou':type==='been'?'visitou':'quer visitar'}!</p><a href="index.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="map" style="width:14px;height:14px;pointer-events:none"></i> Explorar o Mapa</a></div>`;
   return `<div style="font-size:14px;color:var(--muted);margin-bottom:18px">${items.length} lugar${items.length!==1?'es':''} marcado${items.length!==1?'s':''} como "${label}"</div>
   <div style="display:flex;flex-direction:column;gap:10px">${items.map(r=>`
-    <a href="sobral_post.html?id=${r.spot_id}" class="reaction-card">
+    <a href="index.html?id=${r.spot_id}" class="reaction-card">
       <div class="rc-emoji" style="background:rgba(200,135,26,.1)"><i data-lucide="${type==='like'?'heart':type==='been'?'check-circle':'calendar'}" style="width:22px;height:22px;stroke-width:1.5;opacity:.7"></i></div>
       <div class="rc-info"><div class="rc-name">${SPOTS_MAP[r.spot_id]?.name||'Ponto Turístico'}</div><div class="rc-meta">${new Date(r.created_at).toLocaleDateString('pt-BR')}</div></div>
       <div class="rc-type">${label}</div>
     </a>`).join('')}</div>`;
 }
 
+/* ── Configurações ───────────────────────────────────────────────────────── */
 function renderSettings(){
   const name=PROFILE.full_name||USER.user_metadata?.full_name||'';
   const bio=PROFILE.bio||'';
@@ -178,7 +269,7 @@ async function deleteSub(id){
   if(!confirm('Excluir esta submissão? Ação irreversível.'))return;
   await supa.from('submissions').delete().eq('id',id);
   SUBS=SUBS.filter(s=>s.id!==id);
-  toast('Submissão excluída.','');
+  toast('Submissão excluída.');
   renderTab('submissions');
 }
 

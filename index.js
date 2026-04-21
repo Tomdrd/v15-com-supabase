@@ -2,13 +2,17 @@ const SU='https://nrohpfggqcbscyoigpiz.supabase.co';
 const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA';
 const supa = supabase.createClient(SU, SK);
 
-const CL = {
-  todos:     'Todos',
-  religioso: 'Religioso',
-  cultura:   'Cultura',
-  historico: 'Histórico',
-  natureza:  'Natureza',
-  lazer:     'Lazer'
+const CL = { todos:'Todos', religioso:'Religioso', cultura:'Cultura', historico:'Histórico', natureza:'Natureza', lazer:'Lazer' };
+
+// ── Ícone por categoria (Lucide) ─────────────────────────────────────────────
+const CAT_ICON = {
+  religioso: 'church',
+  cultura:   'landmark',
+  historico: 'castle',
+  natureza:  'trees',
+  lazer:     'ferris-wheel',
+  eventos:   'calendar-days',
+  event:     'calendar-days',
 };
 
 let SPOTS = [], map, cat = 'todos', q = '', markers = {}, uMk = null, uLat = null, uLng = null;
@@ -18,8 +22,7 @@ const mr = r => ({
   lat: r.lat, lng: r.lng, desc: r.description, address: r.address,
   horario: r.horario, entrada: r.entrada, photo: r.photo,
   type: r.type || 'spot',
-  eventDate: r.event_date || null,
-  eventEnd:  r.event_end  || null,
+  eventDate: r.event_date || null, eventEnd: r.event_end || null,
   isFeatured: !!r.is_featured,
   blogTitle: r.blog_title, blogContent: r.blog_content,
   blogAuthor: r.blog_author, blogDate: r.blog_date
@@ -27,11 +30,7 @@ const mr = r => ({
 
 async function loadSpots() {
   const { data, error } = await supa.from('spots').select('*').order('created_at', { ascending: true });
-  if (error) {
-    console.error('loadSpots:', error.message);
-    toast('Erro ao carregar os pontos turísticos. Tente recarregar a página.', true);
-    return false;
-  }
+  if (error) { console.error('loadSpots:', error.message); toast('Erro ao carregar os pontos turísticos. Tente recarregar a página.', true); return false; }
   SPOTS = (data || []).map(mr);
   return true;
 }
@@ -43,7 +42,7 @@ function startRT() {
   }).subscribe();
 }
 
-/* ── MAP ────────────────────────────────── */
+/* ── MAP ────────────────────────────────────────────────────────────────── */
 function initMap() {
   map = L.map('map', { center: [-3.688, -40.3497], zoom: 14 });
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -55,24 +54,43 @@ function initMap() {
     if (b.length) map.fitBounds(L.latLngBounds(b).pad(.15));
   }, 300);
   map.on('click', () => closeDetail());
+
+  // ── Deep link: abre painel se ?id=xxx na URL ──────────────────────────
+  const urlId = new URLSearchParams(location.search).get('id');
+  if (urlId) setTimeout(() => focusSpot(urlId), 600);
 }
 
-const mkIco = (s, a = false) => {
-  const z = a ? 50 : 42;
+// ── Marcador com ícone Lucide SVG por categoria ───────────────────────────
+const ICON_SVG = {
+  church:        '<path d="M18 22V10l-6-8-6 8v12"/><path d="M15 22v-4a3 3 0 0 0-6 0v4"/><path d="M10 6.5V4h4v2.5"/><path d="M12 4V2"/>',
+  landmark:      '<line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/>',
+  castle:        '<path d="M22 20v-9H2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2Z"/><path d="M18 11V4H6v7"/><path d="M15 22v-4a3 3 0 0 0-6 0v4"/><path d="M2 11V9h4V7h4V5h4v2h4v2h4v2"/>',
+  trees:         '<path d="M10 10v.2A3 3 0 0 1 8.9 16H5a3 3 0 0 1-1-5.8V10a3 3 0 0 1 6 0Z"/><path d="M7 16v6"/><path d="M13 19v3"/><path d="M12 19h8.3a1 1 0 0 0 .7-1.7L18 14h.3a1 1 0 0 0 .7-1.7L16 9h.2a1 1 0 0 0 .8-1.6l-3-4a1 1 0 0 0-1.6 0l-3 4a1 1 0 0 0 .8 1.6H10"/>',
+  'ferris-wheel':'<circle cx="12" cy="12" r="2"/><path d="M12 2v4"/><path d="m6.8 15-3.5 2"/><path d="m20.7 7-3.5 2"/><path d="M6.8 9 3.3 7"/><path d="m20.7 17-3.5-2"/><path d="m9 22 3-8 3 8"/><path d="M8 22h8"/>',
+  'calendar-days':'<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/>',
+};
+
+const mkIco = (s, active = false) => {
+  const z = active ? 50 : 42;
+  const iconKey = s.type === 'event' ? 'calendar-days' : (CAT_ICON[s.cat] || 'landmark');
+  const svgPaths = ICON_SVG[iconKey] || ICON_SVG['landmark'];
+  const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(45deg);flex-shrink:0">${svgPaths}</svg>`;
   return L.divIcon({
-    html: `<div style="width:${z}px;height:${z}px;background:${s.color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.5)${a ? ',0 0 0 3px rgba(200,135,26,.9)' : ''};border:2px solid rgba(255,255,255,.3)"><div style="width:${a ? 10 : 8}px;height:${a ? 10 : 8}px;background:rgba(255,255,255,.9);border-radius:50%;transform:rotate(45deg)"></div></div>`,
-    className: '', iconSize: [z, z], iconAnchor: [z / 2, z], popupAnchor: [0, -z]
+    html: `<div style="width:${z}px;height:${z}px;background:${s.color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.5)${active?',0 0 0 3px rgba(200,135,26,.9)':''};border:2px solid rgba(255,255,255,.3)">${iconSvg}</div>`,
+    className: '', iconSize: [z, z], iconAnchor: [z/2, z], popupAnchor: [0, -z]
   });
 };
 
 const mkPopup = s => `<div class="pp-title">${s.name}</div><div class="pp-sub">${CL[s.cat] || s.cat}</div>`;
 
 function placeM() {
-  gs().forEach((s, i) => {
+  // Performance: todos os marcadores adicionados imediatamente sem delay escalonado
+  gs().forEach(s => {
     const m = L.marker([s.lat, s.lng], { icon: mkIco(s) });
     m.bindPopup(mkPopup(s), { maxWidth: 210 });
     m.on('click', () => { openD(s.id); hlCard(s.id); });
-    setTimeout(() => { m.addTo(map); markers[s.id] = m; }, i * 70);
+    m.addTo(map);
+    markers[s.id] = m;
   });
   updCnt();
 }
@@ -82,18 +100,18 @@ function refreshM() {
   Object.keys(markers).forEach(id => {
     if (!ids.has(id)) { if (map.hasLayer(markers[id])) markers[id].remove(); delete markers[id]; }
   });
-  gs().forEach((s, i) => {
+  gs().forEach(s => {
     if (!markers[s.id]) {
       const m = L.marker([s.lat, s.lng], { icon: mkIco(s) });
       m.bindPopup(mkPopup(s), { maxWidth: 210 });
       m.on('click', () => { openD(s.id); hlCard(s.id); });
-      setTimeout(() => { if (map) { m.addTo(map); markers[s.id] = m; } }, i * 40);
+      if (map) { m.addTo(map); markers[s.id] = m; }
     }
   });
   updCnt();
 }
 
-/* ── LIST ───────────────────────────────── */
+/* ── LIST ───────────────────────────────────────────────────────────────── */
 function buildList() {
   const sl = document.getElementById('spotsList');
   const f = gs().filter(s => {
@@ -131,36 +149,99 @@ function focusSpot(id) {
   openD(id); hlCard(id); closeSbMob();
 }
 
+/* ── DETAIL PANEL (bottom sheet drag) ──────────────────────────────────── */
+let _dpDragStartY = 0, _dpDragStartScroll = 0, _dpDragging = false;
+
+function initDpDrag() {
+  const dp = document.getElementById('dp');
+  const handle = document.getElementById('dpHandle');
+  if (!handle || !dp) return;
+
+  handle.addEventListener('touchstart', e => {
+    _dpDragStartY = e.touches[0].clientY;
+    _dpDragging = true;
+    dp.style.transition = 'none';
+  }, { passive: true });
+
+  handle.addEventListener('touchmove', e => {
+    if (!_dpDragging) return;
+    const dy = e.touches[0].clientY - _dpDragStartY;
+    if (dy > 0) dp.style.transform = `translateY(${dy}px)`;
+    else if (dy < -30) dp.classList.add('expanded');
+  }, { passive: true });
+
+  handle.addEventListener('touchend', e => {
+    if (!_dpDragging) return;
+    _dpDragging = false;
+    dp.style.transition = '';
+    const dy = e.changedTouches[0].clientY - _dpDragStartY;
+    if (dy > 80) closeDetail();
+    else dp.style.transform = '';
+  });
+}
+
 function openD(id) {
   const s = gs().find(x => String(x.id) === String(id)); if (!s) return;
-  document.getElementById('dpPhoto').innerHTML = s.photo
-    ? `<img src="${s.photo}" alt="${s.name}">`
+
+  // atualiza URL para compartilhamento sem recarregar a página
+  history.replaceState(null, '', `?id=${id}`);
+
+  const photoEl = document.getElementById('dpPhoto');
+  photoEl.innerHTML = s.photo
+    ? `<img src="${s.photo}" alt="${s.name}" loading="lazy">`
     : `<div class="dp-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`;
+  photoEl.onclick = () => window.location.href = `sobral_post.html?id=${s.id}`;
+
   document.getElementById('dpTitle').textContent = s.name;
   const ce = document.getElementById('dpCat');
   ce.textContent = CL[s.cat] || s.cat;
   ce.style.cssText = `background:${s.color}33;color:${s.color};border:1px solid ${s.color}66`;
   document.getElementById('dpDesc').textContent = s.desc;
+
   const evtBadge = s.type === 'event'
     ? `<div style="background:rgba(200,135,26,.15);border:1px solid rgba(200,135,26,.4);border-radius:6px;padding:6px 12px;margin:8px 0;font-size:13px;color:#C8871A;display:inline-flex;align-items:center;gap:6px"><i data-lucide="calendar" class="icon-xs"></i><strong>${fmtEvtDate(s.eventDate, s.eventEnd)}</strong></div>`
     : '';
   document.getElementById('dpEvtBadge').innerHTML = evtBadge;
+
+  // distância com raio visual no mapa
   const ds = uLat !== null ? `<span><i data-lucide="ruler" class="icon-xs"></i> <strong>${fd(d(uLat, uLng, s.lat, s.lng))}</strong></span>` : '';
   document.getElementById('dpMeta').innerHTML = `
     ${s.address ? `<span><i data-lucide="map-pin" class="icon-xs"></i> <strong>${s.address}</strong></span>` : ''}
     ${s.horario  ? `<span><i data-lucide="clock"   class="icon-xs"></i> <strong>${s.horario}</strong></span>`  : ''}
     ${s.entrada  ? `<span><i data-lucide="ticket"  class="icon-xs"></i> <strong>${s.entrada}</strong></span>`  : ''}
     ${ds}`;
+
   document.getElementById('dpLink').href = `sobral_post.html?id=${s.id}`;
-  document.getElementById('dp').classList.add('open');
+
+  // botão compartilhar
+  document.getElementById('dpShare').onclick = () => shareSpot(s);
+
+  const dp = document.getElementById('dp');
+  dp.classList.remove('expanded');
+  dp.style.transform = '';
+  dp.classList.add('open');
   document.getElementById('stbar').classList.add('hidden');
   lucide.createIcons();
   renderReactionBtns(s.id);
 }
 
 function closeDetail() {
-  document.getElementById('dp').classList.remove('open');
+  document.getElementById('dp').classList.remove('open', 'expanded');
+  document.getElementById('dp').style.transform = '';
   document.getElementById('stbar').classList.remove('hidden');
+  history.replaceState(null, '', location.pathname);
+}
+
+// ── Compartilhamento ───────────────────────────────────────────────────────
+function shareSpot(s) {
+  const url = `${location.origin}${location.pathname}?id=${s.id}`;
+  if (navigator.share) {
+    navigator.share({ title: s.name, text: `${s.name} — Sobral Cultural`, url });
+  } else {
+    navigator.clipboard.writeText(url).then(() => toast('Link copiado!')).catch(() => {
+      prompt('Copie o link:', url);
+    });
+  }
 }
 
 function hlCard(id) {
@@ -169,7 +250,9 @@ function hlCard(id) {
   if (c) { c.classList.add('active'); c.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
 }
 
-/* ── GEO ────────────────────────────────── */
+/* ── GEO ────────────────────────────────────────────────────────────────── */
+let _radiusCircle = null;
+
 function getUserLocation() {
   if (!navigator.geolocation) { toast('Geolocalização não suportada.', true); return; }
   const btn = document.getElementById('btnGeo');
@@ -181,6 +264,7 @@ function getUserLocation() {
     if (btn) { btn.classList.remove('locating'); btn.style.background = '#1B6B6B'; }
     if (bnavGeo) { bnavGeo.classList.remove('bnav-locating'); bnavGeo.style.color = 'var(--teal)'; }
     if (uMk) uMk.remove();
+    if (_radiusCircle) { _radiusCircle.remove(); _radiusCircle = null; }
     uMk = L.marker([uLat, uLng], {
       icon: L.divIcon({ html: '<div class="user-dot"></div>', className: '', iconSize: [14, 14], iconAnchor: [7, 7] })
     }).addTo(map);
@@ -196,7 +280,19 @@ function getUserLocation() {
   }, { timeout: 10000, enableHighAccuracy: true });
 }
 
-/* ── FILTERS ────────────────────────────── */
+// raio visual ao abrir um painel com localização ativa
+function showRadius(spotId) {
+  if (uLat === null) return;
+  const s = gs().find(x => x.id === spotId); if (!s) return;
+  if (_radiusCircle) _radiusCircle.remove();
+  const dist = d(uLat, uLng, s.lat, s.lng);
+  _radiusCircle = L.circle([uLat, uLng], {
+    radius: dist, color: 'rgba(200,135,26,.5)', fillColor: 'rgba(200,135,26,.05)',
+    fillOpacity: 1, weight: 1, dashArray: '4 4'
+  }).addTo(map);
+}
+
+/* ── FILTERS ─────────────────────────────────────────────────────────────── */
 function setCat(c) {
   cat = c;
   document.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p.dataset.cat === c));
@@ -210,9 +306,9 @@ function fmtEvtDate(start, end) {
   return (s && e) ? `${s} → ${e}` : (s || 'Data a confirmar');
 }
 
-/* ── DRAWER / SIDEBAR ───────────────────── */
-function toggleDrw() { ['hbg', 'drw', 'dov'].forEach(id => document.getElementById(id).classList.toggle('open')); }
-function closeDrw()  { ['hbg', 'drw', 'dov'].forEach(id => document.getElementById(id).classList.remove('open')); }
+/* ── DRAWER / SIDEBAR ────────────────────────────────────────────────────── */
+function toggleDrw() { ['hbg','drw','dov'].forEach(id => document.getElementById(id).classList.toggle('open')); }
+function closeDrw()  { ['hbg','drw','dov'].forEach(id => document.getElementById(id).classList.remove('open')); }
 function toggleSbMob() {
   document.getElementById('sb').classList.toggle('mob-open');
   document.getElementById('sbBack').style.display = document.getElementById('sb').classList.contains('mob-open') ? 'block' : 'none';
@@ -222,13 +318,24 @@ function closeSbMob() {
   document.getElementById('sbBack').style.display = 'none';
 }
 
-/* ── UTILS ──────────────────────────────── */
+/* ── ONBOARDING (primeira visita) ────────────────────────────────────────── */
+function maybeShowOnboarding() {
+  if (localStorage.getItem('sc_onboarded')) return;
+  const ov = document.getElementById('onboarding');
+  if (ov) { ov.classList.add('show'); localStorage.setItem('sc_onboarded', '1'); }
+}
+function closeOnboarding() {
+  const ov = document.getElementById('onboarding');
+  if (ov) ov.classList.remove('show');
+}
+
+/* ── UTILS ───────────────────────────────────────────────────────────────── */
 function d(a, b, c, e) {
   const R = 6371e3, dL = (c - a) * Math.PI / 180, dN = (e - b) * Math.PI / 180,
-    x = Math.sin(dL / 2) ** 2 + Math.cos(a * Math.PI / 180) * Math.cos(c * Math.PI / 180) * Math.sin(dN / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+    x = Math.sin(dL/2)**2 + Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dN/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
 }
-function fd(m) { return m < 1000 ? `${Math.round(m)}m` : `${(m / 1e3).toFixed(1)}km`; }
+function fd(m) { return m < 1000 ? `${Math.round(m)}m` : `${(m/1e3).toFixed(1)}km`; }
 function updCnt(n) { document.getElementById('cntVis').textContent = n !== undefined ? n : gs().length; }
 function toast(msg, err = false) {
   const t = document.getElementById('toast');
@@ -237,149 +344,61 @@ function toast(msg, err = false) {
   setTimeout(() => t.className = 'toast' + (err ? ' err' : ''), 3800);
 }
 
-/* ══════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════════════════
    FEATURED CAROUSEL
-══════════════════════════════════════════ */
+══════════════════════════════════════════════════════════════════════════ */
 let _carIdx = 0, _carItems = [], _carTimer = null;
 
 function buildCarousel() {
   const featured = SPOTS.filter(s => s.isFeatured);
   const el = document.getElementById('fcarousel');
-  if (!featured.length) {
-    el.style.display = 'none';
-    document.body.classList.remove('has-carousel');
-    return;
-  }
+  if (!featured.length) { el.style.display = 'none'; document.body.classList.remove('has-carousel'); return; }
   _carItems = featured;
   el.style.display = 'block';
   document.body.classList.add('has-carousel');
-
-  const carouselEl = document.getElementById('fcarousel');
-  carouselEl.innerHTML = '<div class="fcar-track" id="fcarTrack"></div><div class="fcar-dots" id="fcarDots"></div>';
-
-  const track = document.getElementById('fcarTrack');
-  track.innerHTML = _carItems.map((s, i) => `
+  el.innerHTML = '<div class="fcar-track" id="fcarTrack"></div><div class="fcar-dots" id="fcarDots"></div>';
+  document.getElementById('fcarTrack').innerHTML = _carItems.map((s, i) => `
     <div class="fcar-slide" data-i="${i}">
-      ${s.photo
-        ? `<img src="${s.photo}" alt="${s.name}" draggable="false">`
-        : `<div class="fcar-slide-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
+      ${s.photo ? `<img src="${s.photo}" alt="${s.name}" draggable="false">` : `<div class="fcar-slide-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
       <div class="fcar-grad"></div>
       <div class="fcar-info">
         <div class="fcar-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.86L12 17.77l-6.18 3.23L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Destaque</div>
         <div class="fcar-name">${s.name}</div>
         <div class="fcar-cat">${CL[s.cat] || s.cat}</div>
       </div>
-    </div>
-  `).join('');
-
-  renderCarDots();
-  carGoTo(0);
-  carAutoplay();
-  initCarSwipe();
+    </div>`).join('');
+  renderCarDots(); carGoTo(0); carAutoplay(); initCarSwipe();
 }
 
 function renderCarDots() {
-  const dotsCont = document.getElementById('fcarDots');
-  if (!dotsCont) return;
-  dotsCont.innerHTML = _carItems.map((_, i) =>
-    `<div class="fcar-dot${i === _carIdx ? ' act' : ''}" onclick="carGoTo(${i})"></div>`
-  ).join('');
+  const d = document.getElementById('fcarDots'); if (!d) return;
+  d.innerHTML = _carItems.map((_, i) => `<div class="fcar-dot${i===_carIdx?' act':''}" onclick="carGoTo(${i})"></div>`).join('');
 }
-
 function carGoTo(i) {
   _carIdx = ((i % _carItems.length) + _carItems.length) % _carItems.length;
-  const track = document.getElementById('fcarTrack');
-  if (track) track.style.transform = `translateX(-${_carIdx * 100}%)`;
+  const t = document.getElementById('fcarTrack'); if (t) t.style.transform = `translateX(-${_carIdx*100}%)`;
   renderCarDots();
 }
-
-function carAutoplay() {
-  clearInterval(_carTimer);
-  if (_carItems.length < 2) return;
-  _carTimer = setInterval(() => carGoTo(_carIdx + 1), 5000);
-}
-
+function carAutoplay() { clearInterval(_carTimer); if (_carItems.length < 2) return; _carTimer = setInterval(() => carGoTo(_carIdx+1), 5000); }
 function initCarSwipe() {
-  const el = document.getElementById('fcarousel');
-  if (!el) return;
-
-  let startX = 0, startY = 0, dx = 0, dragging = false, lockAxis = null;
-
-  el.addEventListener('touchstart', e => {
-    const t = e.touches[0];
-    startX = t.clientX; startY = t.clientY;
-    dx = 0; dragging = true; lockAxis = null;
-    const track = document.getElementById('fcarTrack');
-    if (track) track.style.transition = 'none';
-    clearInterval(_carTimer);
-  }, { passive: true });
-
-  el.addEventListener('touchmove', e => {
-    if (!dragging) return;
-    const t = e.touches[0];
-    const curDx = t.clientX - startX;
-    const curDy = t.clientY - startY;
-
-    if (!lockAxis) {
-      lockAxis = Math.abs(curDx) > Math.abs(curDy) ? 'x' : 'y';
-    }
-    if (lockAxis !== 'x') return;
-
-    e.preventDefault();
-    dx = curDx;
-    const track = document.getElementById('fcarTrack');
-    if (track) {
-      const base = -_carIdx * 100;
-      track.style.transform = `translateX(calc(${base}% + ${dx}px))`;
-    }
-  }, { passive: false });
-
-  el.addEventListener('touchend', () => {
-    if (!dragging) return;
-    dragging = false;
-    const track = document.getElementById('fcarTrack');
-    if (track) track.style.transition = '';
-
-    if (lockAxis === 'x') {
-      if (dx < -40)      carGoTo(_carIdx + 1);
-      else if (dx > 40)  carGoTo(_carIdx - 1);
-      else               carGoTo(_carIdx);
-    }
-    dx = 0; lockAxis = null;
-    carAutoplay();
-  });
-
-  el.addEventListener('touchcancel', () => {
-    dragging = false; dx = 0; lockAxis = null;
-    const track = document.getElementById('fcarTrack');
-    if (track) { track.style.transition = ''; carGoTo(_carIdx); }
-    carAutoplay();
-  });
-
-  // tap no slide abre o post (apenas quando não foi swipe)
-  el.addEventListener('click', e => {
-    if (Math.abs(dx) > 5) return;
-    const slide = e.target.closest('.fcar-slide');
-    if (!slide) return;
-    const s = _carItems[_carIdx];
-    if (s) window.location.href = `sobral_post.html?id=${s.id}`;
-  });
+  const el = document.getElementById('fcarousel'); if (!el) return;
+  let startX=0, startY=0, dx=0, dragging=false, lockAxis=null;
+  el.addEventListener('touchstart', e => { const t=e.touches[0]; startX=t.clientX; startY=t.clientY; dx=0; dragging=true; lockAxis=null; const track=document.getElementById('fcarTrack'); if(track) track.style.transition='none'; clearInterval(_carTimer); }, {passive:true});
+  el.addEventListener('touchmove', e => { if(!dragging) return; const t=e.touches[0]; const curDx=t.clientX-startX; const curDy=t.clientY-startY; if(!lockAxis) lockAxis=Math.abs(curDx)>Math.abs(curDy)?'x':'y'; if(lockAxis!=='x') return; e.preventDefault(); dx=curDx; const track=document.getElementById('fcarTrack'); if(track) track.style.transform=`translateX(calc(${-_carIdx*100}% + ${dx}px))`; }, {passive:false});
+  el.addEventListener('touchend', () => { if(!dragging) return; dragging=false; const track=document.getElementById('fcarTrack'); if(track) track.style.transition=''; if(lockAxis==='x'){ if(dx<-40) carGoTo(_carIdx+1); else if(dx>40) carGoTo(_carIdx-1); else carGoTo(_carIdx); } dx=0; lockAxis=null; carAutoplay(); });
+  el.addEventListener('touchcancel', () => { dragging=false; dx=0; lockAxis=null; const track=document.getElementById('fcarTrack'); if(track){track.style.transition=''; carGoTo(_carIdx);} carAutoplay(); });
+  el.addEventListener('click', e => { if(Math.abs(dx)>5) return; const slide=e.target.closest('.fcar-slide'); if(!slide) return; const s=_carItems[_carIdx]; if(s) window.location.href=`sobral_post.html?id=${s.id}`; });
 }
 
-/* ══════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════════════════
    BOTTOM NAV AUTH
-══════════════════════════════════════════ */
+══════════════════════════════════════════════════════════════════════════ */
 function updateBnavAuth(user) {
-  const el = document.getElementById('bnavAuth');
-  if (!el) return;
+  const el = document.getElementById('bnavAuth'); if (!el) return;
   if (user) {
     const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Eu';
     const av   = user.user_metadata?.avatar_url || user.user_metadata?.picture || '';
-    el.innerHTML = `
-      <div style="width:22px;height:22px;border-radius:50%;background:var(--ochre);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--deep);overflow:hidden;flex-shrink:0">
-        ${av ? `<img src="${av}" style="width:100%;height:100%;object-fit:cover">` : name.charAt(0).toUpperCase()}
-      </div>
-      <span>${name.split(' ')[0]}</span>`;
+    el.innerHTML = `<div style="width:22px;height:22px;border-radius:50%;background:var(--ochre);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--deep);overflow:hidden;flex-shrink:0">${av?`<img src="${av}" style="width:100%;height:100%;object-fit:cover">`:name.charAt(0).toUpperCase()}</div><span>${name.split(' ')[0]}</span>`;
     el.onclick = () => { window.location.href = 'sobral_perfil.html'; };
   } else {
     el.innerHTML = `<i data-lucide="user" class="bnav-ico"></i><span>Perfil</span>`;
@@ -388,9 +407,9 @@ function updateBnavAuth(user) {
   }
 }
 
-/* ── AUTH ───────────────────────────────── */
+/* ── AUTH ────────────────────────────────────────────────────────────────── */
 let CUR_USER = null, CUR_REACTIONS = [];
-let REACTION_COUNTS = {}; // cache: { spotId: { like: N, been: N, going: N } }
+let REACTION_COUNTS = {};
 
 async function initAuth() {
   const { data: { session } } = await supa.auth.getSession();
@@ -407,28 +426,18 @@ async function renderAuthChip() {
   if (CUR_USER) {
     const av   = CUR_USER.user_metadata?.avatar_url || CUR_USER.user_metadata?.picture || '';
     const name = CUR_USER.user_metadata?.full_name  || CUR_USER.email?.split('@')[0]    || 'Eu';
-    chip.innerHTML = `<a href="sobral_perfil.html" class="user-chip"><div class="uc-av">${av ? `<img src="${av}" alt="">` : name.charAt(0).toUpperCase()}</div><span>${name.split(' ')[0]}</span></a>`;
+    chip.innerHTML = `<a href="sobral_perfil.html" class="user-chip"><div class="uc-av">${av?`<img src="${av}" alt="">`:name.charAt(0).toUpperCase()}</div><span>${name.split(' ')[0]}</span></a>`;
     if (drawerSection) drawerSection.innerHTML = `
       <a href="sobral_perfil.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="user"></i></div> Meu Perfil</a>
       <a href="sobral_submeter.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="plus"></i></div> Sugerir Ponto ou Evento</a>
       <button class="drw-lnk" onclick="logoutMap();closeDrw()"><div class="drw-ic"><i data-lucide="log-out"></i></div> Sair</button>`;
-    // verifica papel de admin na tabela profiles
     const { data: prof } = await supa.from('profiles').select('role').eq('id', CUR_USER.id).single();
     const isAdmin = prof?.role === 'admin';
-    const adminLink     = document.getElementById('adminLink');
-    const drawerAdminLink = document.getElementById('drawerAdminLink');
-    const drawerAdminSec  = document.getElementById('drawerAdminSec');
-    if (adminLink)      adminLink.style.display      = isAdmin ? '' : 'none';
-    if (drawerAdminLink) drawerAdminLink.style.display = isAdmin ? '' : 'none';
-    if (drawerAdminSec)  drawerAdminSec.style.display  = isAdmin ? '' : 'none';
+    ['adminLink','drawerAdminLink','drawerAdminSec'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display=isAdmin?'':'none'; });
   } else {
     chip.innerHTML = `<a href="sobral_login.html?redirect=/" class="btn-login">Entrar</a>`;
     if (drawerSection) drawerSection.innerHTML = `<a href="sobral_login.html?redirect=/" class="drw-lnk"><div class="drw-ic"><i data-lucide="user"></i></div> Entrar / Criar Conta</a>`;
-    // garante que links do admin ficam ocultos ao deslogar
-    ['adminLink','drawerAdminLink','drawerAdminSec'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
-    });
+    ['adminLink','drawerAdminLink','drawerAdminSec'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
   }
   lucide.createIcons();
 }
@@ -436,8 +445,7 @@ async function renderAuthChip() {
 async function logoutMap() {
   await supa.auth.signOut();
   CUR_USER = null; CUR_REACTIONS = [];
-  renderAuthChip();
-  updateBnavAuth(null);
+  renderAuthChip(); updateBnavAuth(null);
   toast('Sessão encerrada.');
 }
 
@@ -447,71 +455,53 @@ async function loadUserReactions() {
   CUR_REACTIONS = data || [];
 }
 
-/* ── REACTIONS ──────────────────────────── */
+/* ── REACTIONS ───────────────────────────────────────────────────────────── */
 async function renderReactionBtns(spotId) {
-  const el = document.getElementById('rxnBtns');
-  if (!el) return;
-
-  // loading state — mostra skeleton enquanto busca
-  el.innerHTML = `
-    <div style="display:flex;gap:8px;opacity:.35;pointer-events:none">
-      <div style="height:32px;width:72px;border-radius:8px;background:rgba(245,237,216,.15)"></div>
-      <div style="height:32px;width:72px;border-radius:8px;background:rgba(245,237,216,.15)"></div>
-      <div style="height:32px;width:72px;border-radius:8px;background:rgba(245,237,216,.15)"></div>
-    </div>`;
-
-  // usa cache se disponível; só vai ao banco na primeira abertura do spot
+  const el = document.getElementById('rxnBtns'); if (!el) return;
+  el.innerHTML = `<div style="display:flex;gap:8px;opacity:.35;pointer-events:none"><div style="height:32px;width:72px;border-radius:8px;background:rgba(245,237,216,.15)"></div><div style="height:32px;width:72px;border-radius:8px;background:rgba(245,237,216,.15)"></div><div style="height:32px;width:72px;border-radius:8px;background:rgba(245,237,216,.15)"></div></div>`;
   if (!REACTION_COUNTS[spotId]) {
     const { data: counts } = await supa.from('reactions').select('reaction').eq('spot_id', String(spotId));
     REACTION_COUNTS[spotId] = {
-      like:  (counts || []).filter(r => r.reaction === 'like').length,
-      been:  (counts || []).filter(r => r.reaction === 'been').length,
-      going: (counts || []).filter(r => r.reaction === 'going').length,
+      like:  (counts||[]).filter(r=>r.reaction==='like').length,
+      been:  (counts||[]).filter(r=>r.reaction==='been').length,
+      going: (counts||[]).filter(r=>r.reaction==='going').length,
     };
   }
-
-  const { like: likeCount, been: beenCount, going: goingCount } = REACTION_COUNTS[spotId];
-  const myLike  = CUR_REACTIONS.find(r => r.spot_id === String(spotId) && r.reaction === 'like');
-  const myBeen  = CUR_REACTIONS.find(r => r.spot_id === String(spotId) && r.reaction === 'been');
-  const myGoing = CUR_REACTIONS.find(r => r.spot_id === String(spotId) && r.reaction === 'going');
-
-  if (!CUR_USER) {
-    el.innerHTML = `<div style="font-size:11.5px;color:rgba(245,237,216,.4)"><a href="sobral_login.html?redirect=/" style="color:var(--ochre)">Entre</a> para curtir e marcar pontos</div>`;
-    return;
-  }
+  const { like: lc, been: bc, going: gc } = REACTION_COUNTS[spotId];
+  const myLike  = CUR_REACTIONS.find(r=>r.spot_id===String(spotId)&&r.reaction==='like');
+  const myBeen  = CUR_REACTIONS.find(r=>r.spot_id===String(spotId)&&r.reaction==='been');
+  const myGoing = CUR_REACTIONS.find(r=>r.spot_id===String(spotId)&&r.reaction==='going');
+  if (!CUR_USER) { el.innerHTML = `<div style="font-size:11.5px;color:rgba(245,237,216,.4)"><a href="sobral_login.html?redirect=/" style="color:var(--ochre)">Entre</a> para curtir e marcar pontos</div>`; return; }
   el.innerHTML = `
-    <button class="rxn-btn ${myLike  ? 'active-like'  : ''}" onclick="toggleReaction('${spotId}','like')"  title="Gostei"><i data-lucide="heart"    class="icon-sm"></i><span>Gostei</span>${likeCount  > 0 ? `<span class="rxn-count">${likeCount}</span>`  : ''}</button>
-    <button class="rxn-btn ${myBeen  ? 'active-been'  : ''}" onclick="toggleReaction('${spotId}','been')"  title="Eu Fui"><i data-lucide="check"    class="icon-sm"></i><span>Eu Fui</span>${beenCount  > 0 ? `<span class="rxn-count">${beenCount}</span>`  : ''}</button>
-    <button class="rxn-btn ${myGoing ? 'active-going' : ''}" onclick="toggleReaction('${spotId}','going')" title="Eu Vou"><i data-lucide="calendar" class="icon-sm"></i><span>Eu Vou</span>${goingCount > 0 ? `<span class="rxn-count">${goingCount}</span>` : ''}</button>`;
+    <button class="rxn-btn ${myLike?'active-like':''}"  onclick="toggleReaction('${spotId}','like')"  title="Gostei"><i data-lucide="heart"    class="icon-sm"></i><span>Gostei</span>${lc>0?`<span class="rxn-count">${lc}</span>`:''}</button>
+    <button class="rxn-btn ${myBeen?'active-been':''}"  onclick="toggleReaction('${spotId}','been')"  title="Eu Fui"><i data-lucide="check"    class="icon-sm"></i><span>Eu Fui</span>${bc>0?`<span class="rxn-count">${bc}</span>`:''}</button>
+    <button class="rxn-btn ${myGoing?'active-going':''}" onclick="toggleReaction('${spotId}','going')" title="Eu Vou"><i data-lucide="calendar" class="icon-sm"></i><span>Eu Vou</span>${gc>0?`<span class="rxn-count">${gc}</span>`:''}</button>`;
   lucide.createIcons();
+  // mostra raio de distância no mapa ao abrir o painel
+  showRadius(spotId);
 }
 
 async function toggleReaction(spotId, reaction) {
   if (!CUR_USER) { toast('Entre para reagir aos pontos!', true); return; }
-  const existing = CUR_REACTIONS.find(r => r.spot_id === String(spotId) && r.reaction === reaction);
+  const existing = CUR_REACTIONS.find(r=>r.spot_id===String(spotId)&&r.reaction===reaction);
   if (existing) {
     await supa.from('reactions').delete().eq('id', existing.id);
-    CUR_REACTIONS = CUR_REACTIONS.filter(r => r.id !== existing.id);
-    // atualiza cache local
-    if (REACTION_COUNTS[spotId]) REACTION_COUNTS[spotId][reaction] = Math.max(0, REACTION_COUNTS[spotId][reaction] - 1);
-    toast(reaction === 'like' ? 'Gostei removido' : reaction === 'been' ? 'Eu Fui removido' : 'Eu Vou removido');
+    CUR_REACTIONS = CUR_REACTIONS.filter(r=>r.id!==existing.id);
+    if (REACTION_COUNTS[spotId]) REACTION_COUNTS[spotId][reaction] = Math.max(0, REACTION_COUNTS[spotId][reaction]-1);
+    toast(reaction==='like'?'Gostei removido':reaction==='been'?'Eu Fui removido':'Eu Vou removido');
   } else {
-    const { data } = await supa.from('reactions').insert({
-      user_id: CUR_USER.id, spot_id: String(spotId), reaction, spot_type: 'spot'
-    }).select().single();
+    const { data } = await supa.from('reactions').insert({ user_id:CUR_USER.id, spot_id:String(spotId), reaction, spot_type:'spot' }).select().single();
     if (data) CUR_REACTIONS.push(data);
-    // atualiza cache local
-    if (REACTION_COUNTS[spotId]) REACTION_COUNTS[spotId][reaction] += 1;
-    toast(reaction === 'like' ? 'Gostei!' : reaction === 'been' ? 'Marcado como Eu Fui!' : 'Marcado como Eu Vou!');
+    if (REACTION_COUNTS[spotId]) REACTION_COUNTS[spotId][reaction]+=1;
+    toast(reaction==='like'?'Gostei!':reaction==='been'?'Marcado como Eu Fui!':'Marcado como Eu Vou!');
   }
   renderReactionBtns(spotId);
 }
 
-/* ── BOOT ───────────────────────────────── */
+/* ── BOOT ────────────────────────────────────────────────────────────────── */
 window.addEventListener('load', async () => {
   const ok = await loadSpots();
   if (!ok) {
-    // mantém a tela de loading e mostra erro — não inicializa o mapa
     const l = document.getElementById('loading');
     l.querySelector('.lsp').style.display = 'none';
     const err = document.createElement('div');
@@ -524,8 +514,10 @@ window.addEventListener('load', async () => {
   buildCarousel();
   startRT();
   initAuth();
+  initDpDrag();
   lucide.createIcons();
   const l = document.getElementById('loading');
   l.classList.add('fade');
   setTimeout(() => l.remove(), 700);
+  setTimeout(maybeShowOnboarding, 1200);
 });
