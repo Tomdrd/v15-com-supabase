@@ -28,10 +28,11 @@
     </div>
   </a>
   <nav class="hn">
-    <a href="/" class="nl" style="color:var(--ochre)">Mapa</a>
-    <a href="sobral_sobre.html" class="nl">Sobre</a>
-    <a href="sobral_contato.html" class="nl">Contato</a>
-    <a href="sobral_game.html" class="nl" style="color:var(--gold)"><i data-lucide="gamepad-2" style="width:14px;height:14px"></i> Quiz</a>
+    
+    <a href="sobral_sobre.html" class="nl"><i data-lucide="info" style="width:14px;height:14px"></i> Sobre</a>
+    <a href="sobral_contato.html" class="nl"><i data-lucide="mail" style="width:14px;height:14px"></i> Contato</a>
+    <a href="sobral_noticias.html" class="nl"><i data-lucide="newspaper" style="width:14px;height:14px"></i> Notícias</a>
+    <a href="sobral_game.html" class="nl"><i data-lucide="gamepad-2" style="width:14px;height:14px"></i> Quiz</a>
     <button class="btn-geo" id="btnGeo" onclick="getUserLocation()">
       <i data-lucide="navigation" class="icon-sm"></i>
       Localização
@@ -139,10 +140,6 @@
 
 <!-- BOTTOM NAV (mobile) -->
 <nav class="bnav" id="bnav">
-  <a href="/" class="bnav-item active" data-page="map">
-    <i data-lucide="map" class="bnav-ico"></i>
-    <span>Mapa</span>
-  </a>
   <button class="bnav-item" data-page="list" onclick="toggleSbMob()">
     <i data-lucide="layers" class="bnav-ico"></i>
     <span>Pontos</span>
