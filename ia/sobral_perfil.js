@@ -5,31 +5,12 @@ const CAT_LABELS={todos:'Todos',religioso:'Religioso',cultura:'Cultura',historic
 const REACTION_LABELS={like:'Gostei',been:'Eu Fui',going:'Eu Vou'};
 const CAT_COLORS={religioso:'#9B8EC4',cultura:'#C8871A',historico:'#7B9E6B',natureza:'#4CAF82',lazer:'#E07B54'};
 
-let USER=null,PROFILE=null,SUBS=[],REACTIONS=[],SPOTS_MAP={};
-let currentTab='mymap';
-let currentFavFilter='all';
+let USER=null,PROFILE=null,SUBS=[],REACTIONS=[],SPOTS_MAP={},currentTab='submissions';
 let profileMap=null;
 
 function toggleDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id)?.classList.toggle('open'));}
 function closeDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id)?.classList.remove('open'));}
 function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type==='ok'?'ok':type==='err'?'err':'');setTimeout(()=>t.className='toast',3800);}
-
-(function injectFadeStyle(){
-  const s=document.createElement('style');
-  s.textContent=`
-    @keyframes tabFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-    .tab-fade{animation:tabFadeIn .22s ease forwards}
-    .pstat-btn{background:none;border:none;cursor:pointer;text-align:center;padding:6px 10px;border-radius:10px;transition:.15s;font-family:'Plus Jakarta Sans',sans-serif}
-    .pstat-btn:hover{background:rgba(200,135,26,.12)}
-    .pstat-btn .pstat-num{font-size:22px;font-weight:800;color:var(--ochre)}
-    .pstat-btn .pstat-lbl{font-size:11px;color:var(--muted)}
-    .fav-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
-    .fav-pill{padding:6px 14px;border-radius:20px;font-size:12.5px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:'Plus Jakarta Sans',sans-serif;transition:.15s}
-    .fav-pill:hover{color:var(--cream);border-color:rgba(200,135,26,.4)}
-    .fav-pill.active{background:rgba(200,135,26,.15);border-color:var(--ochre);color:var(--ochre)}
-  `;
-  document.head.appendChild(s);
-})();
 
 async function init(){
   const{data:{session}}=await supa.auth.getSession();
@@ -72,18 +53,10 @@ function renderPage(){
           <div class="profile-name">${name}</div>
           <div class="profile-email">${USER.email}</div>
           <div class="profile-stats">
-            <button class="pstat-btn" onclick="showTab('submissions')" title="Ver Submissões">
-              <div class="pstat-num">${SUBS.length}</div><div class="pstat-lbl">Submissões</div>
-            </button>
-            <button class="pstat-btn" onclick="showFavTab('like')" title="Locais que gostei">
-              <div class="pstat-num">${likeCount}</div><div class="pstat-lbl">Gostei</div>
-            </button>
-            <button class="pstat-btn" onclick="showFavTab('been')" title="Locais que visitei">
-              <div class="pstat-num">${beenCount}</div><div class="pstat-lbl">Fui</div>
-            </button>
-            <button class="pstat-btn" onclick="showFavTab('going')" title="Locais que vou visitar">
-              <div class="pstat-num">${goingCount}</div><div class="pstat-lbl">Vou</div>
-            </button>
+            <div class="pstat"><div class="pstat-num">${SUBS.length}</div><div class="pstat-lbl">Submissões</div></div>
+            <div class="pstat"><div class="pstat-num">${likeCount}</div><div class="pstat-lbl">Gostei</div></div>
+            <div class="pstat"><div class="pstat-num">${beenCount}</div><div class="pstat-lbl">Fui</div></div>
+            <div class="pstat"><div class="pstat-num">${goingCount}</div><div class="pstat-lbl">Vou</div></div>
           </div>
         </div>
         <div style="padding-bottom:16px;flex-shrink:0">
@@ -94,79 +67,65 @@ function renderPage(){
 
     <div class="profile-tabs">
       <div class="profile-tabs-inner">
-        <button class="ptab" data-tab="mymap"       onclick="showTab('mymap')"><i data-lucide="map"      style="width:14px;height:14px;pointer-events:none"></i> Meu Mapa</button>
-        <button class="ptab" data-tab="favorites"   onclick="showTab('favorites')"><i data-lucide="heart"    style="width:14px;height:14px;pointer-events:none"></i> Favoritos</button>
-        <button class="ptab" data-tab="submissions" onclick="showTab('submissions')"><i data-lucide="map-pin" style="width:14px;height:14px;pointer-events:none"></i> Submissões</button>
-        <button class="ptab" data-tab="settings"    onclick="showTab('settings')"><i data-lucide="settings" style="width:14px;height:14px;pointer-events:none"></i> Configurações</button>
+        <button class="ptab ${currentTab==='submissions'?'active':''}" onclick="showTab('submissions')"><i data-lucide="map-pin" style="width:14px;height:14px;pointer-events:none"></i> Submissões</button>
+        <button class="ptab ${currentTab==='likes'?'active':''}" onclick="showTab('likes')"><i data-lucide="heart" style="width:14px;height:14px;pointer-events:none"></i> Gostei</button>
+        <button class="ptab ${currentTab==='been'?'active':''}" onclick="showTab('been')"><i data-lucide="check-circle" style="width:14px;height:14px;pointer-events:none"></i> Eu Fui</button>
+        <button class="ptab ${currentTab==='going'?'active':''}" onclick="showTab('going')"><i data-lucide="calendar" style="width:14px;height:14px;pointer-events:none"></i> Eu Vou</button>
+        <button class="ptab ${currentTab==='mymap'?'active':''}" onclick="showTab('mymap')"><i data-lucide="map" style="width:14px;height:14px;pointer-events:none"></i> Meu Mapa</button>
+        <button class="ptab ${currentTab==='settings'?'active':''}" onclick="showTab('settings')"><i data-lucide="settings" style="width:14px;height:14px;pointer-events:none"></i> Configurações</button>
       </div>
     </div>
 
     <div class="profile-content" id="tabContent"></div>`;
 
-  setActiveTab(currentTab);
   renderTab(currentTab);
   lucide?.createIcons();
 }
 
-function setActiveTab(tab){
-  document.querySelectorAll('.ptab').forEach(b=>{
-    b.classList.toggle('active',b.dataset.tab===tab);
-  });
-}
-
 function showTab(tab){
   currentTab=tab;
-  setActiveTab(tab);
+  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('active'));
+  const labels={submissions:'Submissões',likes:'Gostei',been:'Fui',going:'Vou',mymap:'Mapa',settings:'Configurações'};
+  document.querySelectorAll('.ptab').forEach(b=>{
+    if(b.textContent.trim().includes(labels[tab])) b.classList.add('active');
+  });
   renderTab(tab);
-}
-
-function showFavTab(filter){
-  currentFavFilter=filter;
-  showTab('favorites');
 }
 
 function renderTab(tab){
   const c=document.getElementById('tabContent');
-  if(!c) return;
-  if(tab==='mymap'){ renderMyMap(); return; }
-  let html='';
-  if(tab==='favorites')   html=renderFavorites();
-  else if(tab==='submissions') html=renderSubmissions();
-  else if(tab==='settings')    html=renderSettings();
-  c.classList.remove('tab-fade');
-  void c.offsetWidth;
-  c.innerHTML=html;
-  c.classList.add('tab-fade');
+  if(tab==='submissions') c.innerHTML=renderSubmissions();
+  else if(tab==='likes') c.innerHTML=renderReactions('like');
+  else if(tab==='been') c.innerHTML=renderReactions('been');
+  else if(tab==='going') c.innerHTML=renderReactions('going');
+  else if(tab==='mymap'){ c.innerHTML=renderMyMap(); initProfileMap(); }
+  else if(tab==='settings') c.innerHTML=renderSettings();
   lucide?.createIcons();
 }
 
 /* ── Meu Mapa ─────────────────────────────────────────────────────────── */
 function renderMyMap(){
-  const beenSpots=REACTIONS.filter(r=>r.reaction==='been').map(r=>SPOTS_MAP[r.spot_id]).filter(Boolean);
-  const goingSpots=REACTIONS.filter(r=>r.reaction==='going').map(r=>SPOTS_MAP[r.spot_id]).filter(Boolean);
-  const allSpots=[...new Map([...beenSpots,...goingSpots].map(s=>[s.id,s])).values()];
-  const c=document.getElementById('tabContent');
+  const beenSpots  = REACTIONS.filter(r=>r.reaction==='been').map(r=>SPOTS_MAP[r.spot_id]).filter(Boolean);
+  const goingSpots = REACTIONS.filter(r=>r.reaction==='going').map(r=>SPOTS_MAP[r.spot_id]).filter(Boolean);
+  const allSpots   = [...new Map([...beenSpots,...goingSpots].map(s=>[s.id,s])).values()];
 
-  if(!allSpots.length){
-    c.classList.remove('tab-fade');void c.offsetWidth;
-    c.innerHTML=`<div class="empty">
-      <div class="empty-icon"><i data-lucide="map" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div>
-      <h3>Nenhum ponto no seu roteiro</h3>
-      <p>Marque lugares como "Eu Fui" ou "Eu Vou" no mapa para criar seu roteiro pessoal.</p>
-      <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="map" style="width:14px;height:14px;pointer-events:none"></i> Explorar o Mapa</a>
-    </div>`;
-    c.classList.add('tab-fade');lucide?.createIcons();return;
-  }
-
-  const beenIds=new Set(beenSpots.map(s=>s.id));
-  const goingIds=new Set(goingSpots.map(s=>s.id));
-
-  const legend=`<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">
-    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div style="width:12px;height:12px;border-radius:50%;background:#4CAF82;flex-shrink:0"></div>Eu Fui (${beenSpots.length})</div>
-    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div style="width:12px;height:12px;border-radius:50%;background:#C8871A;flex-shrink:0"></div>Eu Vou (${goingSpots.length})</div>
+  if(!allSpots.length) return `<div class="empty">
+    <div class="empty-icon"><i data-lucide="map" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div>
+    <h3>Nenhum ponto no seu roteiro</h3>
+    <p>Marque lugares como "Eu Fui" ou "Eu Vou" no mapa para criar seu roteiro pessoal.</p>
+    <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="map" style="width:14px;height:14px;pointer-events:none"></i> Explorar o Mapa</a>
   </div>`;
 
-  const routeList=allSpots.map((s,i)=>`
+  const beenIds  = new Set(beenSpots.map(s=>s.id));
+  const goingIds = new Set(goingSpots.map(s=>s.id));
+
+  const legend = `
+    <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div style="width:12px;height:12px;border-radius:50%;background:#4CAF82;flex-shrink:0"></div>Eu Fui (${beenSpots.length})</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><div style="width:12px;height:12px;border-radius:50%;background:#C8871A;flex-shrink:0"></div>Eu Vou (${goingSpots.length})</div>
+    </div>`;
+
+  const routeList = allSpots.map((s,i)=>`
     <a href="index.html?id=${s.id}" class="route-item">
       <div class="route-num">${i+1}</div>
       <div class="route-thumb" style="background:${s.color||'#888'}22">
@@ -182,76 +141,50 @@ function renderMyMap(){
       </div>
     </a>`).join('');
 
-  c.classList.remove('tab-fade');void c.offsetWidth;
-  c.innerHTML=`${legend}<div id="profileMap" style="height:320px;border-radius:14px;overflow:hidden;margin-bottom:20px;border:1px solid rgba(200,135,26,.2)"></div>
+  return `
+    ${legend}
+    <div id="profileMap" style="height:320px;border-radius:14px;overflow:hidden;margin-bottom:20px;border:1px solid rgba(200,135,26,.2)"></div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:500">Roteiro (${allSpots.length} ponto${allSpots.length!==1?'s':''})</div>
     <div style="display:flex;flex-direction:column;gap:8px">${routeList}</div>`;
-  c.classList.add('tab-fade');
-  lucide?.createIcons();
-  initProfileMap();
 }
 
 function initProfileMap(){
   setTimeout(()=>{
     const el=document.getElementById('profileMap');
     if(!el) return;
-    if(profileMap){profileMap.remove();profileMap=null;}
+    if(profileMap){ profileMap.remove(); profileMap=null; }
+
     profileMap=L.map('profileMap',{center:[-3.688,-40.3497],zoom:13,zoomControl:true});
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OSM © CARTO',maxZoom:19,subdomains:'abcd'}).addTo(profileMap);
-    const beenSpots=REACTIONS.filter(r=>r.reaction==='been').map(r=>SPOTS_MAP[r.spot_id]).filter(Boolean);
-    const goingSpots=REACTIONS.filter(r=>r.reaction==='going').map(r=>SPOTS_MAP[r.spot_id]).filter(Boolean);
-    const beenIds=new Set(beenSpots.map(s=>s.id));
-    const allSpots=[...new Map([...beenSpots,...goingSpots].map(s=>[s.id,s])).values()];
+
+    const beenSpots  = REACTIONS.filter(r=>r.reaction==='been').map(r=>SPOTS_MAP[r.spot_id]).filter(Boolean);
+    const goingSpots = REACTIONS.filter(r=>r.reaction==='going').map(r=>SPOTS_MAP[r.spot_id]).filter(Boolean);
+    const beenIds    = new Set(beenSpots.map(s=>s.id));
+    const allSpots   = [...new Map([...beenSpots,...goingSpots].map(s=>[s.id,s])).values()];
+
     const bounds=[];
     allSpots.forEach((s,i)=>{
       const color=beenIds.has(s.id)?'#4CAF82':'#C8871A';
-      const m=L.marker([s.lat,s.lng],{icon:L.divIcon({html:`<div style="width:32px;height:32px;background:${color};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;border:2px solid rgba(255,255,255,.4);box-shadow:0 2px 8px rgba(0,0,0,.4)">${i+1}</div>`,className:'',iconSize:[32,32],iconAnchor:[16,16]})}).addTo(profileMap);
+      const m=L.marker([s.lat,s.lng],{
+        icon:L.divIcon({
+          html:`<div style="width:32px;height:32px;background:${color};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;border:2px solid rgba(255,255,255,.4);box-shadow:0 2px 8px rgba(0,0,0,.4)">${i+1}</div>`,
+          className:'',iconSize:[32,32],iconAnchor:[16,16]
+        })
+      }).addTo(profileMap);
       m.bindPopup(`<div class="pp-title">${s.name}</div><div class="pp-sub"><a href="index.html?id=${s.id}" style="color:var(--ochre)">Ver no mapa →</a></div>`);
       bounds.push([s.lat,s.lng]);
     });
-    if(bounds.length>1) L.polyline(bounds,{color:'rgba(200,135,26,.4)',weight:2,dashArray:'5 5'}).addTo(profileMap);
+
+    // linha conectando os pontos em ordem (roteiro)
+    if(bounds.length>1){
+      L.polyline(bounds,{color:'rgba(200,135,26,.4)',weight:2,dashArray:'5 5'}).addTo(profileMap);
+    }
+
     if(bounds.length) profileMap.fitBounds(L.latLngBounds(bounds).pad(.2));
   },100);
 }
 
-/* ── Favoritos ────────────────────────────────────────────────────────── */
-function renderFavorites(){
-  const all=REACTIONS.filter(r=>['like','been','going'].includes(r.reaction));
-  const filtered=currentFavFilter==='all'?all:all.filter(r=>r.reaction===currentFavFilter);
-  const counts={all:all.length,like:all.filter(r=>r.reaction==='like').length,been:all.filter(r=>r.reaction==='been').length,going:all.filter(r=>r.reaction==='going').length};
-  const pills=[{key:'all',label:`Todos (${counts.all})`},{key:'like',label:`❤️ Gostei (${counts.like})`},{key:'been',label:`✅ Eu Fui (${counts.been})`},{key:'going',label:`📅 Eu Vou (${counts.going})`}]
-    .map(p=>`<button class="fav-pill${currentFavFilter===p.key?' active':''}" onclick="setFavFilter('${p.key}')">${p.label}</button>`).join('');
-
-  if(!filtered.length){
-    const msg=currentFavFilter==='all'?'Explore o mapa e marque lugares que você gostou, visitou ou quer visitar!':currentFavFilter==='like'?'Curta locais no mapa para eles aparecerem aqui.':currentFavFilter==='been'?'Marque lugares que você já visitou no mapa.':'Planeje sua visita marcando lugares como "Eu Vou".';
-    return `<div class="fav-pills">${pills}</div><div class="empty"><div class="empty-icon"><i data-lucide="heart" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div><h3>Nenhum local aqui</h3><p>${msg}</p><a href="index.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="map" style="width:14px;height:14px;pointer-events:none"></i> Explorar o Mapa</a></div>`;
-  }
-
-  const iconMap={like:'heart',been:'check-circle',going:'calendar'};
-  const colorMap={like:'rgba(200,135,26,.1)',been:'rgba(76,175,130,.1)',going:'rgba(100,64,180,.1)'};
-  const cards=filtered.map(r=>`
-    <a href="index.html?id=${r.spot_id}" class="reaction-card">
-      <div class="rc-emoji" style="background:${colorMap[r.reaction]}"><i data-lucide="${iconMap[r.reaction]}" style="width:22px;height:22px;stroke-width:1.5;opacity:.7"></i></div>
-      <div class="rc-info">
-        <div class="rc-name">${SPOTS_MAP[r.spot_id]?.name||'Ponto Turístico'}</div>
-        <div class="rc-meta">${CAT_LABELS[SPOTS_MAP[r.spot_id]?.cat]||''} · ${new Date(r.created_at).toLocaleDateString('pt-BR')}</div>
-      </div>
-      <div class="rc-type">${REACTION_LABELS[r.reaction]}</div>
-    </a>`).join('');
-
-  return `<div class="fav-pills">${pills}</div><div style="font-size:13px;color:var(--muted);margin-bottom:14px">${filtered.length} lugar${filtered.length!==1?'es':''}</div><div style="display:flex;flex-direction:column;gap:10px">${cards}</div>`;
-}
-
-function setFavFilter(filter){
-  currentFavFilter=filter;
-  const c=document.getElementById('tabContent');
-  c.classList.remove('tab-fade');void c.offsetWidth;
-  c.innerHTML=renderFavorites();
-  c.classList.add('tab-fade');
-  lucide?.createIcons();
-}
-
-/* ── Submissões ──────────────────────────────────────────────────────── */
+/* ── Submissões ──────────────────────────────────────────────────────────── */
 function renderSubmissions(){
   if(!SUBS.length) return `<div class="empty"><div class="empty-icon"><i data-lucide="map-pin" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div><h3>Nenhuma submissão ainda</h3><p>Envie um ponto turístico ou evento para que ele apareça no mapa!</p><a href="sobral_submeter.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="plus" style="width:14px;height:14px;pointer-events:none"></i> Submeter Ponto ou Evento</a></div>`;
   return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><div style="font-size:14px;color:var(--muted)">${SUBS.length} submissão${SUBS.length!==1?'s':''}</div><a href="sobral_submeter.html" class="btn btn-primary btn-sm"><i data-lucide="plus" style="width:12px;height:12px;pointer-events:none"></i> Nova</a></div>
@@ -275,7 +208,21 @@ function renderSubmissions(){
     </div>`).join('')}</div>`;
 }
 
-/* ── Configurações ───────────────────────────────────────────────────── */
+/* ── Reações ─────────────────────────────────────────────────────────────── */
+function renderReactions(type){
+  const items=REACTIONS.filter(r=>r.reaction===type);
+  const label=REACTION_LABELS[type];
+  if(!items.length) return `<div class="empty"><div class="empty-icon">${type==='like'?'<i data-lucide="heart" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i>':type==='been'?'<i data-lucide="check-circle" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i>':'<i data-lucide="calendar" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i>'}</div><h3>Nenhum local aqui ainda</h3><p>Explore o mapa e marque lugares que você ${type==='like'?'gostou':type==='been'?'visitou':'quer visitar'}!</p><a href="index.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="map" style="width:14px;height:14px;pointer-events:none"></i> Explorar o Mapa</a></div>`;
+  return `<div style="font-size:14px;color:var(--muted);margin-bottom:18px">${items.length} lugar${items.length!==1?'es':''} marcado${items.length!==1?'s':''} como "${label}"</div>
+  <div style="display:flex;flex-direction:column;gap:10px">${items.map(r=>`
+    <a href="index.html?id=${r.spot_id}" class="reaction-card">
+      <div class="rc-emoji" style="background:rgba(200,135,26,.1)"><i data-lucide="${type==='like'?'heart':type==='been'?'check-circle':'calendar'}" style="width:22px;height:22px;stroke-width:1.5;opacity:.7"></i></div>
+      <div class="rc-info"><div class="rc-name">${SPOTS_MAP[r.spot_id]?.name||'Ponto Turístico'}</div><div class="rc-meta">${new Date(r.created_at).toLocaleDateString('pt-BR')}</div></div>
+      <div class="rc-type">${label}</div>
+    </a>`).join('')}</div>`;
+}
+
+/* ── Configurações ───────────────────────────────────────────────────────── */
 function renderSettings(){
   const name=PROFILE.full_name||USER.user_metadata?.full_name||'';
   const bio=PROFILE.bio||'';

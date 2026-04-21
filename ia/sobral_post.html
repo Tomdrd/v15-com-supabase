@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <script src="head.js"></script>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sobral Cultural — Post</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="stylesheet" href="sobral_post.css">
+</head>
+<body>
+
+<div class="pgb"><div class="pgf" id="pgf"></div></div>
+
+<div class="topbar">
+  <a href="index.html" class="tb-logo">
+    <img src="logo.png" alt="Sobral Cultural" class="tb-logo-img">
+    <div class="tb-logo-text">
+      <span class="tb-logo-name"></span>
+    </div>
+  </a>
+  <nav class="tb-nav">
+    <a href="index.html"><i data-lucide="map"></i> Mapa</a>
+    <a href="sobral_sobre.html"><i data-lucide="info"></i> Sobre</a>
+    <a href="sobral_contato.html"><i data-lucide="mail"></i> Contato</a>
+    <a href="sobral_noticias.html"><i data-lucide="newspaper"></i> Notícias</a>
+    <a href="sobral_game.html"><i data-lucide="gamepad-2"></i> Quiz</a>
+  </nav>
+  <button class="hbg" id="hbg" onclick="toggleDrw()"><span></span><span></span><span></span></button>
+</div>
+
+<div class="dov" id="dov" onclick="closeDrw()"></div>
+<div class="drw" id="drw">
+  <div class="drw-inner">
+    <div class="drw-sec">Navegação</div>
+    <a href="index.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="map"></i></div> Mapa Turístico</a>
+    <a href="sobral_sobre.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="info"></i></div> Sobre o Projeto</a>
+    <a href="sobral_contato.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="mail"></i></div> Contato</a>
+    <a href="sobral_admin.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="settings"></i></div> Painel Admin</a>
+  </div>
+</div>
+
+<div id="root">
+  <div class="loading-st"><div class="lsp"></div><div style="font-size:13px;color:rgba(245,237,216,.4)">Carregando…</div></div>
+</div>
+
+<button class="floatback" onclick="window.history.back()" title="Voltar">←</button>
+
+<script src="sobral_post.js"></script>
+</body>
+</html>
