@@ -167,7 +167,12 @@ header{position:fixed;top:0;left:0;right:0;z-index:2000;height:var(--H);backgrou
   background:var(--deep);
   border-bottom:1px solid rgba(200,135,26,.2);
   box-shadow:0 8px 32px rgba(0,0,0,.5);
+  opacity:1;
+  transform:translateY(0);
+  transition:opacity .32s ease,transform .32s ease,visibility .32s ease;
+  visibility:visible;
 }
+.fcarousel.is-hiding{opacity:0;transform:translateY(-14px);visibility:hidden}
 .fcar-track{
   display:flex;height:100%;
   will-change:transform;

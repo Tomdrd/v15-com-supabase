@@ -144,9 +144,11 @@ function buildList() {
 
 function focusSpot(id) {
   const s = gs().find(x => x.id === id); if (!s) return;
-  map.flyTo([s.lat, s.lng], 17, { duration: 1.2 });
-  setTimeout(() => { if (markers[id]) markers[id].openPopup(); }, 1300);
-  openD(id); hlCard(id); closeSbMob();
+  hideCarouselSmooth(() => {
+    map.flyTo([s.lat, s.lng], 17, { duration: 1.2 });
+    setTimeout(() => { if (markers[id]) markers[id].openPopup(); }, 1300);
+    openD(id); hlCard(id); closeSbMob();
+  });
 }
 
 /* ── DETAIL PANEL (bottom sheet drag) ──────────────────────────────────── */
@@ -348,14 +350,21 @@ function toast(msg, err = false) {
    FEATURED CAROUSEL
 ══════════════════════════════════════════════════════════════════════════ */
 let _carIdx = 0, _carItems = [], _carTimer = null;
+let _carouselHiddenByInteraction = false;
 
 function buildCarousel() {
   const featured = SPOTS.filter(s => s.isFeatured);
   const el = document.getElementById('fcarousel');
   if (!featured.length) { el.style.display = 'none'; document.body.classList.remove('has-carousel'); return; }
   _carItems = featured;
+  if (_carouselHiddenByInteraction) {
+    el.style.display = 'none';
+    document.body.classList.remove('has-carousel');
+    return;
+  }
   el.style.display = 'block';
   document.body.classList.add('has-carousel');
+  el.classList.remove('is-hiding');
   el.innerHTML = '<div class="fcar-track" id="fcarTrack"></div><div class="fcar-dots" id="fcarDots"></div>';
   document.getElementById('fcarTrack').innerHTML = _carItems.map((s, i) => `
     <div class="fcar-slide" data-i="${i}">
@@ -388,6 +397,24 @@ function initCarSwipe() {
   el.addEventListener('touchend', () => { if(!dragging) return; dragging=false; const track=document.getElementById('fcarTrack'); if(track) track.style.transition=''; if(lockAxis==='x'){ if(dx<-40) carGoTo(_carIdx+1); else if(dx>40) carGoTo(_carIdx-1); else carGoTo(_carIdx); } dx=0; lockAxis=null; carAutoplay(); });
   el.addEventListener('touchcancel', () => { dragging=false; dx=0; lockAxis=null; const track=document.getElementById('fcarTrack'); if(track){track.style.transition=''; carGoTo(_carIdx);} carAutoplay(); });
   el.addEventListener('click', e => { if(Math.abs(dx)>5) return; const slide=e.target.closest('.fcar-slide'); if(!slide) return; const s=_carItems[_carIdx]; if(s) window.location.href=`sobral_post.html?id=${s.id}`; });
+}
+
+function hideCarouselSmooth(afterHide) {
+  const el = document.getElementById('fcarousel');
+  const hasCarouselOnScreen = document.body.classList.contains('has-carousel') && el && el.style.display !== 'none';
+  if (!hasCarouselOnScreen) {
+    if (typeof afterHide === 'function') afterHide();
+    return;
+  }
+  _carouselHiddenByInteraction = true;
+  clearInterval(_carTimer);
+  el.classList.add('is-hiding');
+  setTimeout(() => {
+    el.style.display = 'none';
+    document.body.classList.remove('has-carousel');
+    el.classList.remove('is-hiding');
+    if (typeof afterHide === 'function') afterHide();
+  }, 320);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
