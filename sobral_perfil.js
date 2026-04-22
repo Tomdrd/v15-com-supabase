@@ -70,10 +70,9 @@ function renderPage(){
         </div>
         <div class="profile-info">
           <div class="profile-name">${name}</div>
-          <div class="profile-email">${USER.email}</div>
           <div class="profile-stats">
-            <button class="pstat-btn" onclick="showTab('submissions')" title="Ver Submissões">
-              <div class="pstat-num">${SUBS.length}</div><div class="pstat-lbl">Submissões</div>
+            <button class="pstat-btn" onclick="showTab('submissions')" title="Ver Envios">
+              <div class="pstat-num">${SUBS.length}</div><div class="pstat-lbl">Envios</div>
             </button>
             <button class="pstat-btn" onclick="showFavTab('like')" title="Locais que gostei">
               <div class="pstat-num">${likeCount}</div><div class="pstat-lbl">Gostei</div>
@@ -96,7 +95,7 @@ function renderPage(){
       <div class="profile-tabs-inner">
         <button class="ptab" data-tab="mymap"       onclick="showTab('mymap')"><i data-lucide="map"      style="width:14px;height:14px;pointer-events:none"></i> Meu Mapa</button>
         <button class="ptab" data-tab="favorites"   onclick="showTab('favorites')"><i data-lucide="heart"    style="width:14px;height:14px;pointer-events:none"></i> Favoritos</button>
-        <button class="ptab" data-tab="submissions" onclick="showTab('submissions')"><i data-lucide="map-pin" style="width:14px;height:14px;pointer-events:none"></i> Submissões</button>
+        <button class="ptab" data-tab="submissions" onclick="showTab('submissions')"><i data-lucide="map-pin" style="width:14px;height:14px;pointer-events:none"></i> Envios</button>
         <button class="ptab" data-tab="settings"    onclick="showTab('settings')"><i data-lucide="settings" style="width:14px;height:14px;pointer-events:none"></i> Configurações</button>
       </div>
     </div>
@@ -219,7 +218,7 @@ function renderFavorites(){
   const all=REACTIONS.filter(r=>['like','been','going'].includes(r.reaction));
   const filtered=currentFavFilter==='all'?all:all.filter(r=>r.reaction===currentFavFilter);
   const counts={all:all.length,like:all.filter(r=>r.reaction==='like').length,been:all.filter(r=>r.reaction==='been').length,going:all.filter(r=>r.reaction==='going').length};
-  const pills=[{key:'all',label:`Todos (${counts.all})`},{key:'like',label:`❤️ Gostei (${counts.like})`},{key:'been',label:`✅ Eu Fui (${counts.been})`},{key:'going',label:`📅 Eu Vou (${counts.going})`}]
+  const pills=[{key:'all',label:`<i data-lucide="list" style="width:16px;height:16px"></i> Todos (${counts.all})`},{key:'like',label:`<i data-lucide="heart" style="width:16px;height:16px"></i> Gostei (${counts.like})`},{key:'been',label:`<i data-lucide="check-circle" style="width:16px;height:16px"></i> Eu Fui (${counts.been})`},{key:'going',label:`<i data-lucide="calendar" style="width:16px;height:16px"></i> Eu Vou (${counts.going})`}]
     .map(p=>`<button class="fav-pill${currentFavFilter===p.key?' active':''}" onclick="setFavFilter('${p.key}')">${p.label}</button>`).join('');
 
   if(!filtered.length){
@@ -251,10 +250,10 @@ function setFavFilter(filter){
   lucide?.createIcons();
 }
 
-/* ── Submissões ──────────────────────────────────────────────────────── */
+/* ── Envios ──────────────────────────────────────────────────────── */
 function renderSubmissions(){
-  if(!SUBS.length) return `<div class="empty"><div class="empty-icon"><i data-lucide="map-pin" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div><h3>Nenhuma submissão ainda</h3><p>Envie um ponto turístico ou evento para que ele apareça no mapa!</p><a href="sobral_submeter.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="plus" style="width:14px;height:14px;pointer-events:none"></i> Submeter Ponto ou Evento</a></div>`;
-  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><div style="font-size:14px;color:var(--muted)">${SUBS.length} submissão${SUBS.length!==1?'s':''}</div><a href="sobral_submeter.html" class="btn btn-primary btn-sm"><i data-lucide="plus" style="width:12px;height:12px;pointer-events:none"></i> Nova</a></div>
+  if(!SUBS.length) return `<div class="empty"><div class="empty-icon"><i data-lucide="map-pin" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div><h3>Nenhum envio ainda</h3><p>Envie um ponto turístico ou evento para que ele apareça no mapa!</p><a href="sobral_submeter.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="plus" style="width:14px;height:14px;pointer-events:none"></i> Enviar Ponto ou Evento</a></div>`;
+  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><div style="font-size:14px;color:var(--muted)">${SUBS.length} envio${SUBS.length!==1?'s':''}</div><a href="sobral_submeter.html" class="btn btn-primary btn-sm"><i data-lucide="plus" style="width:12px;height:12px;pointer-events:none"></i> Nova</a></div>
   <div class="cards-grid">${SUBS.map(s=>`
     <div class="sub-card">
       <div class="sub-photo">
@@ -319,10 +318,10 @@ async function changePassword(){
 }
 
 async function deleteSub(id){
-  if(!confirm('Excluir esta submissão? Ação irreversível.'))return;
+  if(!confirm('Excluir este envio? Ação irreversível.'))return;
   await supa.from('submissions').delete().eq('id',id);
   SUBS=SUBS.filter(s=>s.id!==id);
-  toast('Submissão excluída.');
+  toast('Envio excluído.');
   renderTab('submissions');
 }
 

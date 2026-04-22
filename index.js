@@ -544,7 +544,7 @@ async function renderAuthChip() {
     chip.innerHTML = `<a href="sobral_perfil.html" class="user-chip"><div class="uc-av">${av?`<img src="${av}" alt="">`:name.charAt(0).toUpperCase()}</div><span>${name.split(' ')[0]}</span></a>`;
     if (drawerSection) drawerSection.innerHTML = `
       <a href="sobral_perfil.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="user"></i></div> Meu Perfil</a>
-      <a href="sobral_submeter.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="plus"></i></div> Sugerir Ponto ou Evento</a>
+      <a href="sobral_submeter.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="plus"></i></div> Enviar Ponto ou Evento</a>
       <button class="drw-lnk" onclick="logoutMap();closeDrw()"><div class="drw-ic"><i data-lucide="log-out"></i></div> Sair</button>`;
     const { data: prof } = await supa.from('profiles').select('role').eq('id', CUR_USER.id).single();
     const isAdmin = prof?.role === 'admin';

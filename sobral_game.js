@@ -145,7 +145,6 @@ let timerInterval = null;
   const { data:{ session } } = await supa.auth.getSession();
   if (session) {
     USER = session.user;
-    document.getElementById('btnLogout').style.display = 'flex';
     document.getElementById('drwLogout').style.display = 'flex';
   }
   renderHub();
@@ -154,7 +153,6 @@ let timerInterval = null;
 
 supa.auth.onAuthStateChange((_ev, sess) => {
   USER = sess?.user || null;
-  document.getElementById('btnLogout').style.display = USER ? 'flex' : 'none';
   document.getElementById('drwLogout').style.display = USER ? 'flex' : 'none';
 });
 

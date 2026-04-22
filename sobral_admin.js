@@ -841,7 +841,7 @@ function renderModeration() {
     ${pending.length > 0 ? `
     <div style="background:rgba(200,135,26,.08);border:1px solid rgba(200,135,26,.3);border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:10px">
       <i data-lucide="clock" style="width:20px;height:20px;stroke:var(--ochre);fill:none;stroke-width:1.5;flex-shrink:0"></i>
-      <div><strong style="color:var(--ochre)">${pending.length} submissão${pending.length!==1?'s':''} aguardando revisão</strong>
+      <div><strong style="color:var(--ochre)">${pending.length} envio${pending.length!==1?'s':''} aguardando revisão</strong>
       <div style="font-size:12px;color:var(--muted)">Revise e aprove ou rejeite cada uma abaixo</div></div>
     </div>` : ''}
 
@@ -849,7 +849,7 @@ function renderModeration() {
     ${pending.length === 0
       ? `<div class="empty-state" style="padding:28px">
            <div class="es-icon"><i data-lucide="check-circle" style="width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.5;margin-bottom:8px;opacity:.5"></i></div>
-           <p style="font-size:13px">Nenhuma submissão pendente.</p>
+           <p style="font-size:13px">Nenhum envio pendente.</p>
          </div>`
       : `<div class="spots-grid" style="margin-bottom:28px">${pending.map(s => renderCard(s, true)).join('')}</div>`}
 

@@ -16,7 +16,7 @@
     { "source": "/mapa",      "destination": "/index.html" },
     { "source": "/login",     "destination": "/sobral_login.html" },
     { "source": "/perfil",    "destination": "/sobral_perfil.html" },
-    { "source": "/submeter",  "destination": "/sobral_submeter.html" },
+    { "source": "/enviar",  "destination": "/sobral_submeter.html" },
     { "source": "/sobre",     "destination": "/sobral_sobre.html" },
     { "source": "/contato",   "destination": "/sobral_contato.html" },
     { "source": "/termos",    "destination": "/sobral_termos.html" },
