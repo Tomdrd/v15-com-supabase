@@ -70,6 +70,7 @@ function renderPage(){
         </div>
         <div class="profile-info">
           <div class="profile-name">${name}</div>
+          ${PROFILE.bio ? `<div class="profile-bio">${PROFILE.bio}</div>` : ''}
           <div class="profile-stats">
             <button class="pstat-btn" onclick="showTab('submissions')" title="Ver Envios">
               <div class="pstat-num">${SUBS.length}</div><div class="pstat-lbl">Envios</div>

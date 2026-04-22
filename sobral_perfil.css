@@ -48,6 +48,13 @@ html{scroll-behavior:smooth}body{font-family:'Plus Jakarta Sans',sans-serif;back
 .sub-badge.rejected{background:rgba(181,74,42,.8);color:#fff}
 .sub-body{padding:12px 14px}
 .sub-name{font-weight:600;font-size:14px;color:var(--cream);margin-bottom:4px}
+.profile-bio {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.4;
+  max-width: 300px;
+}
 .sub-meta{font-size:11.5px;color:var(--muted);line-height:1.4;margin-bottom:10px}
 .sub-actions{display:flex;gap:7px}
 
