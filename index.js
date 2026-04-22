@@ -61,7 +61,12 @@ function initMap() {
   map.on('click', () => closeDetail(false));
 
   // ── Deep link: abre painel se ?id=xxx na URL ──────────────────────────
-  const urlId = new URLSearchParams(location.search).get('id');
+  const params = new URLSearchParams(location.search);
+  const urlCat = params.get('cat');
+  if (urlCat && (urlCat === 'todos' || urlCat === 'eventos' || Object.prototype.hasOwnProperty.call(CL, urlCat))) {
+    setCat(urlCat);
+  }
+  const urlId = params.get('id');
   if (urlId) setTimeout(() => focusSpot(urlId), 600);
 }
 

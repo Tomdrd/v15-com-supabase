@@ -25,9 +25,8 @@ async function renderPage(){
       ${s.photo?`<img src="${s.photo}" alt="${s.name}">`:`<div class="hero-ph">${s.emoji}</div>`}
       <div class="hero-ov"></div>
       <div class="hero-cnt">
-        <div class="hero-bc"><a href="index.html">Mapa</a><span>›</span><span>${cl}</span><span>›</span><span>${s.name}</span></div>
-        <div class="hero-cat" style="background:${cc}33;color:${cc};border:1px solid ${cc}66">${cl}</div>
         <h1 class="hero-title">${s.blogTitle||s.name}</h1>
+        <a class="hero-cat" href="index.html?cat=${encodeURIComponent(s.cat||'todos')}" style="background:${cc}33;color:${cc};border:1px solid ${cc}66;text-decoration:none">${cl}</a>
         <div class="hero-meta">
           <span><i data-lucide="pencil" style="width:13px;height:13px"></i> ${s.blogAuthor||'Equipe Sobral Cultural'}</span>
           ${ds?`<span><i data-lucide="calendar" style="width:13px;height:13px"></i> ${ds}</span>`:''}
