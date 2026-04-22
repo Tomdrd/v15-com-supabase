@@ -145,7 +145,8 @@ let timerInterval = null;
   const { data:{ session } } = await supa.auth.getSession();
   if (session) {
     USER = session.user;
-    document.getElementById('drwLogout').style.display = 'flex';
+    const logout = document.getElementById('drwLogout');
+    if (logout) logout.style.display = 'flex';
   }
   renderHub();
   lucide?.createIcons();
@@ -153,7 +154,8 @@ let timerInterval = null;
 
 supa.auth.onAuthStateChange((_ev, sess) => {
   USER = sess?.user || null;
-  document.getElementById('drwLogout').style.display = USER ? 'flex' : 'none';
+  const logout = document.getElementById('drwLogout');
+  if (logout) logout.style.display = USER ? 'flex' : 'none';
 });
 
 /* ── SUPABASE ────────────────────────────────────────────────────────────── */
@@ -208,7 +210,7 @@ async function carregarMeuHistorico() {
     .from('game_scores')
     .select('score, correct, total, played_at')
     .eq('user_id', USER.id)
-    .order('played_at', { ascending: false })
+    .order('score', { ascending: false })
     .limit(5);
   return data || [];
 }
