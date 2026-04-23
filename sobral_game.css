@@ -48,13 +48,6 @@ body {
   gap: 12px
 }
 
-.tb-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-  flex-shrink: 0
-}
 
 .tb-logo-img {
   width: 32px;
@@ -63,10 +56,6 @@ body {
   object-fit: contain
 }
 
-.tb-logo-text {
-  display: flex;
-  flex-direction: column
-}
 
 
 
