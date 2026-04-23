@@ -1,0 +1,88 @@
+@import url('vars.css');
+@import url('base.css');
+@import url('topbar.css');
+@import url('icons.css');
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+   background: var(--deep);
+  color: var(--cream);
+  overflow-x: hidden;
+}
+
+.error-container {
+ margin: 70px 0 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.error-content {
+  max-width: 450px;
+  animation: fadeIn .5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.error-icon {
+  margin-bottom: 24px;
+  color: var(--ochre);
+}
+
+.error-code {
+  font-size: 8rem;
+  font-weight: 800;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: rgba(245, 237, 216, 0.15);
+  line-height: 1;
+  margin: 0;
+}
+
+.error-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--cream);
+  margin: -10px 0 12px 0;
+}
+
+.error-message {
+  font-size: 1rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.error-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-primary { background-color: var(--ochre); color: var(--deep); }
+.btn-primary:hover { background-color: #d4a843; }
+.btn-secondary { background-color: transparent; color: var(--muted); border: 1.5px solid var(--border); }
+.btn-secondary:hover { background-color: rgba(245, 237, 216, .08); border-color: rgba(245, 237, 216, .3); color: var(--cream); }

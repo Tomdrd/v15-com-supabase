@@ -3,6 +3,15 @@ const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6I
 const supa=supabase.createClient(SU,SK);
 const CL={todos:'Todos',religioso:'Religioso',cultura:'Cultura',historico:'Histórico',natureza:'Natureza',lazer:'Lazer'};
 const CC={religioso:'#6440B4',cultura:'#1B6B6B',historico:'#B54A2A',natureza:'#3C7828',lazer:'#C8871A'};
+const CAT_ICON = {
+  religioso: 'church',
+  cultura:   'landmark',
+  historico: 'castle',
+  natureza:  'trees',
+  lazer:     'ferris-wheel',
+  eventos:   'calendar-days',
+  event:     'calendar-days',
+};
 const GEO_LAST_KEY='sc_geo_last_position';
 
 window.addEventListener('scroll',()=>{const d=document.documentElement;document.getElementById('pgf').style.width=(d.scrollTop/(d.scrollHeight-d.clientHeight)*100)+'%';});
@@ -16,7 +25,7 @@ async function renderPage(){
   if(!rows||!rows.length){renderNF();return;}
   const r=rows[0];
   const s={id:r.id,name:r.name,cat:r.cat,emoji:r.emoji,color:r.color,lat:r.lat,lng:r.lng,desc:r.description,address:r.address,horario:r.horario,entrada:r.entrada,photo:r.photo,blogTitle:r.blog_title,blogContent:r.blog_content,blogAuthor:r.blog_author,blogDate:r.blog_date};
-  const{data:rel}=await supa.from('spots').select('id,name,cat,emoji,color').eq('cat',s.cat).neq('id',id).limit(3);
+  const{data:rel}=await supa.from('spots').select('id,name,cat,color').eq('cat',s.cat).neq('id',id).limit(3);
   document.title=`${s.name} — Sobral Cultural`;
   const cc=s.color||CC[s.cat]||'#C8871A',cl=CL[s.cat]||s.cat;
   const ds=s.blogDate?new Date(s.blogDate+'T12:00:00').toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'}):'';
@@ -57,7 +66,7 @@ async function renderPage(){
           </div>
         </div>
         ${s.lat&&s.lng?`<div class="mc"><div class="mc-hd"><h3><i data-lucide="map-pin" class="icon-sm"></i> Localização</h3></div><div id="miniMap"></div><div class="loc-tools"><div class="loc-links"><a id="locGoogleMaps" class="loc-link" target="_blank" rel="noopener noreferrer"><i data-lucide="map" class="icon-sm"></i>Google Maps</a><a id="locUber" class="loc-link" target="_blank" rel="noopener noreferrer"><i data-lucide="car-taxi-front" class="icon-sm"></i>Uber</a><a id="locWaze" class="loc-link" target="_blank" rel="noopener noreferrer"><i data-lucide="navigation" class="icon-sm"></i>Waze</a></div><div id="locRouteInfo" class="loc-route-info"><i data-lucide="route" class="icon-xs"></i> Calculando rota...</div></div></div>`:''}
-        ${rel&&rel.length?`<div class="rc"><h3>Veja Também</h3>${rel.map(x=>`<a href="sobral_post.html?id=${x.id}" class="ri"><div class="ri-em" style="background:${x.color||'#1B6B6B'}22">${x.emoji}</div><div><div class="ri-name">${x.name}</div><div class="ri-cat">${CL[x.cat]||x.cat}</div></div></a>`).join('')}</div>`:'' }
+        ${rel&&rel.length?`<div class="rc"><h3>Veja Também</h3>${rel.map(x=>`<a href="sobral_post.html?id=${x.id}" class="ri"><div class="ri-em" style="background:${x.color||'#1B6B6B'}22;color:${x.color||'#1B6B6B'}"><i data-lucide="${CAT_ICON[x.cat]||'map-pin'}"></i></div><div><div class="ri-name">${x.name}</div><div class="ri-cat">${CL[x.cat]||x.cat}</div></div></a>`).join('')}</div>`:'' }
       </div>
     </div>`;
   if(s.lat&&s.lng){setTimeout(()=>initPostLocation(s,cc),200);}
