@@ -42,11 +42,11 @@
 }
 
 .tb-logo-img {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
   border-radius: 8px;
-  display: none;
+
 }
 
 .tb-logo-text {
