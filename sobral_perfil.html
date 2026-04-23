@@ -23,21 +23,25 @@
     </div>
   </a>
   <nav class="tb-nav">
-    <a href="index.html"><i data-lucide="map"></i> Mapa</a>
-    <a href="sobral_sobre.html"><i data-lucide="info"></i> Sobre</a>
-    <a href="sobral_contato.html"><i data-lucide="mail"></i> Contato</a>
-    <a href="sobral_noticias.html"><i data-lucide="newspaper"></i> Notícias</a>
-    <a href="sobral_game.html"><i data-lucide="gamepad-2"></i> Quiz</a>
+    <a href="index.html" class="nl"><i data-lucide="map"></i> Mapa</a>
+    <a href="sobral_sobre.html" class="nl"><i data-lucide="info"></i> Sobre</a>
+    <a href="sobral_contato.html" class="nl"><i data-lucide="mail"></i> Contato</a>
+    <a href="sobral_noticias.html" class="nl"><i data-lucide="newspaper"></i> Notícias</a>
+    <a href="sobral_game.html" class="nl"><i data-lucide="gamepad-2"></i> Quiz</a>
     <button class="btn-logout" onclick="doLogout()"><i data-lucide="log-out"></i> Sair</button>
   </nav>
   <button class="hbg" id="hbg" onclick="toggleDrw()"><span></span><span></span><span></span></button>
 </div>
 <div class="dov" id="dov" onclick="closeDrw()"></div>
 <div class="drw" id="drw">
-  <a href="index.html"><span><i data-lucide="map"></i></span> Mapa</a>
-  <a href="sobral_sobre.html"><span><i data-lucide="info"></i></span> Sobre</a>
-  <a href="sobral_contato.html"><span><i data-lucide="mail"></i></span> Contato</a>
-  <button onclick="doLogout();closeDrw()"><span><i data-lucide="log-out"></i></span> Sair da Conta</button>
+  <div class="drw-inner">
+    <div class="drw-sec">Navegação</div>
+    <a href="index.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="map"></i></div> Mapa</a>
+    <a href="sobral_sobre.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="info"></i></div> Sobre</a>
+    <a href="sobral_contato.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="mail"></i></div> Contato</a>
+    <a href="sobral_noticias.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="newspaper"></i></div> Notícias</a>
+    <a href="sobral_game.html" class="drw-lnk"><div class="drw-ic"><i data-lucide="gamepad-2"></i></div> Quiz</a>
+  </div>
 </div>
 
 <div id="root"><div class="page-loader"><div class="lsp"></div><div style="font-size:13px;color:var(--muted)">Carregando perfil…</div></div></div>

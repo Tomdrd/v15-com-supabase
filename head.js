@@ -134,59 +134,7 @@
     const currentFile = path.split('/').pop() || 'index.html';
     const normalizedPath = currentFile === '' ? 'index.html' : currentFile;
 
-    // 2. Injeta o Menu Desktop (.tb-nav ou .hn)
-    const desktopNav = document.querySelector('.tb-nav') || document.querySelector('.hn');
-    if (desktopNav) {
-      // Mantém botões especiais (como o btn-geo no mapa)
-      const specialButtons = desktopNav.querySelectorAll('.btn-geo, #adminLink, #authChip');
-      
-      let navHtml = MENU_ITEMS.map(item => {
-        const isActive = normalizedPath === item.href ? 'active' : '';
-        return `<a href="${item.href}" class="nl ${isActive}"><i data-lucide="${item.icon}"></i> ${item.label}</a>`;
-      }).join('');
-
-      // Injeta botão Sair se estiver no Perfil (Desktop)
-      if (normalizedPath === 'sobral_perfil.html') {
-        navHtml += `<a href="#" onclick="event.preventDefault();if(window.doLogout)doLogout();else location.reload()" class="nl"><i data-lucide="log-out"></i> Sair</a>`;
-      }
-
-      desktopNav.innerHTML = navHtml;
-      specialButtons.forEach(btn => desktopNav.appendChild(btn));
-    }
-
-    // 3. Injeta o Menu Mobile (Drawer)
-    const drawerInner = document.querySelector('.drw-inner') || document.querySelector('.drw');
-    if (drawerInner) {
-      const isIndex = normalizedPath === 'index.html';
-
-      // Filtra elementos para preservar: evita duplicar "Navegação" e remove botões de auth se não for index
-      const existingSections = Array.from(drawerInner.querySelectorAll('.drw-sec, #drawerAdminSec, #drawerAdminLink, #drawerAuthSection, button'))
-        .filter(el => {
-          // Não preserva o título "Navegação" (será re-injetado abaixo)
-          if (el.classList.contains('drw-sec') && el.textContent.trim() === 'Navegação') return false;
-          
-          // Remove botões e seções de conta em páginas internas conforme solicitado
-          if (!isIndex && (el.tagName === 'BUTTON' || el.id === 'drawerAuthSection' || el.id === 'drwLogout' || el.id === 'drawerAdminSec' || el.id === 'drawerAdminLink')) return false;
-          
-          return true;
-        });
-
-      let navHtml = `<div class="drw-sec">Navegação</div>`;
-      navHtml += MENU_ITEMS.map(item => {
-        const isActive = normalizedPath === item.href ? 'active' : '';
-        return `<a href="${item.href}" class="drw-lnk ${isActive}"><div class="drw-ic"><i data-lucide="${item.icon}"></i></div> ${item.label}</a>`;
-      }).join('');
-
-      // Injeta botão Sair se estiver no Perfil (Mobile Drawer)
-      if (normalizedPath === 'sobral_perfil.html') {
-        navHtml += `<a href="#" onclick="event.preventDefault();if(window.doLogout)doLogout()" class="drw-lnk"><div class="drw-ic"><i data-lucide="log-out"></i></div> Sair da Conta</a>`;
-      }
-
-      drawerInner.innerHTML = navHtml;
-      existingSections.forEach(sec => drawerInner.appendChild(sec));
-    }
-
-    // 4. Reinicializa ícones após injeção
+    // 2. Reinicializa ícones Lucide (nav já estático no HTML)
     if (window.lucide) {
       lucide.createIcons();
     }
