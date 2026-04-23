@@ -1,7 +1,7 @@
 {
   "name": "Sobral Cultural",
   "short_name": "SobralCul",
-  "description": "Explore os pontos turísticos, culturais e históricos de Sobral, Ceará.",
+  "description": "Mapeamento cultural e turístico de Sobral, Ceará.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1a1410",

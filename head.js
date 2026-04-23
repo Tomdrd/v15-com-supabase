@@ -25,7 +25,7 @@
   }
 
   // ── Open Graph ────────────────────────────────────────
-  const OG_IMAGE = 'https://raw.githubusercontent.com/Tomdrd/v15-com-supabase/main/tumb.jpg';
+  const OG_IMAGE = 'https://raw.githubusercontent.com/Tomdrd/v15-com-supabase/refs/heads/main/tumb.jpg';
 
   // og:image, og:url e campos estáticos podem ser injetados imediatamente
   meta({ property: 'og:site_name',    content: 'Sobral Cultural' });
@@ -33,8 +33,8 @@
   meta({ property: 'og:image',        content: OG_IMAGE });
   meta({ property: 'og:image:width',  content: '1200' });
   meta({ property: 'og:image:height', content: '630' });
-  meta({ property: 'og:url',          content: window.location.href });
-  meta({ property: 'og:description',  content: 'Explore os pontos turísticos, culturais e históricos de Sobral, Ceará.' });
+  meta({ property: 'og:url',          content: 'https://sobralcultural.vercel.app/' });
+  meta({ property: 'og:description',  content: 'Mapeamento cultural e turístico de Sobral, Ceará.' });
 
   // og:title e twitter:title precisam do <title> da página — lê após DOM pronto
   const ogTitle     = document.createElement('meta');
@@ -42,19 +42,22 @@
   const twCard      = document.createElement('meta');
   const twDesc      = document.createElement('meta');
   const twImage     = document.createElement('meta');
+  const twUrl       = document.createElement('meta');
   ogTitle.setAttribute('property', 'og:title');
   twTitle.setAttribute('name', 'twitter:title');
   twCard.setAttribute('name',  'twitter:card');        twCard.setAttribute('content',  'summary_large_image');
-  twDesc.setAttribute('name',  'twitter:description'); twDesc.setAttribute('content',  'Explore os pontos turísticos, culturais e históricos de Sobral, Ceará.');
+  twDesc.setAttribute('name',  'twitter:description'); twDesc.setAttribute('content',  'Mapeamento cultural e turístico de Sobral, Ceará.');
   twImage.setAttribute('name', 'twitter:image');       twImage.setAttribute('content', OG_IMAGE);
+  twUrl.setAttribute('name',   'twitter:url');         twUrl.setAttribute('content',   'https://sobralcultural.vercel.app/');
   head.appendChild(ogTitle);
   head.appendChild(twCard);
   head.appendChild(twTitle);
   head.appendChild(twDesc);
   head.appendChild(twImage);
+  head.appendChild(twUrl);
 
   function applyOgTitle() {
-    const title = document.title || 'Sobral Cultural — Mapa Turístico';
+    const title = document.title || 'Sobral Cultural';
     ogTitle.setAttribute('content', title);
     twTitle.setAttribute('content', title);
   }
@@ -67,7 +70,7 @@
 
   // ── Meta description ─────────────────────────────────
   if (!document.querySelector('meta[name="description"]')) {
-    meta({ name: 'description', content: 'Explore os pontos turísticos, culturais e históricos de Sobral, Ceará.' });
+    meta({ name: 'description', content: 'Mapeamento cultural e turístico de Sobral, Ceará.' });
   }
 
   // ── Favicon ───────────────────────────────────────────
