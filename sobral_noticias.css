@@ -55,16 +55,6 @@ body {
   flex-shrink: 0
 }
 
-.tb-logo span {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 17px;
-  color: var(--cream)
-}
-
-.tb-logo em {
-  color: var(--ochre);
-  font-style: normal
-}
 
 .tb-nav {
   display: flex;
