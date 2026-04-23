@@ -73,7 +73,9 @@ function startRealtime() {
 
 function updateBadge() {
   const el = document.getElementById('spotCountBadge');
-  if (el) el.textContent = _cache.length;
+  if (el) el.textContent = _cache.filter(s => s.type !== 'event').length;
+  const ev = document.getElementById('eventCountBadge');
+  if (ev) ev.textContent = _cache.filter(s => s.type === 'event').length;
 }
 
 // ══════════════════════════════════════════
@@ -192,13 +194,14 @@ function navigate(view, id = null) {
   if (!requireAuth()) return;
   currentView = view; editingId = id;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const nm = { dashboard:0, list:1, new:2, messages:3, moderation:4, pages:5, backup:6 };
+  const nm = { dashboard:0, list:1, events:2, new:3, messages:4, moderation:5, pages:6, backup:7 };
   const btns = document.querySelectorAll('.nav-btn');
-  if (view === 'edit') btns[2]?.classList.add('active');
+  if (view === 'edit') btns[3]?.classList.add('active');
   else if (nm[view] !== undefined) btns[nm[view]]?.classList.add('active');
   const main = document.getElementById('mainContent');
   if      (view === 'dashboard')  main.innerHTML = renderDashboard();
   else if (view === 'list')       main.innerHTML = renderList();
+  else if (view === 'events')     main.innerHTML = renderList('', 'eventos');
   else if (view === 'new')      { main.innerHTML = renderForm(null); initFormExtras(); }
   else if (view === 'edit')     { main.innerHTML = renderForm(id);   initFormExtras(id); }
   else if (view === 'messages')   main.innerHTML = renderMessages();
