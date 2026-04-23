@@ -11,6 +11,7 @@ const supa    = supabase.createClient(SUPA_URL, SUPA_KEY);
 // ══════════════════════════════════════════
 const CAT_LABELS = {
   todos:     'Todos',
+  eventos:   'Eventos',
   religioso: 'Religioso',
   cultura:   'Cultura',
   historico: 'Histórico',
@@ -303,7 +304,12 @@ function renderDashboard() {
 // ══════════════════════════════════════════
 function renderList(filter = '', cat = 'todos') {
   const spots = getSpots();
-  const filtered = spots.filter(s => (cat==='todos'||s.cat===cat) && s.name.toLowerCase().includes(filter.toLowerCase()));
+  const filtered = spots.filter(s => {
+    const catOk = cat === 'todos' ? true
+                : cat === 'eventos' ? s.type === 'event'
+                : (s.cat === cat && s.type !== 'event');
+    return catOk && s.name.toLowerCase().includes(filter.toLowerCase());
+  });
   return `
   <div class="page-header">
     <div class="page-title"><h2>Pontos Turísticos</h2><p>${spots.length} pontos no Supabase</p></div>
