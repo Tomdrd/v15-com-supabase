@@ -892,9 +892,9 @@ header {
 }
 
 .lt {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 32px;
-  font-weight: 800;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 20px;
+  font-weight: normal;
   color: var(--cream);
   animation: fi .8s ease both
 }
@@ -1489,9 +1489,9 @@ body.has-carousel .app-body {
 }
 
 .ob-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Times New Roman', Times, serif;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: normal;
   color: var(--cream);
   margin-bottom: 20px;
   text-align: center

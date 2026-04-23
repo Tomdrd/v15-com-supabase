@@ -56,11 +56,17 @@
 }
 
 .tb-logo-name {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Times New Roman', Times, serif;
   font-size: 20px;
-  font-weight: 700;
-  color: #ffffff;
+  font-weight: normal;
+  color: var(--cream);
   letter-spacing: 0.3px;
+}
+
+.tb-logo-name em {
+  color: #ff6600;
+  font-style: normal;
+}
 }
 
 .tb-logo-sub {

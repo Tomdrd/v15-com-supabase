@@ -137,7 +137,7 @@
     // 1. Preenche o nome da marca em todos os locais
     const brandElements = document.querySelectorAll('.tb-logo-name');
     const [first, ...rest] = SITE_NAME.split(' ');
-    const brandHtml = first + (rest.length ? ' <em style="color:#ff6600;font-style:normal">' + rest.join(' ') + '</em>' : '');
+    const brandHtml = first + (rest.length ? ' <em>' + rest.join(' ') + '</em>' : '');
     
     brandElements.forEach(el => {
       if (!el.querySelector('em')) el.innerHTML = brandHtml;

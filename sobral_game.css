@@ -68,12 +68,7 @@ body {
   flex-direction: column
 }
 
-.tb-logo-name {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 15px;
-  color: var(--cream);
-  line-height: 1.1
-}
+
 
 .tb-logo-sub {
   font-size: 10px;
