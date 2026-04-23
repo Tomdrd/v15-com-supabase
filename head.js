@@ -25,9 +25,10 @@
   }
 
   // ── Open Graph ────────────────────────────────────────
-  const OG_IMAGE = 'https://raw.githubusercontent.com/Tomdrd/v15-com-supabase/refs/heads/main/tumb.jpg';
+  const OG_IMAGE = 'https://sobralcultural.vercel.app/tumb.jpg';
 
   // og:image, og:url e campos estáticos podem ser injetados imediatamente
+  if (!document.querySelector('meta[property="og:type"]')) {
   meta({ property: 'og:site_name',    content: 'Sobral Cultural' });
   meta({ property: 'og:type',         content: 'website' });
   meta({ property: 'og:image',        content: OG_IMAGE });
@@ -35,8 +36,10 @@
   meta({ property: 'og:image:height', content: '630' });
   meta({ property: 'og:url',          content: 'https://sobralcultural.vercel.app/' });
   meta({ property: 'og:description',  content: 'Mapeamento cultural e turístico de Sobral, Ceará.' });
+  }
 
   // og:title e twitter:title precisam do <title> da página — lê após DOM pronto
+  if (!document.querySelector('meta[property="og:title"]')) {
   const ogTitle     = document.createElement('meta');
   const twTitle     = document.createElement('meta');
   const twCard      = document.createElement('meta');
@@ -66,6 +69,7 @@
     document.addEventListener('DOMContentLoaded', applyOgTitle);
   } else {
     applyOgTitle();
+  }
   }
 
   // ── Meta description ─────────────────────────────────
