@@ -41,6 +41,7 @@ function mapRow(r) {
   return { id:r.id, name:r.name, cat:r.cat, color:r.color,
     lat:r.lat, lng:r.lng, desc:r.description, address:r.address,
     horario:r.horario, entrada:r.entrada, photo:r.photo,
+    type:r.type||'spot', event_date:r.event_date||null, event_end:r.event_end||null,
     blogTitle:r.blog_title, blogContent:r.blog_content,
     blogAuthor:r.blog_author, blogDate:r.blog_date, createdAt:r.created_at,
     isFeatured:!!r.is_featured };
