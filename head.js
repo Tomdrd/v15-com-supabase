@@ -134,15 +134,6 @@
     const currentFile = path.split('/').pop() || 'index.html';
     const normalizedPath = currentFile === '' ? 'index.html' : currentFile;
 
-    // 1. Preenche o nome da marca em todos os locais
-    const brandElements = document.querySelectorAll('.tb-logo-name');
-    const [first, ...rest] = SITE_NAME.split(' ');
-    const brandHtml = first + (rest.length ? ' <em>' + rest.join(' ') + '</em>' : '');
-    
-    brandElements.forEach(el => {
-      if (!el.querySelector('em')) el.innerHTML = brandHtml;
-    });
-
     // 2. Injeta o Menu Desktop (.tb-nav ou .hn)
     const desktopNav = document.querySelector('.tb-nav') || document.querySelector('.hn');
     if (desktopNav) {
