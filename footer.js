@@ -143,7 +143,7 @@
     }
 
     // Não mostra na própria página de pesquisa
-    if (pg === 'sobral_pesquisa.html') return;
+    if (pg === 'sobral_pesquisa.html' || pg === 'sobral_pesquisa') return;
 
     // Não mostra se dispensou nesta sessão
     const KEY = 'pesq_widget_dismissed';
