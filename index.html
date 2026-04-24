@@ -3,7 +3,6 @@
 <head>
   <script src="splash.js"></script>
   <script src="head.js"></script>
-  <script src="navigate.js"></script>
 <meta charset="UTF-8">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -46,11 +45,7 @@
     </div>
   </a>
   <nav class="hn">
-    <a href="index.html" class="nl active"><i data-lucide="map"></i> Mapa</a>
-    <a href="sobral_sobre.html" class="nl"><i data-lucide="info"></i> Sobre</a>
-    <a href="sobral_contato.html" class="nl"><i data-lucide="mail"></i> Contato</a>
-    <a href="sobral_noticias.html" class="nl"><i data-lucide="newspaper"></i> Notícias</a>
-    <a href="sobral_game.html" class="nl"><i data-lucide="gamepad-2"></i> Quiz</a>
+    <!-- Links injetados dinamicamente pelo head.js -->
     <button class="btn-geo" id="btnGeo" onclick="getUserLocation()">
       <i data-lucide="navigation" class="icon-sm"></i>
       Localização
@@ -181,6 +176,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="index.js"></script>
+<script src="footer.js"></script>
 
 <!-- ONBOARDING -->
 <div id="onboarding" class="ob-overlay">
