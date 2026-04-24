@@ -134,7 +134,62 @@
     const currentFile = path.split('/').pop() || 'index.html';
     const normalizedPath = currentFile === '' ? 'index.html' : currentFile;
 
-    // 2. Reinicializa ícones Lucide (nav já estático no HTML)
+    // 2. Injeta o Menu Desktop (.tb-nav ou .hn)
+    const desktopNav = document.querySelector('.tb-nav') || document.querySelector('.hn');
+    if (desktopNav) {
+      // Salva o HTML dos botões especiais que devem ser preservados.
+      const specialButtonsHTML = Array.from(desktopNav.querySelectorAll('.btn-geo, #adminLink, #authChip'))
+        .map(el => el.outerHTML)
+        .join('');
+      
+      let menuHtml = MENU_ITEMS.map(item => {
+        const isActive = normalizedPath === item.href ? 'active' : '';
+        return `<a href="${item.href}" class="nl ${isActive}"><i data-lucide="${item.icon}"></i> ${item.label}</a>`;
+      }).join('');
+
+      // Injeta botão Sair se estiver no Perfil (Desktop)
+      if (normalizedPath === 'sobral_perfil.html') {
+        menuHtml += `<a href="#" onclick="event.preventDefault();if(window.doLogout)doLogout();else location.reload()" class="nl"><i data-lucide="log-out"></i> Sair</a>`;
+      }
+
+      // Remonta a barra de navegação para garantir a ordem e consistência.
+      desktopNav.innerHTML = menuHtml + specialButtonsHTML;
+    }
+
+    // 3. Injeta o Menu Mobile (Drawer)
+    const drawerInner = document.querySelector('.drw-inner') || document.querySelector('.drw');
+    if (drawerInner) {
+      const isIndex = normalizedPath === 'index.html';
+
+      // Salva o HTML dos elementos especiais que devem ser preservados (apenas na index.html).
+      const specialElementsHTML = Array.from(drawerInner.querySelectorAll('.drw-sec, #drawerAdminSec, #drawerAdminLink, #drawerAuthSection, button'))
+        .filter(el => {
+          // Não preserva o título "Navegação" (será re-injetado abaixo)
+          if (el.classList.contains('drw-sec') && el.textContent.trim() === 'Navegação') return false;
+          
+          // Em páginas internas, não preserva os botões/seções especiais da index.
+          if (!isIndex && (el.tagName === 'BUTTON' || el.id.startsWith('drawer') || el.id === 'drwLogout')) return false;
+          
+          return true;
+        })
+        .map(el => el.outerHTML)
+        .join('');
+
+      let navHtml = `<div class="drw-sec">Navegação</div>`;
+      navHtml += MENU_ITEMS.map(item => {
+        const isActive = normalizedPath === item.href ? 'active' : '';
+        return `<a href="${item.href}" class="drw-lnk ${isActive}"><div class="drw-ic"><i data-lucide="${item.icon}"></i></div> ${item.label}</a>`;
+      }).join('');
+
+      if (normalizedPath === 'sobral_perfil.html') {
+        navHtml += `<a href="#" onclick="event.preventDefault();if(window.doLogout)doLogout()" class="drw-lnk"><div class="drw-ic"><i data-lucide="log-out"></i></div> Sair da Conta</a>`;
+      }
+
+      // Remonta o drawer para garantir a ordem e consistência.
+      drawerInner.innerHTML = navHtml + specialElementsHTML;
+    }
+
+    // 4. Reinicializa ícones após injeção
     if (window.lucide) {
       lucide.createIcons();
     }
