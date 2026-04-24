@@ -35,7 +35,7 @@ async function loadTerms(){
 
 function initMap(){
   setTimeout(()=>{
-    coordMap=L.map('coordMap',{center:[-3.688,-40.3497],zoom:14});
+    coordMap=L.map('coordMap',{center:[-3.688,-40.3497],zoom:14,attributionControl:false});
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OSM © CARTO',subdomains:'abcd',maxZoom:19}).addTo(coordMap);
     coordMap.on('click',e=>{
       document.getElementById('fLat').value=e.latlng.lat.toFixed(6);

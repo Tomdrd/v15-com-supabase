@@ -135,8 +135,14 @@
     document.head.appendChild(style);
     document.body.appendChild(footer);
 
-    // Não mostra na própria página de pesquisa
     const pg = window.location.pathname.split('/').pop();
+
+    // Oculta o rodapé visual na página inicial, mas mantém a pesquisa rodando
+    if (pg === '' || pg === 'index.html') {
+        footer.style.display = 'none';
+    }
+
+    // Não mostra na própria página de pesquisa
     if (pg === 'sobral_pesquisa.html') return;
 
     // Não mostra se dispensou nesta sessão

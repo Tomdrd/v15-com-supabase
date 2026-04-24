@@ -529,7 +529,10 @@ body {
 }
 
 #miniMap {
-  height: 190px
+  height: 190px;
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
 }
 
 .loc-tools {

@@ -205,7 +205,7 @@ function initProfileMap(){
     const el=document.getElementById('profileMap');
     if(!el) return;
     if(profileMap){profileMap.remove();profileMap=null;}
-    profileMap=L.map('profileMap',{center:[-3.688,-40.3497],zoom:13,zoomControl:true});
+        profileMap=L.map('profileMap',{center:[-3.688,-40.3497],zoom:13,zoomControl:true,attributionControl:false});
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OSM © CARTO',maxZoom:19,subdomains:'abcd'}).addTo(profileMap);
     const beenSpots=REACTIONS.filter(r=>r.reaction==='been').map(r=>SPOTS_MAP[r.spot_id]).filter(Boolean);
     const goingSpots=REACTIONS.filter(r=>r.reaction==='going').map(r=>SPOTS_MAP[r.spot_id]).filter(Boolean);

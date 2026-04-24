@@ -121,7 +121,7 @@ function buildUberUrl(dest,name,origin){
 function buildWazeUrl(dest){return`https://waze.com/ul?ll=${dest.lat},${dest.lng}&navigate=yes`;}
 
 async function initPostLocation(s,cc){
-  const mm=L.map('miniMap',{center:[s.lat,s.lng],zoom:15,zoomControl:false,dragging:false,scrollWheelZoom:false});
+  const mm=L.map('miniMap',{center:[s.lat,s.lng],zoom:15,zoomControl:false,dragging:false,scrollWheelZoom:false,attributionControl:false});
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OSM © CARTO',subdomains:'abcd',maxZoom:19}).addTo(mm);
   const ico=L.divIcon({html:`<div style="width:34px;height:34px;background:${cc};border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.4);box-shadow:0 4px 12px rgba(0,0,0,.4)"><span style="transform:rotate(45deg);font-size:15px">${s.emoji}</span></div>`,className:'',iconSize:[34,34],iconAnchor:[17,34]});
   L.marker([s.lat,s.lng],{icon:ico}).addTo(mm);

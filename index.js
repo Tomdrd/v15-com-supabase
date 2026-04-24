@@ -57,7 +57,7 @@ function startRT() {
 
 /* ── MAP ────────────────────────────────────────────────────────────────── */
 function initMap() {
-  map = L.map('map', { center: [-3.688, -40.3497], zoom: 14 });
+  map = L.map('map', { center: [-3.688, -40.3497], zoom: 14, attributionControl: false });
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution: '© OSM © CARTO', maxZoom: 19, subdomains: 'abcd'
   }).addTo(map);

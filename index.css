@@ -1442,7 +1442,7 @@ body.has-carousel .app-body {
   }
 
   .stbar {
-    bottom: 58px
+    display: none;
   }
 
   .dp {
