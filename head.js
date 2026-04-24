@@ -119,13 +119,30 @@
   // ── Constante do site ────────────────────────
   const SITE_NAME = 'Sobral Cultural';
 
+  // ── Instalação PWA ───────────────────────────
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+  window.installPWA = async (e) => {
+    if (e) e.preventDefault();
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') deferredPrompt = null;
+    } else {
+      alert('O aplicativo já está instalado ou seu navegador não suporta a instalação direta.');
+    }
+  };
+
   // ── Configuração do Menu Global ──────────────
   const MENU_ITEMS = [
-    { label: 'Mapa', href: 'index.html', icon: 'map' },
     { label: 'Sobre', href: 'sobral_sobre.html', icon: 'info' },
     { label: 'Contato', href: 'sobral_contato.html', icon: 'mail' },
     { label: 'Notícias', href: 'sobral_noticias.html', icon: 'newspaper' },
     { label: 'Quiz', href: 'sobral_game.html', icon: 'gamepad-2' },
+    { label: 'App', href: '#', icon: 'download', onclick: 'installPWA(event)' },
   ];
 
   // Função para injetar os menus
@@ -144,7 +161,8 @@
       
       let menuHtml = MENU_ITEMS.map(item => {
         const isActive = normalizedPath === item.href ? 'active' : '';
-        return `<a href="${item.href}" class="nl ${isActive}"><i data-lucide="${item.icon}"></i> ${item.label}</a>`;
+        const clickAttr = item.onclick ? ` onclick="${item.onclick}"` : '';
+        return `<a href="${item.href}" class="nl ${isActive}"${clickAttr}><i data-lucide="${item.icon}"></i> ${item.label}</a>`;
       }).join('');
 
       // Injeta botão Sair se estiver no Perfil (Desktop)
@@ -178,7 +196,8 @@
       let navHtml = `<div class="drw-sec">Navegação</div>`;
       navHtml += MENU_ITEMS.map(item => {
         const isActive = normalizedPath === item.href ? 'active' : '';
-        return `<a href="${item.href}" class="drw-lnk ${isActive}"><div class="drw-ic"><i data-lucide="${item.icon}"></i></div> ${item.label}</a>`;
+        const clickAttr = item.onclick ? ` onclick="${item.onclick}"` : '';
+        return `<a href="${item.href}" class="drw-lnk ${isActive}"${clickAttr}><div class="drw-ic"><i data-lucide="${item.icon}"></i></div> ${item.label}</a>`;
       }).join('');
 
       if (normalizedPath === 'sobral_perfil.html') {
