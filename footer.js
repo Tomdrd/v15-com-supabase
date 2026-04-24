@@ -34,7 +34,7 @@
             right: 0;
             top: 50%;
             transform: translateY(-50%) translateX(110%);
-            z-index: 900;
+            z-index: 1101;
             width: 220px;
             background: #1e2a28;
             border: 1px solid rgba(27,107,107,.45);
@@ -54,7 +54,7 @@
             right: 0;
             top: 50%;
             transform: translateY(-50%);
-            z-index: 900;
+            z-index: 1101;
             writing-mode: vertical-rl;
             text-orientation: mixed;
             background: linear-gradient(180deg, #1B6B6B, #14504f);
