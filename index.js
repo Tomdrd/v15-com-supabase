@@ -22,6 +22,14 @@ let _suppressListAnimationNextBuild = false;
 const GEO_PREF_KEY = 'sc_geo_persistent_enabled';
 const GEO_LAST_KEY = 'sc_geo_last_position';
 
+// ++ PAGINATION STATE
+let _listPage = 0;
+const _listPerPage = 8; // Spots per page
+let _currentFilteredList = [];
+let _isListLoading = false;
+let _listAppendTimeout = null;
+// -- END PAGINATION STATE
+
 const mr = r => ({
   id: r.id, name: r.name, cat: r.cat, color: r.color,
   lat: r.lat, lng: r.lng, desc: r.description, address: r.address,
@@ -122,35 +130,117 @@ function refreshM() {
 }
 
 /* ── LIST ───────────────────────────────────────────────────────────────── */
+function initInfiniteScroll() {
+  const listEl = document.getElementById('spotsList');
+  if (!listEl) return;
+  listEl.addEventListener('scroll', () => {
+    if (_isListLoading || (_listPage * _listPerPage >= _currentFilteredList.length)) {
+      return;
+    }
+    if (listEl.scrollTop + listEl.clientHeight >= listEl.scrollHeight - 150) {
+      appendListItems();
+    }
+  });
+}
+
+function generateSkeletonHTML(count) {
+  let html = '';
+  for (let i = 0; i < count; i++) {
+    html += `
+      <div class="sc-skeleton">
+        <div class="sk-thumb shimmer"></div>
+        <div class="sk-body">
+          <div class="sk-ic shimmer"></div>
+          <div class="sk-info">
+            <div class="sk-line shimmer"></div>
+            <div class="sk-line short shimmer"></div>
+          </div>
+        </div>
+      </div>`;
+  }
+  return html;
+}
+
+function appendListItems() {
+  const sl = document.getElementById('spotsList');
+  if (!sl || _isListLoading) return;
+
+  const start = _listPage * _listPerPage;
+  const end = start + _listPerPage;
+  const pageItems = _currentFilteredList.slice(start, end);
+
+  if (!pageItems.length) return;
+
+  _isListLoading = true;
+  sl.insertAdjacentHTML('beforeend', generateSkeletonHTML(pageItems.length));
+
+  _listAppendTimeout = setTimeout(() => {
+    if (!document.getElementById('spotsList')) { _isListLoading = false; return; }
+    document.querySelectorAll('.sc-skeleton').forEach(el => el.remove());
+    const disableAnim = _suppressListAnimationNextBuild;
+    _suppressListAnimationNextBuild = false;
+    const newHtml = pageItems.map((s, i) => `
+      <div class="sc" id="card-${s.id}" onclick="focusSpot('${s.id}')" style="${disableAnim ? 'animation:none;' : `animation-delay:${i * 40}ms;`}">
+        <div class="sc-thumb" style="background:${s.color}22">
+          ${s.photo ? `<img src="${s.photo}" alt="${s.name}" loading="lazy">` : `<div class="sc-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
+        </div>
+        <div class="sc-body">
+          <div class="sc-ic" style="background:${s.color}22"><div class="sc-dot" style="background:${s.color}"></div></div>
+          <div class="sc-info">
+            <div class="sc-name">${s.name}</div>
+            <div class="sc-tag">${CL[s.cat] || s.cat}${s.type === 'event' && s.eventDate ? ' · ' + fmtEvtDate(s.eventDate, s.eventEnd) : ''}</div>
+          </div>
+          ${uLat !== null ? `<div class="sc-dist">${fd(d(uLat, uLng, s.lat, s.lng))}</div>` : ''}
+        </div>
+      </div>`).join('');
+    sl.insertAdjacentHTML('beforeend', newHtml);
+    _listPage++;
+    _isListLoading = false;
+  }, 250);
+}
+
 function buildList() {
   const sl = document.getElementById('spotsList');
-  const disableAnim = _suppressListAnimationNextBuild;
-  _suppressListAnimationNextBuild = false;
-  const f = gs().filter(s => {
+  if (!sl) return;
+
+  clearTimeout(_listAppendTimeout);
+  _isListLoading = false;
+
+  // 1. Filter and sort the full list
+  _currentFilteredList = gs().filter(s => {
     const catOk = cat === 'todos' ? true : cat === 'eventos' ? s.type === 'event' : (s.cat === cat && s.type !== 'event');
     return catOk && s.name.toLowerCase().includes(q.toLowerCase());
   });
-  if (uLat !== null) f.sort((a, b) => d(uLat, uLng, a.lat, a.lng) - d(uLat, uLng, b.lat, b.lng));
-  if (!f.length) { sl.innerHTML = '<div class="no-res">Nenhum ponto encontrado</div>'; updCnt(0); return; }
-  sl.innerHTML = f.map((s, i) => `
-    <div class="sc" id="card-${s.id}" onclick="focusSpot('${s.id}')" style="${disableAnim ? 'animation:none;' : `animation-delay:${i * 35}ms;`}">
-      <div class="sc-thumb" style="background:${s.color}22">
-        ${s.photo ? `<img src="${s.photo}" alt="${s.name}" loading="lazy">` : `<div class="sc-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
-      </div>
-      <div class="sc-body">
-        <div class="sc-ic" style="background:${s.color}22"><div class="sc-dot" style="background:${s.color}"></div></div>
-        <div class="sc-info">
-          <div class="sc-name">${s.name}</div>
-          <div class="sc-tag">${CL[s.cat] || s.cat}${s.type === 'event' && s.eventDate ? ' · ' + fmtEvtDate(s.eventDate, s.eventEnd) : ''}</div>
-        </div>
-        ${uLat !== null ? `<div class="sc-dist">${fd(d(uLat, uLng, s.lat, s.lng))}</div>` : ''}
-      </div>
-    </div>`).join('');
-  updCnt(f.length);
+  if (uLat !== null) {
+    _currentFilteredList.sort((a, b) => d(uLat, uLng, a.lat, a.lng) - d(uLat, uLng, b.lat, b.lng));
+  }
+
+  // 2. Reset view
+  sl.innerHTML = '';
+  _listPage = 0;
+
+  // 3. Handle empty state
+  if (!_currentFilteredList.length) {
+    sl.innerHTML = '<div class="no-res">Nenhum ponto encontrado</div>';
+    updCnt(0);
+    // Hide all markers
+    Object.values(markers).forEach(m => { if (map.hasLayer(m)) m.remove(); });
+    return;
+  }
+
+  // 4. Load first page
+  appendListItems();
+
+  // 5. Update total count and markers on map
+  updCnt(_currentFilteredList.length);
+  const currentIds = new Set(_currentFilteredList.map(s => s.id));
   gs().forEach(s => {
     if (!markers[s.id]) return;
-    if (f.find(x => x.id === s.id)) { if (!map.hasLayer(markers[s.id])) markers[s.id].addTo(map); }
-    else { if (map.hasLayer(markers[s.id])) markers[s.id].remove(); }
+    if (currentIds.has(s.id)) {
+      if (!map.hasLayer(markers[s.id])) markers[s.id].addTo(map);
+    } else {
+      if (map.hasLayer(markers[s.id])) markers[s.id].remove();
+    }
   });
 }
 
@@ -629,6 +719,7 @@ window.addEventListener('load', async () => {
   initAuth();
   initDpDrag();
   lucide.createIcons();
+  initInfiniteScroll();
   restorePersistentGeo();
   const l = document.getElementById('loading');
   l.classList.add('fade');

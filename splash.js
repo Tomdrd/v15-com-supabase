@@ -30,9 +30,9 @@
       animation: splash-zoom 1.2s ease-out forwards;
     }
     .splash-logo {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Times New Roman', sans-serif;
       font-size: 32px;
-      font-weight: 800;
+      font-weight: bold;
       color: #F5EDD8;
       letter-spacing: -1px;
     }

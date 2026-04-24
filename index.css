@@ -393,6 +393,54 @@ header {
   border-radius: 3px
 }
 
+/* SKELETON LOADER */
+.sc-skeleton {
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 10px;
+  margin-bottom: 7px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sc-skeleton .sk-thumb { height: 70px; }
+.sc-skeleton .sk-body { padding: 10px; display: flex; gap: 9px; align-items: flex-start; }
+.sc-skeleton .sk-ic { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+.sc-skeleton .sk-info { flex: 1; }
+.sc-skeleton .sk-line { height: 12px; border-radius: 4px; }
+.sc-skeleton .sk-line.short { width: 60%; height: 10px; margin-top: 6px; }
+
+/* Shimmer Animation */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, .06);
+}
+.shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  animation: shimmer-anim 1.5s infinite;
+}
+
+@keyframes shimmer-anim {
+  0% {
+    left: -150%;
+  }
+  50% {
+    left: -150%;
+  }
+  100% {
+    left: 150%;
+  }
+}
+
+
+/* SPOT CARD */
 .sc {
   background: rgba(255, 255, 255, .04);
   border: 1px solid rgba(255, 255, 255, .07);
