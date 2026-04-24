@@ -49,6 +49,15 @@ async function init(){
   if(ids.length){
     const{data:spots}=await supa.from('spots').select('id,name,cat,color,lat,lng,photo').in('id',ids);
     if(spots) spots.forEach(s=>{SPOTS_MAP[s.id]=s;});
+
+    // Fallback: para IDs não encontrados em spots (removidos/rejeitados/pendentes),
+    // busca o nome na tabela submissions
+    const foundIds=new Set((spots||[]).map(s=>String(s.id)));
+    const missingIds=ids.filter(id=>!foundIds.has(String(id)));
+    if(missingIds.length){
+      const{data:subs}=await supa.from('submissions').select('id,name,cat,color,photo').in('id',missingIds);
+      if(subs) subs.forEach(s=>{SPOTS_MAP[s.id]={id:s.id,name:s.name,cat:s.cat,color:s.color,photo:s.photo};});
+    }
   }
   renderPage();
 }
@@ -216,7 +225,7 @@ function initProfileMap(){
 
 /* ── Favoritos ────────────────────────────────────────────────────────── */
 function renderFavorites(){
-  const all=REACTIONS.filter(r=>['like','been','going'].includes(r.reaction));
+  const all=REACTIONS.filter(r=>['like','been','going'].includes(r.reaction)&&SPOTS_MAP[r.spot_id]);
   const filtered=currentFavFilter==='all'?all:all.filter(r=>r.reaction===currentFavFilter);
   const counts={all:all.length,like:all.filter(r=>r.reaction==='like').length,been:all.filter(r=>r.reaction==='been').length,going:all.filter(r=>r.reaction==='going').length};
   const pills=[{key:'all',label:`<i data-lucide="list" style="width:16px;height:16px"></i> Todos (${counts.all})`},{key:'like',label:`<i data-lucide="heart" style="width:16px;height:16px"></i> Gostei (${counts.like})`},{key:'been',label:`<i data-lucide="check-circle" style="width:16px;height:16px"></i> Eu Fui (${counts.been})`},{key:'going',label:`<i data-lucide="calendar" style="width:16px;height:16px"></i> Eu Vou (${counts.going})`}]
