@@ -11,8 +11,10 @@ async function init(){
   USER=session.user;
   const av=USER.user_metadata?.avatar_url||USER.user_metadata?.picture;
   const avEl=document.getElementById('userAvatar');
-  if(av)avEl.innerHTML=`<img src="${av}" alt="">`;
-  else avEl.textContent=(USER.user_metadata?.full_name||USER.email||'?').charAt(0).toUpperCase();
+  if(avEl){
+    if(av)avEl.innerHTML=`<img src="${av}" alt="">`;
+    else avEl.textContent=(USER.user_metadata?.full_name||USER.email||'?').charAt(0).toUpperCase();
+  }
   initMap();
   loadTerms();
   buildEmojiGrid();
@@ -55,6 +57,7 @@ function selectType(type){
 
 function toggleSec(name){
   document.getElementById('sec-'+name).classList.toggle('collapsed');
+  if(name==='loc'&&coordMap) setTimeout(()=>coordMap.invalidateSize(), 300);
 }
 
 function pickEmoji(e){
@@ -77,7 +80,12 @@ async function handlePhoto(file){
   document.getElementById('photoArea').innerHTML=`<div class="photo-preview"><img src="${compressed}" alt="Preview"><div class="photo-preview-actions"><button class="btn-secondary" style="background:rgba(0,0,0,.5);color:#fff;border:none;padding:6px 12px;border-radius:7px;cursor:pointer;font-size:12px" onclick="removePhoto()"><i data-lucide="trash-2" style="width:12px;height:12px;pointer-events:none"></i> Remover</button></div></div>`;
 }
 async function compressImage(file,maxW=900,q=0.78){return new Promise(r=>{const rd=new FileReader();rd.onload=e=>{const img=new Image();img.onload=()=>{const ratio=Math.min(maxW/img.width,1);const c=document.createElement('canvas');c.width=img.width*ratio;c.height=img.height*ratio;c.getContext('2d').drawImage(img,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',q));};img.src=e.target.result;};rd.readAsDataURL(file);});}
-function removePhoto(){pendingPhoto=null;document.getElementById('photoArea').innerHTML=`<div class="drop-zone" id="dropZone"><input type="file" accept="image/*" onchange="handlePhoto(this.files[0])"><div class="drop-zone-icon"><i data-lucide="upload-cloud" style="width:40px;height:40px;stroke-width:1"></i></div><p>Arraste ou clique para enviar uma foto</p><small>JPG, PNG, WEBP — máximo 5 MB</small></div>`;lucide?.createIcons();}
+function removePhoto(){
+  pendingPhoto=null;
+  document.getElementById('photoArea').innerHTML=`<div class="drop-zone" id="dropZone"><input type="file" accept="image/*" onchange="handlePhoto(this.files[0])"><div class="drop-zone-icon"><i data-lucide="upload-cloud" style="width:40px;height:40px;stroke-width:1"></i></div><p>Arraste ou clique para enviar uma foto</p><small>JPG, PNG, WEBP — máximo 5 MB</small></div>`;
+  setupDropZone();
+  lucide?.createIcons();
+}
 
 // SUBMIT
 async function submitForm(){
@@ -101,7 +109,13 @@ async function submitForm(){
     const path=`submissions/${USER.id}/${Date.now()}.jpg`;
     const res=await fetch(pendingPhoto);const blob=await res.blob();
     const{data,error:upErr}=await supa.storage.from('spots-photos').upload(path,blob,{contentType:'image/jpeg',upsert:true});
-    if(!upErr){const{data:ud}=supa.storage.from('spots-photos').getPublicUrl(path);photoUrl=ud.publicUrl;}
+    if(upErr){
+      btn.disabled=false;txt.innerHTML='<i data-lucide="send" class="icon-sm" style="pointer-events:none"></i> Enviar para Aprovação';
+      showErr('Erro ao fazer upload da foto: '+upErr.message);
+      return;
+    }
+    const{data:ud}=supa.storage.from('spots-photos').getPublicUrl(path);
+    photoUrl=ud.publicUrl;
   }
 
   const row={
@@ -129,12 +143,14 @@ async function submitForm(){
 function showErr(msg){const e=document.getElementById('errMsg');e.textContent=msg;e.classList.add('show');e.scrollIntoView({behavior:'smooth',block:'nearest'});setTimeout(()=>e.classList.remove('show'),5000);}
 
 // drag-drop
-document.addEventListener('DOMContentLoaded',()=>{
+function setupDropZone(){
   const dz=document.getElementById('dropZone');
   if(!dz)return;
   dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
   dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
   dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f)handlePhoto(f);});
-});
+}
+
+document.addEventListener('DOMContentLoaded', setupDropZone);
 
 window.onload=init;
