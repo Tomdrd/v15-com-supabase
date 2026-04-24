@@ -1,0 +1,545 @@
+/* sobral_pesquisa.css — Estilos da pesquisa de satisfação */
+
+/* ── WRAP PRINCIPAL ─────────────────────────────── */
+.pesquisa-wrap {
+  padding-top: calc(var(--H) + 28px);
+  padding-bottom: 80px;
+  max-width: 680px;
+  margin: 0 auto;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+/* ── HERO ───────────────────────────────────────── */
+.pesq-hero {
+  text-align: center;
+  padding: 48px 24px 40px;
+  background: linear-gradient(135deg, var(--mid) 0%, #1a2e2a 100%);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pesq-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(27,107,107,.16), transparent 70%);
+  pointer-events: none;
+}
+
+.pesq-hero-ring {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(27,107,107,.12);
+  border: 1.5px solid rgba(27,107,107,.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: #5ec8c8;
+  position: relative;
+  z-index: 1;
+  animation: float 3s ease-in-out infinite;
+}
+
+.pesq-hero-title {
+  font-size: clamp(24px, 5vw, 36px);
+  font-weight: 800;
+  color: var(--cream);
+  margin-bottom: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.pesq-hero-title em {
+  color: #5ec8c8;
+  font-style: normal;
+}
+
+.pesq-hero-sub {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 420px;
+  margin: 0 auto;
+  line-height: 1.8;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── PROGRESSO ──────────────────────────────────── */
+.pesq-progress {
+  margin-bottom: 24px;
+}
+
+.pesq-prog-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.pesq-prog-label strong {
+  color: var(--ochre);
+}
+
+.pesq-prog-bar {
+  height: 5px;
+  background: rgba(255,255,255,.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.pesq-prog-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1B6B6B, #5ec8c8);
+  border-radius: 3px;
+  transition: width .4s ease;
+}
+
+/* ── CARD DA PERGUNTA ───────────────────────────── */
+.pesq-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 28px 24px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  animation: slideIn .3s ease;
+}
+
+.pesq-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #1B6B6B, #5ec8c8, var(--ochre));
+  opacity: .5;
+}
+
+.pesq-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  background: rgba(27,107,107,.1);
+  border: 1px solid rgba(27,107,107,.3);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #5ec8c8;
+  letter-spacing: .4px;
+  margin-bottom: 16px;
+}
+
+.pesq-question {
+  font-size: clamp(16px, 3vw, 20px);
+  font-weight: 700;
+  color: var(--cream);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.pesq-hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 16px;
+  margin-top: -12px;
+  font-style: italic;
+}
+
+/* ── OPÇÕES (radio / select único) ─────────────── */
+.pesq-options {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.pesq-opt {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,.07);
+  background: rgba(255,255,255,.025);
+  cursor: pointer;
+  transition: all .2s;
+  text-align: left;
+  width: 100%;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--cream);
+  font-size: 13.5px;
+}
+
+.pesq-opt:hover {
+  border-color: rgba(27,107,107,.4);
+  background: rgba(27,107,107,.07);
+  transform: translateX(4px);
+}
+
+.pesq-opt.selected {
+  border-color: #1B6B6B;
+  background: rgba(27,107,107,.14);
+}
+
+.pesq-opt.selected .pesq-opt-dot {
+  background: #1B6B6B;
+  border-color: #1B6B6B;
+}
+
+.pesq-opt.selected .pesq-opt-dot::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.pesq-opt-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.2);
+  flex-shrink: 0;
+  position: relative;
+  transition: .2s;
+}
+
+/* ── CHECKBOXES (multi) ─────────────────────────── */
+.pesq-opt.checkbox .pesq-opt-dot {
+  border-radius: 6px;
+}
+
+.pesq-opt.checkbox.selected .pesq-opt-dot::after {
+  content: '✓';
+  font-size: 11px;
+  font-weight: 700;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+}
+
+/* ── ESCALA 0–10 ────────────────────────────────── */
+.pesq-scale {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.pesq-scale-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+
+.pesq-scale-btn:hover {
+  border-color: rgba(200,135,26,.4);
+  background: rgba(200,135,26,.08);
+  color: var(--ochre);
+  transform: translateY(-2px);
+}
+
+.pesq-scale-btn.selected {
+  border-color: var(--ochre);
+  background: rgba(200,135,26,.18);
+  color: var(--ochre);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(200,135,26,.2);
+}
+
+.pesq-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 8px;
+  padding: 0 2px;
+}
+
+/* ── TEXTAREA ───────────────────────────────────── */
+.pesq-textarea {
+  width: 100%;
+  min-height: 110px;
+  background: rgba(255,255,255,.04);
+  border: 1.5px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  color: var(--cream);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  padding: 14px 16px;
+  resize: vertical;
+  transition: border-color .2s;
+  outline: none;
+  line-height: 1.6;
+}
+
+.pesq-textarea:focus {
+  border-color: rgba(27,107,107,.5);
+}
+
+.pesq-textarea::placeholder {
+  color: rgba(245,237,216,.25);
+}
+
+/* ── NAVEGAÇÃO ──────────────────────────────────── */
+.pesq-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 22px;
+  gap: 12px;
+}
+
+.pesq-nav-right {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* ── RESULTADO ──────────────────────────────────── */
+.pesq-result {
+  animation: slideIn .4s ease;
+}
+
+.pesq-result-hero {
+  text-align: center;
+  padding: 48px 24px 40px;
+  background: linear-gradient(135deg, var(--mid) 0%, #1b2e1e 100%);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pesq-result-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(60,120,40,.15), transparent 70%);
+  pointer-events: none;
+}
+
+.pesq-result-ring {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: rgba(60,120,40,.12);
+  border: 2px solid rgba(60,120,40,.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: #8fce6b;
+  position: relative;
+  z-index: 1;
+  animation: pop .5s cubic-bezier(.175,.885,.32,1.275);
+}
+
+.pesq-result-title {
+  font-size: clamp(22px, 4vw, 30px);
+  font-weight: 800;
+  color: var(--cream);
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.pesq-result-sub {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.7;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── SEÇÃO DE GRÁFICOS ──────────────────────────── */
+.pesq-charts {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pesq-chart-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px;
+}
+
+.pesq-chart-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cream);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pesq-chart-title i {
+  width: 16px;
+  height: 16px;
+  color: var(--ochre);
+}
+
+/* Barra horizontal */
+.pesq-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.pesq-bar-row:last-child {
+  margin-bottom: 0;
+}
+
+.pesq-bar-label {
+  font-size: 12.5px;
+  color: var(--cream);
+  min-width: 120px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pesq-bar-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pesq-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #1B6B6B, #5ec8c8);
+  transition: width 1s ease;
+}
+
+.pesq-bar-fill.gold {
+  background: linear-gradient(90deg, var(--ochre), var(--gold));
+}
+
+.pesq-bar-fill.green {
+  background: linear-gradient(90deg, #3C7828, #8fce6b);
+}
+
+.pesq-bar-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ochre);
+  min-width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Nota média destaque */
+.pesq-nota-destaque {
+  text-align: center;
+  padding: 20px 0 8px;
+}
+
+.pesq-nota-num {
+  font-size: 64px;
+  font-weight: 800;
+  color: var(--ochre);
+  line-height: 1;
+}
+
+.pesq-nota-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* Total de respostas */
+.pesq-total-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(200,135,26,.1);
+  border: 1px solid rgba(200,135,26,.25);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ochre);
+  margin-bottom: 20px;
+}
+
+/* Sugestões recentes */
+.pesq-sugestoes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pesq-sugestao-item {
+  padding: 12px 14px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+/* Loading resultado */
+.pesq-chart-loading {
+  text-align: center;
+  padding: 24px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ── RESPONSIVO ─────────────────────────────────── */
+@media (max-width: 480px) {
+  .pesq-scale {
+    gap: 5px;
+  }
+
+  .pesq-scale-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  .pesq-card {
+    padding: 20px 16px;
+  }
+
+  .pesq-bar-label {
+    min-width: 90px;
+    font-size: 11.5px;
+  }
+}
