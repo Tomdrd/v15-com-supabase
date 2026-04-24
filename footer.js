@@ -153,7 +153,7 @@
         <div class="pw-desc">Leva menos de 3 minutos. Ajude a melhorar o Sobral Cultural.</div>
         <a href="sobral_pesquisa.html" class="pw-btn">
             <i data-lucide="arrow-right"></i>
-            Responder pesquisa
+            Responder
         </a>
         <button class="pw-dismiss" onclick="pwDismiss()">Não mostrar novamente</button>
     `;
