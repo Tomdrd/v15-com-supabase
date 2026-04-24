@@ -140,24 +140,20 @@ async function initPostLocation(s,cc){
   const userMk=L.marker([origin.lat,origin.lng],{icon:L.divIcon({html:'<div class="post-user-dot"></div>',className:'',iconSize:[14,14],iconAnchor:[7,7]})}).addTo(mm);
   userMk.bindPopup('<div class="pp-title">Você está aqui</div>');
 
-  const [walkRes,driveRes]=await Promise.allSettled([
-    fetchOsrmRoute(origin,{lat:s.lat,lng:s.lng},'foot'),
-    fetchOsrmRoute(origin,{lat:s.lat,lng:s.lng},'driving')
-  ]);
-  const walk=walkRes.status==='fulfilled'?walkRes.value:null;
-  const drive=driveRes.status==='fulfilled'?driveRes.value:null;
-  if(!walk&&!drive){
+  const drive=await fetchOsrmRoute(origin,{lat:s.lat,lng:s.lng},'driving').catch(()=>null);
+  if(!drive){
     infoEl.innerHTML='<i data-lucide="route-off" class="icon-xs"></i> Rota indisponível no momento';
     lucide?.createIcons();
     return;
   }
-  const pick=drive||walk;
-  const latlngs=pick.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
-  L.polyline(latlngs,{color:'#C8871A',weight:4,opacity:.9,dashArray:drive?null:'6 6'}).addTo(mm);
+  const latlngs=drive.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+  L.polyline(latlngs,{color:'#C8871A',weight:4,opacity:.9}).addTo(mm);
   mm.fitBounds(L.latLngBounds([[origin.lat,origin.lng],[s.lat,s.lng]]).pad(.2));
-  const walkTxt=walk?`a pé ${fmtDuration(walk.duration)}`:null;
-  const driveTxt=drive?`carro ${fmtDuration(drive.duration)}`:null;
-  infoEl.innerHTML=`<i data-lucide="route" class="icon-xs"></i> <strong>${[walkTxt,driveTxt].filter(Boolean).join(' · ')}</strong> <em>(${fd((drive||walk).distance)})</em>`;
+  
+  const walkDuration = drive.distance / 1.38; // Velocidade média a pé ~ 5 km/h
+  const walkTxt=`a pé ${fmtDuration(walkDuration)}`;
+  const driveTxt=`carro ${fmtDuration(drive.duration)}`;
+  infoEl.innerHTML=`<i data-lucide="route" class="icon-xs"></i> <strong>${walkTxt} · ${driveTxt}</strong> <em>(${fd(drive.distance)})</em>`;
   lucide?.createIcons();
 }
 
