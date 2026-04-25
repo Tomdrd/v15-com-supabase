@@ -588,8 +588,6 @@ function hideCarouselSmooth(afterHide) {
     el.style.display = 'none';
     document.body.classList.remove('has-carousel');
     el.classList.remove('is-hiding');
-    const showBtn = document.getElementById('showCarouselBtn');
-    if (showBtn && _carItems.length > 0) showBtn.style.display = 'flex';
     if (typeof afterHide === 'function') afterHide();
   }, transitionMs);
 }
@@ -599,9 +597,6 @@ function showCarouselSmooth() {
   const hasFeaturedItems = _carItems.length > 0;
   const isAlreadyVisible = document.body.classList.contains('has-carousel') && el && el.style.display !== 'none';
   if (!el || !hasFeaturedItems || isAlreadyVisible) return;
-
-  const showBtn = document.getElementById('showCarouselBtn');
-  if (showBtn) showBtn.style.display = 'none';
 
   _carouselHiddenByInteraction = false;
   el.style.display = 'block';
@@ -729,13 +724,6 @@ window.addEventListener('load', async () => {
     l.appendChild(err);
     return;
   }
-
-  const showBtn = document.createElement('button');
-  showBtn.id = 'showCarouselBtn';
-  showBtn.title = 'Mostrar Destaques';
-  showBtn.innerHTML = '<i data-lucide="chevron-down"></i>';
-  showBtn.onclick = () => showCarouselSmooth();
-  document.body.appendChild(showBtn);
 
   initMap();
   buildCarousel();
