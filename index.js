@@ -274,6 +274,12 @@ function initDpDrag() {
     const dy = e.touches[0].clientY - _dpDragStartY;
     if (dy > 0) dp.style.transform = `translateY(${dy}px)`;
     else if (dy < -30) dp.classList.add('expanded');
+    if (dy > 0) {
+      dp.style.transform = `translateY(${dy}px)`;
+    } else if (dy < -30) {
+      dp.classList.add('expanded');
+      hideCarouselSmooth();
+    }
   }, { passive: true });
 
   handle.addEventListener('touchend', e => {
@@ -528,7 +534,12 @@ function buildCarousel() {
   el.style.display = 'block';
   document.body.classList.add('has-carousel');
   el.classList.remove('is-hiding');
-  el.innerHTML = '<div class="fcar-track" id="fcarTrack"></div><div class="fcar-dots" id="fcarDots"></div>';
+  el.innerHTML = `
+    <div class="fcar-track" id="fcarTrack"></div>
+    <div class="fcar-dots" id="fcarDots"></div>
+    <button class="fcar-toggle-btn" onclick="hideCarouselSmooth()" title="Ocultar Destaques">
+      <i data-lucide="chevron-up"></i>
+    </button>`;
   document.getElementById('fcarTrack').innerHTML = _carItems.map((s, i) => `
     <div class="fcar-slide" data-i="${i}">
       ${s.photo ? `<img src="${s.photo}" alt="${s.name}" draggable="false">` : `<div class="fcar-slide-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
@@ -539,7 +550,7 @@ function buildCarousel() {
         <div class="fcar-cat">${CL[s.cat] || s.cat}</div>
       </div>
     </div>`).join('');
-  renderCarDots(); carGoTo(0); carAutoplay(); initCarSwipe();
+  renderCarDots(); carGoTo(0); carAutoplay(); initCarSwipe(); lucide.createIcons({ nodes: [el.querySelector('.fcar-toggle-btn')] });
 }
 
 function renderCarDots() {
@@ -577,6 +588,8 @@ function hideCarouselSmooth(afterHide) {
     el.style.display = 'none';
     document.body.classList.remove('has-carousel');
     el.classList.remove('is-hiding');
+    const showBtn = document.getElementById('showCarouselBtn');
+    if (showBtn && _carItems.length > 0) showBtn.style.display = 'flex';
     if (typeof afterHide === 'function') afterHide();
   }, transitionMs);
 }
@@ -586,6 +599,9 @@ function showCarouselSmooth() {
   const hasFeaturedItems = _carItems.length > 0;
   const isAlreadyVisible = document.body.classList.contains('has-carousel') && el && el.style.display !== 'none';
   if (!el || !hasFeaturedItems || isAlreadyVisible) return;
+
+  const showBtn = document.getElementById('showCarouselBtn');
+  if (showBtn) showBtn.style.display = 'none';
 
   _carouselHiddenByInteraction = false;
   el.style.display = 'block';
@@ -713,6 +729,14 @@ window.addEventListener('load', async () => {
     l.appendChild(err);
     return;
   }
+
+  const showBtn = document.createElement('button');
+  showBtn.id = 'showCarouselBtn';
+  showBtn.title = 'Mostrar Destaques';
+  showBtn.innerHTML = '<i data-lucide="chevron-down"></i>';
+  showBtn.onclick = () => showCarouselSmooth();
+  document.body.appendChild(showBtn);
+
   initMap();
   buildCarousel();
   startRT();
