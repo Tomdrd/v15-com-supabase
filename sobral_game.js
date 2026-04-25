@@ -715,7 +715,7 @@ async function encerrarQuiz() {
 
 /* ── COMPARTILHAR ────────────────────────────────────────────────────────── */
 function compartilhar(score, pct) {
-  const texto = `🏆 Fiz ${score} pontos no Quiz Sobral Cultural!\n${pct}% de acertos — teste você também!\nsobral.cultural.app`;
+  const texto = `🏆 Fiz ${score} pontos no Quiz Sobral Cultural!\n${pct}% de acertos — teste você também!\n${location.origin + location.pathname}`;
   if (navigator.share) {
     navigator.share({ title: 'Quiz Sobral', text: texto }).catch(() => {});
   } else {
