@@ -1012,6 +1012,34 @@ header {
   color: var(--ochre) !important
 }
 
+/* CUSTOM LEAFLET CONTROLS */
+.leaflet-bar {
+  box-shadow: 0 3px 12px rgba(0, 0, 0, .4);
+  border-radius: 10px;
+  border: 1px solid rgba(200, 135, 26, .3);
+  background-color: var(--mid);
+}
+
+.leaflet-bar a {
+  width: 36px;
+  height: 36px;
+  line-height: 36px;
+  background-color: transparent;
+  color: var(--cream);
+  font-size: 20px;
+  font-weight: 600;
+  transition: all .2s;
+}
+
+.leaflet-bar a:hover {
+  background-color: rgba(200, 135, 26, .15);
+  color: var(--ochre);
+}
+
+.leaflet-bar a:first-child {
+  border-bottom: 1px solid rgba(200, 135, 26, .2);
+}
+
 .pp-title {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 14px;
