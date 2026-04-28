@@ -27,47 +27,6 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<style>
-/* ===== Estilos para o Painel de Destaques Arrastável (Mobile) VAMOS VER SE FUNCIONA!!! ===== */
-@media (max-width: 768px) {
-  /* O painel de lista (sidebar) precisa de uma transição suave */
-  .sidebar {
-    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  /* O puxador herda o estilo de .dp-handle, mas damos um cursor específico */
-  #highlightsHandle {
-    display: block; /* Garante que seja visível */
-    cursor: grab;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: none;
-  }
-  #highlightsHandle:active {
-    cursor: grabbing;
-  }
-
-  /* Esconde o puxador em telas grandes onde o painel é fixo */
-  @media (min-width: 769px) {
-    #highlightsHandle { display: none; }
-  }
-
-  /* Estado do painel quando estiver colapsado */
-  .sidebar.collapsed {
-    /* Move o painel para baixo, mas mantém uma parte (80px) visível com o puxador */
-    transform: translateY(calc(100% - 80px));
-  }
-
-  /* Botão para mostrar os destaques novamente */
-  #showHighlightsBtn {
-    position: fixed;
-    bottom: 80px; /* Acima da barra de navegação inferior */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 950; /* Abaixo do painel, acima do mapa */
-    box-shadow: 0 4px 12px rgba(0,0,0,.3);
-  }
-}
-</style>
 <link rel="stylesheet" href="index.css">
 </head>
 <body>
@@ -128,10 +87,6 @@
 
 <div class="app-body">
   <div class="sidebar" id="sb">
-    <!-- Adicionado "puxador" para arrastar, visível apenas em mobile -->
-    <div class="dp-handle" id="highlightsHandle" style="display: none;">
-      <div class="dp-handle-bar"></div>
-    </div>
     <div class="sb-hd">
       <h2>Pontos Turísticos</h2>
       <input class="sbox" id="searchInput" placeholder="Buscar ponto turístico…" oninput="filterSpots()">
@@ -147,7 +102,7 @@
     </div>
     <div class="spl" id="spotsList"></div>
   </div>
-  <div class="sb-back" id="sbBack"></div>
+  <div class="sb-back" id="sbBack" onclick="closeSbMob()"></div>
 
   <div style="position:relative;flex:1;display:flex;flex-direction:column;min-width:0">
     <div id="map" style="flex:1"></div>
@@ -192,7 +147,7 @@
 
 <!-- BOTTOM NAV (mobile) -->
 <nav class="bnav" id="bnav">
-  <button class="bnav-item" data-page="list" id="bnavListBtn">
+  <button class="bnav-item" data-page="list" onclick="toggleSbMob()">
     <i data-lucide="layers" class="bnav-ico"></i>
     <span>Pontos</span>
   </button>
@@ -210,11 +165,6 @@
   </div>
 </nav>
 
-<!-- Botão para mostrar os destaques novamente -->
-<button class="btn btn-primary" id="showHighlightsBtn" style="display: none;">
-  <i data-lucide="arrow-up"></i> Mostrar Destaques
-</button>
-
 <div class="stbar" id="stbar">
   <span><i data-lucide="map-pin" class="icon-xs"></i> <strong id="cntVis">0</strong> pontos</span>
   <span><i data-lucide="map" class="icon-xs"></i> Sobral, CE</span>
@@ -225,120 +175,6 @@
 
 <div class="toast" id="toast"></div>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  // Executa a lógica do painel arrastável apenas em telas móveis
-  if (window.innerWidth > 768) return;
-
-  const highlightsPanel = document.getElementById('sb');
-  const highlightsHandle = document.getElementById('highlightsHandle');
-  const showHighlightsBtn = document.getElementById('showHighlightsBtn');
-  const bnavListBtn = document.getElementById('bnavListBtn');
-  const sbBack = document.getElementById('sbBack');
-
-  if (!highlightsPanel || !highlightsHandle || !showHighlightsBtn || !bnavListBtn || !sbBack) {
-    return;
-  }
-
-  // Função para controlar a visibilidade do painel
-  const toggleHighlightsPanel = (show) => {
-    if (show) {
-      // Mostra o painel completamente
-      highlightsPanel.classList.remove('collapsed');
-      highlightsPanel.classList.add('open');
-      sbBack.classList.add('open');
-      showHighlightsBtn.style.display = 'none';
-      highlightsPanel.style.transform = ''; // Garante que ele suba totalmente
-    } else {
-      // Colapsa o painel (não o fecha completamente)
-      highlightsPanel.classList.add('collapsed');
-      highlightsPanel.classList.remove('open');
-      sbBack.classList.remove('open');
-      showHighlightsBtn.style.display = 'inline-flex';
-    }
-  };
-
-  // Ação do botão "Mostrar Destaques"
-  showHighlightsBtn.addEventListener('click', () => toggleHighlightsPanel(true));
-
-  // Ação do botão da barra de navegação inferior para abrir/expandir o painel
-  bnavListBtn.addEventListener('click', () => toggleHighlightsPanel(true));
-
-  // Ação do fundo para fechar o painel
-  sbBack.addEventListener('click', () => {
-    highlightsPanel.classList.remove('open');
-    sbBack.classList.remove('open');
-  });
-
-  // --- Lógica do Arraste ---
-  let isDragging = false;
-  let startY = 0;
-
-  const getTransformY = (element) => {
-    const style = window.getComputedStyle(element);
-    const matrix = new DOMMatrix(style.transform);
-    return matrix.m42;
-  };
-
-  const handleDragStart = (clientY) => {
-    // Só ativa o arraste se o painel estiver totalmente visível
-    if (!highlightsPanel.classList.contains('open')) return;
-    
-    isDragging = true;
-    startY = clientY;
-    highlightsPanel.style.transition = 'none';
-  };
-
-  const handleDragMove = (clientY) => {
-    if (!isDragging) return;
-    
-    const deltaY = clientY - startY;
-
-    // Permite arrastar apenas para baixo (para ocultar)
-    if (deltaY > 0) {
-      highlightsPanel.style.transform = `translateY(${deltaY}px)`;
-    }
-  };
-
-  const handleDragEnd = () => {
-    if (!isDragging) return;
-    isDragging = false;
-    
-    highlightsPanel.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
-    
-    const currentTransformY = getTransformY(highlightsPanel);
-
-    // Se arrastou mais de 80px, colapsa o painel. Senão, ele volta ao normal.
-    if (currentTransformY > 80) {
-      toggleHighlightsPanel(false);
-    } else {
-      // Volta para a posição original (totalmente aberto)
-      highlightsPanel.style.transform = 'translateY(0)';
-    }
-  };
-
-  // --- Eventos de Mouse e Toque ---
-  const onMouseMove = (e) => handleDragMove(e.clientY);
-  const onTouchMove = (e) => { if (isDragging) handleDragMove(e.touches[0].clientY); };
-
-  const onDragEnd = () => {
-    handleDragEnd();
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onDragEnd);
-    document.removeEventListener('touchmove', onTouchMove);
-    document.removeEventListener('touchend', onDragEnd);
-  };
-
-  highlightsHandle.addEventListener('mousedown', (e) => {
-    e.preventDefault(); handleDragStart(e.clientY);
-    document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onDragEnd);
-  });
-  highlightsHandle.addEventListener('touchstart', (e) => {
-    handleDragStart(e.touches[0].clientY);
-    document.addEventListener('touchmove', onTouchMove); document.addEventListener('touchend', onDragEnd);
-  }, { passive: true });
-});
-</script>
 <script src="index.js"></script>
 <script src="footer.js"></script>
 
