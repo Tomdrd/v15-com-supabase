@@ -139,6 +139,7 @@ let quiz    = null;
 let rankPag = 0;
 let rankAll = [];
 let timerInterval = null;
+let isMuted = localStorage.getItem('quizMuted') === 'true';
 
 /* ── INIT ────────────────────────────────────────────────────────────────── */
 (async () => {
@@ -238,17 +239,29 @@ async function doLogout() {
 
 /* ── ÁUDIO ───────────────────────────────────────────────────────────────── */
 function playAudio(src, volume = 0.9) { // Aumentei o volume padrão para 0.9 para melhor audibilidade
+  if (isMuted) return null;
   // Envolve a reprodução em um try-catch para evitar erros caso o navegador
   // bloqueie o autoplay de áudio antes de uma interação do usuário.
   try {
     const audio = new Audio(src);
     audio.volume = volume;
-    audio.play();
-    console.log(`Áudio '${src}' iniciado com sucesso.`);
+    audio.play()
+      .then(() => console.log(`Áudio '${src}' iniciado com sucesso.`))
+      .catch(e => console.warn(`Não foi possível tocar o áudio '${src}' (autoplay bloqueado ou outro erro):`, e));
     return audio; // Retorna o objeto de áudio para controle externo, se necessário
   } catch (e) {
-    console.warn(`Não foi possível tocar o áudio: ${src}`, e);
+    console.error(`Erro ao criar ou iniciar o objeto Audio para '${src}':`, e);
     return null;
+  }
+}
+
+function toggleSound() {
+  isMuted = !isMuted;
+  localStorage.setItem('quizMuted', isMuted);
+  const btn = document.getElementById('soundBtn');
+  if (btn) {
+    btn.innerHTML = `<i data-lucide="${isMuted ? 'volume-x' : 'volume-2'}"></i>`;
+    lucide.createIcons();
   }
 }
 
@@ -518,6 +531,9 @@ function renderQuestao() {
           <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
         </div>
         ${streakHtml}
+        <button class="quiz-sound-btn" id="soundBtn" onclick="toggleSound()" title="Ativar/desativar som">
+          <i data-lucide="${isMuted ? 'volume-x' : 'volume-2'}"></i>
+        </button>
         <div class="quiz-timer-wrap">
           <svg class="quiz-timer-svg" viewBox="0 0 44 44">
             <circle class="timer-bg" cx="22" cy="22" r="18"/>

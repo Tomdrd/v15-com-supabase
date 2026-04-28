@@ -1021,6 +1021,31 @@ body {
   }
 }
 
+.quiz-sound-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: .15s;
+  flex-shrink: 0;
+}
+
+.quiz-sound-btn:hover {
+  background: rgba(255, 255, 255, .12);
+  color: var(--cream);
+}
+
+.quiz-sound-btn i {
+  width: 20px;
+  height: 20px;
+}
+
 /* circular timer */
 .quiz-timer-wrap {
   position: relative;
