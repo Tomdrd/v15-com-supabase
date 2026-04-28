@@ -1212,15 +1212,23 @@ header {
   box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
   opacity: 1;
   transform: translateY(0);
-  transition: opacity .32s ease, transform .32s ease, visibility .32s ease;
+  transition: all .32s ease;
   visibility: visible;
 }
 
 
 .fcarousel.is-hiding {
+  height: 30px;
+  box-shadow: none;
+  background: transparent;
+  overflow: visible;
+}
+.fcarousel.is-hiding .fcar-track,
+.fcarousel.is-hiding .fcar-dots,
+.fcarousel.is-hiding .fcar-grad,
+.fcarousel.is-hiding .fcar-info {
   opacity: 0;
-  transform: translateY(-14px);
-  visibility: hidden
+  visibility: hidden;
 }
 
 .fcarousel.is-showing {
@@ -1252,9 +1260,13 @@ header {
   background: rgba(26, 20, 16, .9);
   transform: translateX(-50%) translateY(-2px);
 }
-.fcar-toggle-btn i {
+.fcar-toggle-btn svg {
   width: 12px;
   height: 12px;
+  transition: transform .3s;
+}
+.fcarousel.is-hiding .fcar-toggle-btn svg {
+  transform: rotate(180deg);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1390,6 +1402,11 @@ header {
 /* adjust app body when carousel visible */
 body.has-carousel .app-body {
   padding-top: calc(var(--H) + clamp(220px, 28vh, 380px));
+}
+
+/* adjust app body when carousel is hidden */
+body.has-carousel-hidden .app-body {
+  padding-top: calc(var(--H) + 30px);
 }
 
 /* ═══════════════════════════════════════════════

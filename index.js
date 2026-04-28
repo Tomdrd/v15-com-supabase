@@ -537,7 +537,7 @@ function buildCarousel() {
   el.innerHTML = `
     <div class="fcar-track" id="fcarTrack"></div>
     <div class="fcar-dots" id="fcarDots"></div>
-    <button class="fcar-toggle-btn" onclick="hideCarouselSmooth()" title="Ocultar Destaques">
+    <button class="fcar-toggle-btn" onclick="toggleCarousel()" title="Ocultar Destaques">
       <i data-lucide="chevron-up"></i>
     </button>`;
   document.getElementById('fcarTrack').innerHTML = _carItems.map((s, i) => `
@@ -573,9 +573,19 @@ function initCarSwipe() {
   el.addEventListener('click', e => { if(Math.abs(dx)>5) return; const slide=e.target.closest('.fcar-slide'); if(!slide) return; const s=_carItems[_carIdx]; if(s) window.location.href=`sobral_post.html?id=${s.id}`; });
 }
 
+function toggleCarousel() {
+  const el = document.getElementById('fcarousel');
+  if (!el) return;
+  if (el.classList.contains('is-hiding')) {
+    showCarouselSmooth();
+  } else {
+    hideCarouselSmooth();
+  }
+}
+
 function hideCarouselSmooth(afterHide) {
   const el = document.getElementById('fcarousel');
-  const hasCarouselOnScreen = document.body.classList.contains('has-carousel') && el && el.style.display !== 'none';
+  const hasCarouselOnScreen = document.body.classList.contains('has-carousel');
   if (!hasCarouselOnScreen) {
     if (typeof afterHide === 'function') afterHide();
     return;
@@ -583,26 +593,25 @@ function hideCarouselSmooth(afterHide) {
   _carouselHiddenByInteraction = true;
   clearInterval(_carTimer);
   el.classList.add('is-hiding');
+  document.body.classList.remove('has-carousel');
+  document.body.classList.add('has-carousel-hidden');
+  el.querySelector('.fcar-toggle-btn').title = 'Exibir Destaques';
+
   const transitionMs = prefersReducedMotion() ? 0 : 320;
   setTimeout(() => {
-    el.style.display = 'none';
-    document.body.classList.remove('has-carousel');
-    el.classList.remove('is-hiding');
     if (typeof afterHide === 'function') afterHide();
   }, transitionMs);
 }
 
 function showCarouselSmooth() {
   const el = document.getElementById('fcarousel');
-  const hasFeaturedItems = _carItems.length > 0;
-  const isAlreadyVisible = document.body.classList.contains('has-carousel') && el && el.style.display !== 'none';
-  if (!el || !hasFeaturedItems || isAlreadyVisible) return;
+  if (!el || _carItems.length === 0 || document.body.classList.contains('has-carousel')) return;
 
   _carouselHiddenByInteraction = false;
-  el.style.display = 'block';
+  el.classList.remove('is-hiding');
+  document.body.classList.remove('has-carousel-hidden');
   document.body.classList.add('has-carousel');
-  el.classList.add('is-showing');
-  requestAnimationFrame(() => el.classList.remove('is-showing'));
+  el.querySelector('.fcar-toggle-btn').title = 'Ocultar Destaques';
   carAutoplay();
 }
 
