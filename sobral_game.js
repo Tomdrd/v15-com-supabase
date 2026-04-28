@@ -649,7 +649,7 @@ function responder(idx) {
     );
   } else {
     quiz.streak = 0;
-    playAudio('errou.mp3');
+    playAudio('errou2.mp3');
     document.getElementById('opt' + idx).classList.add('wrong');
     document.getElementById('opt' + p.correta)?.classList.add('missed');
     mostrarFeedback(false,
