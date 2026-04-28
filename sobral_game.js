@@ -487,6 +487,7 @@ function iniciarQuiz() {
     idx: 0, score: 0, correct: 0,
     streak: 0, maxStreak: 0,
     tempoRestante: TEMPO_POR_QUESTAO,
+    timerWarningPlayed: false, // Novo estado para controlar o som de aviso do timer
     respondeu: false,
   };
   renderQuestao();
@@ -577,6 +578,10 @@ function iniciarTimer() {
       if (quiz.tempoRestante <= 5) {
         num.classList.add('warn');
         if (arc) arc.classList.add('warn');
+        if (quiz.tempoRestante === 5 && !quiz.timerWarningPlayed) {
+          playAudio('timer.mp3');
+          quiz.timerWarningPlayed = true;
+        }
       }
     }
     if (quiz.tempoRestante <= 0) {
@@ -664,7 +669,7 @@ async function proximaQuestao() {
 
 /* ── RESULTADO ───────────────────────────────────────────────────────────── */
 async function encerrarQuiz() {
-  playAudio('paragens.mp3');
+  playAudio('parabens.mp3');
   clearInterval(timerInterval);
   const total = quiz.perguntas.length;
   const pct = Math.round((quiz.correct / total) * 100);
