@@ -236,6 +236,22 @@ async function doLogout() {
   location.reload();
 }
 
+/* ── ÁUDIO ───────────────────────────────────────────────────────────────── */
+function playAudio(src, volume = 0.9) { // Aumentei o volume padrão para 0.9 para melhor audibilidade
+  // Envolve a reprodução em um try-catch para evitar erros caso o navegador
+  // bloqueie o autoplay de áudio antes de uma interação do usuário.
+  try {
+    const audio = new Audio(src);
+    audio.volume = volume;
+    audio.play();
+    console.log(`Áudio '${src}' iniciado com sucesso.`);
+    return audio; // Retorna o objeto de áudio para controle externo, se necessário
+  } catch (e) {
+    console.warn(`Não foi possível tocar o áudio: ${src}`, e);
+    return null;
+  }
+}
+
 /* ── TOAST ───────────────────────────────────────────────────────────────── */
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
@@ -601,6 +617,7 @@ function responder(idx) {
     const bonus = tempoUsado < 5 ? PONTOS_VELOCIDADE : 0;
     quiz.score += PONTOS_CORRETO + bonus;
     document.getElementById('opt' + idx).classList.add('correct');
+    playAudio('acerto-mi.mp3');
     const bonusMsg = bonus > 0
       ? `<span style="color:var(--gold);font-size:11.5px"> +${bonus} bônus velocidade!</span>`
       : '';
@@ -611,6 +628,7 @@ function responder(idx) {
     );
   } else {
     quiz.streak = 0;
+    playAudio('errou.mp3');
     document.getElementById('opt' + idx).classList.add('wrong');
     document.getElementById('opt' + p.correta)?.classList.add('missed');
     mostrarFeedback(false,
@@ -646,6 +664,7 @@ async function proximaQuestao() {
 
 /* ── RESULTADO ───────────────────────────────────────────────────────────── */
 async function encerrarQuiz() {
+  playAudio('paragens.mp3');
   clearInterval(timerInterval);
   const total = quiz.perguntas.length;
   const pct = Math.round((quiz.correct / total) * 100);
