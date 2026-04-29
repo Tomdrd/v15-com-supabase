@@ -143,11 +143,11 @@
     }
 
     // Não mostra na própria página de pesquisa
-    if (pg === 'sobral_pesquisa.html' || pg === 'sobral_pesquisa') return;
+    if (pg.startsWith('sobral_pesquisa')) return;
 
-    // Não mostra se dispensou nesta sessão
+    // Não mostra se o usuário dispensou permanentemente
     const KEY = 'pesq_widget_dismissed';
-    if (sessionStorage.getItem(KEY)) return;
+    if (localStorage.getItem(KEY)) return;
 
     // Painel
     const panel = document.createElement('div');
@@ -182,7 +182,7 @@
         setTimeout(function(){ tab.classList.add('show'); }, 200);
     };
     window.pwDismiss = function() {
-        sessionStorage.setItem(KEY, '1');
+        localStorage.setItem(KEY, '1');
         panel.classList.remove('show');
         tab.classList.remove('show');
         setTimeout(function(){ panel.remove(); tab.remove(); }, 400);
