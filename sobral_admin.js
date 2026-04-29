@@ -204,6 +204,8 @@ function navigate(view, id = null) {
   else if (view === 'list')       main.innerHTML = renderList();
   else if (view === 'events')     main.innerHTML = renderList('', 'eventos');
   else if (view === 'new')      { main.innerHTML = renderForm(null); initFormExtras(); }
+  else if (view === 'news')       { main.innerHTML = renderNewsList(); }
+  else if (view === 'editNews')   { main.innerHTML = renderNewsForm(id); }
   else if (view === 'edit')     { main.innerHTML = renderForm(id);   initFormExtras(id); }
   else if (view === 'messages')   main.innerHTML = renderMessages();
   else if (view === 'backup')     main.innerHTML = renderBackup();
