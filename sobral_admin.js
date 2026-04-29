@@ -81,16 +81,27 @@ function updateBadge() {
 }
 
 function updateNewsBadge() {
-  const badge = document.getElementById('badge-news');
-  if (!badge) return;
+  const newsBadge = document.getElementById('badge-news');
+  const featBadge = document.getElementById('badge-featured');
   
-  const count = _newsCache.length;
+  if (!newsBadge || !featBadge) return;
   
-  if (count > 0) {
-    badge.textContent = count;
-    badge.style.display = ''; // Deixa o CSS da classe .badge controlar o alinhamento
+  // Contagem Total
+  const totalCount = _newsCache.length;
+  if (totalCount > 0) {
+    newsBadge.textContent = totalCount;
+    newsBadge.style.display = '';
   } else {
-    badge.style.display = 'none';
+    newsBadge.style.display = 'none';
+  }
+
+  // Contagem de Destaques (is_featured === true)
+  const featCount = _newsCache.filter(n => n.is_featured).length;
+  if (featCount > 0) {
+    featBadge.textContent = featCount;
+    featBadge.style.display = '';
+  } else {
+    featBadge.style.display = 'none';
   }
 }
 
@@ -220,6 +231,7 @@ function navigate(view, id = null) {
   else if (view === 'events')     main.innerHTML = renderList('', 'eventos');
   else if (view === 'new')      { main.innerHTML = renderForm(null); initFormExtras(); }
   else if (view === 'news')       { main.innerHTML = renderNewsList(); }
+  else if (view === 'news-featured') { main.innerHTML = renderFeaturedManager(); }
   else if (view === 'editNews')   { main.innerHTML = renderNewsForm(id); }
   else if (view === 'edit')     { main.innerHTML = renderForm(id);   initFormExtras(id); }
   else if (view === 'messages')   main.innerHTML = renderMessages();
@@ -1046,6 +1058,84 @@ async function saveNews(id) {
       btn.innerHTML = '<i data-lucide="save" class="icon-sm"></i> Salvar'; 
       lucide.createIcons(); 
     }
+  }
+}
+
+// ══════════════════════════════════════════
+//  GERENCIAR DESTAQUES
+// ══════════════════════════════════════════
+function renderFeaturedManager() {
+  const featuredSpots = _cache.filter(s => s.isFeatured);
+  const featuredNews  = _newsCache.filter(n => n.is_featured);
+  const total = featuredSpots.length + featuredNews.length;
+
+  return `
+  <div class="page-header">
+    <div class="page-title">
+      <h2>Gerenciar Destaques</h2>
+      <p>${total} itens aparecendo no carrossel da página inicial</p>
+    </div>
+  </div>
+  <div class="page-content">
+    <div class="section-title">Pontos Turísticos e Eventos</div>
+    <div class="spots-grid" style="margin-bottom: 30px;">
+      ${featuredSpots.length === 0 ? '<p style="color:var(--muted)">Nenhum ponto em destaque.</p>' : 
+        featuredSpots.map(s => `
+        <div class="spot-item">
+          <div class="spot-photo">
+            <img src="${s.photo || ''}">
+            <div class="spot-photo-badge" style="background:var(--terra)">${s.type === 'event' ? 'Evento' : 'Ponto'}</div>
+          </div>
+          <div class="spot-body">
+            <div class="spot-name">${s.name}</div>
+            <div class="spot-actions">
+              <button class="btn btn-sm btn-danger" onclick="quickRemoveFeatured('${s.id}', 'spot')">
+                <i data-lucide="star-off" class="icon-sm"></i> Remover do Carrossel
+              </button>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <div class="section-title">Matérias e Notícias</div>
+    <div class="spots-grid">
+      ${featuredNews.length === 0 ? '<p style="color:var(--muted)">Nenhuma notícia em destaque.</p>' : 
+        featuredNews.map(n => `
+        <div class="spot-item">
+          <div class="spot-photo">
+            <img src="${n.cover_image || ''}">
+            <div class="spot-photo-badge" style="background:var(--ochre)">Notícia</div>
+          </div>
+          <div class="spot-body">
+            <div class="spot-name">${n.title}</div>
+            <div class="spot-actions">
+              <button class="btn btn-sm btn-danger" onclick="quickRemoveFeatured('${n.id}', 'news')">
+                <i data-lucide="star-off" class="icon-sm"></i> Remover do Carrossel
+              </button>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+async function quickRemoveFeatured(id, type) {
+  const table = type === 'spot' ? 'spots' : 'news';
+  const column = 'is_featured'; // Nome da coluna em ambas as tabelas
+
+  showToast('Removendo destaque...', 'info');
+
+  try {
+    const { error } = await supa.from(table).update({ [column]: false }).eq('id', id);
+    if (error) throw error;
+
+    showToast('Removido com sucesso!', 'success');
+    if (type === 'spot') { await loadSpots(); } else { await loadNews(); }
+    document.getElementById('mainContent').innerHTML = renderFeaturedManager();
+    lucide.createIcons();
+  } catch (err) {
+    console.error(err);
+    showToast('Erro ao remover: ' + err.message, 'error');
   }
 }
 

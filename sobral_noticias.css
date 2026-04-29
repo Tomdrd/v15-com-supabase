@@ -503,6 +503,7 @@ body {
   font-size: 12.5px;
   color: var(--muted);
   line-height: 1.6;
+  line-clamp: 3;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -604,7 +605,7 @@ body {
   border-color: rgba(200, 135, 26, .5)
 }
 
-.detail-body {}
+
 
 .detail-header {
   display: flex;
