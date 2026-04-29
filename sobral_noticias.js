@@ -6,6 +6,7 @@ const supa = supabase.createClient(SU, SK);
 // ── Ícones Lucide por categoria ───────────────────────────────────────────────
 const CAT_ICON = {
   evento:      'calendar',
+  editorial:   'star',
   cultura:     'landmark',
   musica:      'music',
   gastronomia: 'utensils',
@@ -38,11 +39,11 @@ function timeAgo(dateStr) {
 function iconForCat(cat) { return CAT_ICON[cat] || 'file-text'; }
 
 function tagClass(cat) {
-  const map = { evento:'tag-evento', cultura:'tag-cultura', turismo:'tag-turismo', gastronomia:'tag-gastronomia', musica:'tag-musica' };
+  const map = { evento:'tag-evento', editorial:'tag-editorial', cultura:'tag-cultura', turismo:'tag-turismo', gastronomia:'tag-gastronomia', musica:'tag-musica' };
   return map[cat] || 'tag-cultura';
 }
 function icoClass(cat) {
-  const map = { evento:'ico-evento', cultura:'ico-cultura', turismo:'ico-turismo', gastronomia:'ico-gastronomia', musica:'ico-musica' };
+  const map = { evento:'ico-evento', editorial:'ico-editorial', cultura:'ico-cultura', turismo:'ico-turismo', gastronomia:'ico-gastronomia', musica:'ico-musica' };
   return map[cat] || 'ico-cultura';
 }
 
@@ -151,12 +152,16 @@ function openDetail(id) {
   const searchBar = document.querySelector('.search-bar');
   const heroFilters = document.querySelector('.hero-filters');
 
-  const longText = (n.long || n.summary || '')
-    .split('\n\n')
-    .filter(p => p.trim())
-    .map(p => `<p>${p.trim()}</p>`)
-    .join('');
-
+  let longText = '';
+  if (n.isEditorial) {
+    longText = n.content || '<p>Conteúdo indisponível.</p>';
+  } else {
+    longText = (n.long || n.summary || '')
+      .split('\n\n')
+      .filter(p => p.trim())
+      .map(p => `<p>${p.trim()}</p>`)
+      .join('');
+  }
   // Monta imagem de cabeçalho se disponível
   const headerImage = n.image_url ? `
     <div style="
@@ -271,19 +276,43 @@ function showEmptyDb() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 window.addEventListener('load', async () => {
   try {
-    const { data, error } = await supa
-      .from('news_summaries')
-      .select('*')
-      .order('published_at', { ascending: false })
-      .limit(50);
+    const [rssRes, editRes] = await Promise.all([
+      supa.from('news_summaries').select('*').order('published_at', { ascending: false }).limit(30),
+      supa.from('news').select('*').eq('is_published', true).order('created_at', { ascending: false }).limit(30)
+    ]);
 
-    if (error) throw error;
+    if (rssRes.error) throw rssRes.error;
+    if (editRes.error) throw editRes.error;
 
-    if (data && data.length > 0) {
-      allNews = data.map(n => ({
+    const rssData = rssRes.data || [];
+    const editData = editRes.data || [];
+
+    const normalizedRSS = rssData.map(n => ({
         ...n,
-        time: timeAgo(n.published_at),
-      }));
+        isEditorial: false,
+        sortDate: new Date(n.published_at).getTime(),
+        time: timeAgo(n.published_at)
+    }));
+
+    const normalizedEdit = editData.map(n => ({
+      id: n.id,
+      title: n.title,
+      summary: n.summary,
+      content: n.content,
+      image_url: n.cover_image,
+      cat: 'editorial',
+      tag: n.ai_generated ? 'IA Especial' : 'Editorial',
+      source: n.author || 'Equipe Sobral',
+      source_url: n.source_url,
+      published_at: n.created_at,
+      sortDate: new Date(n.created_at).getTime(),
+      time: timeAgo(n.created_at),
+      isEditorial: true
+    }));
+
+    allNews = [...normalizedRSS, ...normalizedEdit].sort((a, b) => b.sortDate - a.sortDate);
+
+    if (allNews.length > 0) {
       renderGrid();
     } else {
       showEmptyDb();

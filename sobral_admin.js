@@ -35,6 +35,7 @@ const COLORS = ['#1B6B6B','#6440B4','#B54A2A','#3C7828','#C8871A','#1A5F8B','#8B
 //  CACHE + LEITURA
 // ══════════════════════════════════════════
 let _cache = [];
+let _newsCache = [];
 let _pendingPhoto = null; // foto pendente de upload (era window._pendingPhoto)
 
 function mapRow(r) {
@@ -77,6 +78,20 @@ function updateBadge() {
   if (el) el.textContent = _cache.filter(s => s.type !== 'event').length;
   const ev = document.getElementById('eventCountBadge');
   if (ev) ev.textContent = _cache.filter(s => s.type === 'event').length;
+}
+
+function updateNewsBadge() {
+  const badge = document.getElementById('badge-news');
+  if (!badge) return;
+  
+  const count = _newsCache.length;
+  
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = ''; // Deixa o CSS da classe .badge controlar o alinhamento
+  } else {
+    badge.style.display = 'none';
+  }
 }
 
 // ══════════════════════════════════════════
@@ -784,6 +799,256 @@ function confirmReset() {
   document.getElementById('confirmModal').classList.add('open');
 }
 
+async function loadNews() {
+  const { data, error } = await supa.from('news').select('*').order('created_at', { ascending: false });
+  if (error) { console.error('Erro ao carregar notícias:', error); return; }
+  _newsCache = data || [];
+  updateNewsBadge();
+  if (currentView === 'news') {
+    document.getElementById('mainContent').innerHTML = renderNewsList();
+    lucide.createIcons();
+  }
+}
+
+// ══════════════════════════════════════════
+//  SISTEMA DE NOTÍCIAS E IA
+// ══════════════════════════════════════════
+
+async function generateNewsFromUrl() {
+  const urlInput = document.getElementById('n-source-url');
+  const url = urlInput?.value?.trim();
+  const btn = document.getElementById('btnGenerateNews');
+
+  if (!url) {
+    showToast('Cole o link da matéria original primeiro!', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i data-lucide="loader-2" class="icon-sm" style="animation: spin 1s linear infinite;"></i> Gerando...';
+  lucide.createIcons();
+
+  try {
+    // Captura a sessão atual para autenticação
+    const { data: { session } } = await supa.auth.getSession();
+    
+    if (!session) {
+      throw new Error('Sessão expirada. Por favor, faça login novamente.');
+    }
+
+    // Chamada para a Edge Function
+    const response = await fetch('https://nrohpfggqcbscyoigpiz.supabase.co/functions/v1/generate-news', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({ url: url }) // Garante que a URL é enviada como um objeto JSON
+    });
+    
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || `Erro do servidor: ${response.status}`);
+    }
+
+    // Preenchimento dos campos com o retorno da IA
+    document.getElementById('n-title').value = result.data.generatedTitle || '';
+    document.getElementById('n-summary').value = result.data.generatedSummary || '';
+    document.getElementById('newsEditor').innerHTML = result.data.generatedHtmlContent || '';
+    
+    if (result.data.coverImage) {
+      document.getElementById('n-cover').value = result.data.coverImage;
+    }
+
+    const aiCheckbox = document.getElementById('n-ai-generated');
+    if(aiCheckbox) aiCheckbox.checked = true;
+
+    showToast('Conteúdo gerado com sucesso! Revise antes de salvar.', 'success');
+
+  } catch (err) {
+    console.error('Erro detalhado:', err);
+    showToast(`Erro na IA: ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="sparkles" class="icon-sm"></i> Gerar Conteúdo com IA';
+    lucide.createIcons();
+  }
+}
+
+function renderNewsForm(id = null) {
+  const isNew = id === 'nova' || id === null || id === 'null';
+  const n = !isNew ? _newsCache.find(x => x.id === id) : null;
+  return `
+  <div class="page-header">
+    <div class="page-title">
+      <h2>${isNew ? 'Nova Matéria' : 'Editar Matéria'}</h2>
+      <p>Escreva do zero ou use a IA para resumir um link.</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-ghost" onclick="navigate('news')">← Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNews('${id}')">
+        <i data-lucide="save" class="icon-sm"></i> Salvar
+      </button>
+    </div>
+  </div>
+  <div class="page-content">
+    ${isNew ? `
+    <div class="form-section" style="border-color: var(--ochre); background: rgba(200, 135, 26, 0.05);">
+      <div class="form-section-body">
+        <div style="display:flex; gap: 10px; align-items: flex-end;">
+          <div class="form-group" style="flex: 1;">
+            <label style="color: var(--ochre);">Link Fonte (Instagram, G1, O Povo, etc)</label>
+            <input id="n-source-url" placeholder="https://..." style="border-color: var(--ochre);">
+          </div>
+          <button id="btnGenerateNews" class="btn btn-primary" onclick="generateNewsFromUrl()" style="margin-bottom: 2px; flex-shrink: 0;">
+            <i data-lucide="sparkles" class="icon-sm"></i> Gerar Conteúdo com IA
+          </button>
+        </div>
+      </div>
+    </div>` : ''}
+
+    <div class="form-section">
+      <div class="form-section-body">
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label>Título da Matéria <em>*</em></label>
+          <input id="n-title" placeholder="Ex: Novo edital..." value="${n?.title || ''}">
+        </div>
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label>Resumo Curto</label>
+          <textarea id="n-summary" rows="2" maxlength="250">${n?.summary || ''}</textarea>
+        </div>
+        <div class="form-row cols-2">
+          <div class="form-group">
+            <label>URL da Imagem de Capa</label>
+            <input id="n-cover" value="${n?.cover_image || ''}">
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <div class="form-group form-group-check">
+              <label class="check-label">
+                <input type="checkbox" id="n-ai-generated" ${n?.ai_generated ? 'checked' : ''}>
+                <span class="check-box"></span>
+                <span>Texto gerado por IA</span>
+              </label>
+            </div>
+            <div class="form-group form-group-check">
+              <label class="check-label">
+                <input type="checkbox" id="n-featured" ${n?.is_featured ? 'checked' : ''}>
+                <span class="check-box"></span>
+                <span>Exibir no carrossel de destaques</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        ${!isNew ? `<input type="hidden" id="n-source-url" value="${n?.source_url || ''}">` : ''}
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-header"><h3>Conteúdo Completo</h3></div>
+      <div class="form-section-body">
+        <div class="editor-toolbar">
+          <button onclick="fmtNews('bold')"><b>B</b></button>
+          <button onclick="fmtNews('italic')"><i>I</i></button>
+          <button onclick="fmtNews('formatBlock','h2')">H2</button>
+          <button onclick="fmtNews('formatBlock','p')">¶</button>
+        </div>
+        <div id="newsEditor" class="blog-editor" contenteditable="true">
+          ${n?.content || '<p>Escreva a matéria aqui...</p>'}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// Substituindo a função renderNewsList() existente
+function renderNewsList() {
+  const news = _newsCache;
+  return `
+  <div class="page-header">
+    <div class="page-title"><h2>Notícias</h2><p>${news.length} matérias cadastradas</p></div>
+    <div class="page-actions">
+      <button class="btn btn-primary" onclick="navigate('editNews', 'nova')">
+        <i data-lucide="plus" class="icon-sm"></i> Nova Matéria
+      </button>
+    </div>
+  </div>
+  <div class="page-content">
+    ${news.length === 0 
+      ? `<div class="empty-state"><h3>Nenhuma notícia encontrada</h3><p>Clique em "Nova Matéria" para começar.</p></div>`
+      : `<div class="spots-grid">
+          ${news.map(n => `
+            <div class="spot-item">
+              <div class="spot-photo">
+                ${n.cover_image ? `<img src="${n.cover_image}">` : `<div class="spot-photo-placeholder"><i data-lucide="newspaper"></i></div>`}
+                ${n.ai_generated ? `<div class="spot-photo-badge" style="background:var(--ochre)">✨ IA</div>` : ''}
+                ${n.is_featured ? `<div class="spot-photo-badge" style="background:var(--terra); left: auto; right: 10px;">📌 Destaque</div>` : ''}
+              </div>
+              <div class="spot-body">
+                <div class="spot-name">${n.title}</div>
+                <div class="spot-meta">${n.summary ? n.summary.substring(0, 120) + '...' : 'Sem resumo disponível.'}</div>
+                <div class="spot-actions">
+                  <button class="btn btn-sm btn-secondary" onclick="navigate('editNews', '${n.id}')">
+                    <i data-lucide="pencil" class="icon-sm"></i> Editar
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>`
+    }
+  </div>`;
+}
+
+async function saveNews(id) {
+  const title = document.getElementById('n-title')?.value?.trim();
+  if (!title) { showToast('O título é obrigatório.', 'error'); return; }
+
+  const summary = document.getElementById('n-summary')?.value?.trim() || '';
+  const source_url = document.getElementById('n-source-url')?.value?.trim() || '';
+  const cover_image = document.getElementById('n-cover')?.value?.trim() || '';
+  const content = document.getElementById('newsEditor')?.innerHTML || '';
+  const ai_generated = !!document.getElementById('n-ai-generated')?.checked;
+  const is_featured = !!document.getElementById('n-featured')?.checked;
+
+  const isNew = id === 'nova' || id === 'null' || !id;
+  const newsId = isNew ? crypto.randomUUID() : id;
+
+  const row = {
+    id: newsId,
+    title,
+    summary,
+    content,
+    source_url,
+    cover_image,
+    ai_generated,
+    is_featured,
+    is_published: true
+  };
+
+  if (isNew) row.created_at = new Date().toISOString();
+
+  // Feedback visual de salvamento
+  const btn = document.querySelector('button[onclick^="saveNews"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
+
+  try {
+    const { error } = await supa.from('news').upsert(row, { onConflict: 'id' });
+    if (error) throw error;
+    
+    showToast('Matéria salva com sucesso!', 'success');
+    setTimeout(() => navigate('news'), 900); // Volta pra lista de notícias
+  } catch (err) {
+    console.error(err);
+    showToast('Erro ao salvar: ' + err.message, 'error');
+    if (btn) { 
+      btn.disabled = false; 
+      btn.innerHTML = '<i data-lucide="save" class="icon-sm"></i> Salvar'; 
+      lucide.createIcons(); 
+    }
+  }
+}
+
 // ══════════════════════════════════════════
 //  MODERATION
 // ══════════════════════════════════════════
@@ -1237,7 +1502,7 @@ window.onload = async () => {
       window._adminUser = session.user;
       showLoginOverlay(false);
       showToast('Conectando ao Supabase…', 'info');
-      await Promise.all([loadSpots(), loadMessages(), loadPages(), loadSubmissions()]);
+      await Promise.all([loadSpots(), loadMessages(), loadPages(), loadSubmissions(), loadNews()]);
       startRealtime();
       navigate('dashboard');
       return;

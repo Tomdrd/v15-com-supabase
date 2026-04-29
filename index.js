@@ -29,6 +29,21 @@ let _currentFilteredList = [];
 let _isListLoading = false;
 let _listAppendTimeout = null;
 // -- END PAGINATION STATE
+let FEATURED_NEWS = [];
+
+async function loadFeaturedNews() {
+  const { data, error } = await supa.from('news').select('id, title, cover_image').eq('is_published', true).eq('is_featured', true).order('created_at', { ascending: false });
+  if (!error && data) {
+    FEATURED_NEWS = data.map(n => ({
+      id: n.id,
+      name: n.title,
+      cat: 'editorial',
+      color: '#C8871A',
+      photo: n.cover_image,
+      isNews: true
+    }));
+  }
+}
 
 const mr = r => ({
   id: r.id, name: r.name, cat: r.cat, color: r.color,
@@ -522,12 +537,24 @@ let _carouselHiddenByInteraction = false;
 const prefersReducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function buildCarousel() {
-  const featured = SPOTS.filter(s => s.isFeatured);
+  // Filtra os pontos turísticos em destaque
+  const featuredSpots = SPOTS.filter(s => s.isFeatured);
+  
+  // Combina pontos e notícias em uma nova variável para evitar conflito de nomes
+  const allFeaturedItems = [...featuredSpots, ...FEATURED_NEWS];
+
   const el = document.getElementById('fcarousel');
-  if (!featured.length) { el.style.display = 'none'; document.body.classList.remove('has-carousel'); return; }
-  _carItems = featured;
+  
+  // Se não houver nada para destacar, oculta o carrossel
+  if (!allFeaturedItems.length) { 
+    el.style.display = 'none'; 
+    document.body.classList.remove('has-carousel'); 
+    return; 
+  }
+
+  // Atualiza a variável global de itens do carrossel
+  _carItems = allFeaturedItems;
   if (_carouselHiddenByInteraction) {
-    el.style.display = 'none';
     document.body.classList.remove('has-carousel');
     return;
   }
@@ -545,9 +572,9 @@ function buildCarousel() {
       ${s.photo ? `<img src="${s.photo}" alt="${s.name}" draggable="false">` : `<div class="fcar-slide-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
       <div class="fcar-grad"></div>
       <div class="fcar-info">
-        <div class="fcar-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.86L12 17.77l-6.18 3.23L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Destaque</div>
+        <div class="fcar-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.86L12 17.77l-6.18 3.23L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> ${s.isNews ? 'Matéria' : 'Destaque'}</div>
         <div class="fcar-name">${s.name}</div>
-        <div class="fcar-cat">${CL[s.cat] || s.cat}</div>
+        <div class="fcar-cat">${s.isNews ? 'Matéria Especial' : (CL[s.cat] || s.cat)}</div>
       </div>
     </div>`).join('');
   renderCarDots(); carGoTo(0); carAutoplay(); initCarSwipe(); lucide.createIcons({ nodes: [el.querySelector('.fcar-toggle-btn')] });
@@ -570,7 +597,12 @@ function initCarSwipe() {
   el.addEventListener('touchmove', e => { if(!dragging) return; const t=e.touches[0]; const curDx=t.clientX-startX; const curDy=t.clientY-startY; if(!lockAxis) lockAxis=Math.abs(curDx)>Math.abs(curDy)?'x':'y'; if(lockAxis!=='x') return; e.preventDefault(); dx=curDx; const track=document.getElementById('fcarTrack'); if(track) track.style.transform=`translateX(calc(${-_carIdx*100}% + ${dx}px))`; }, {passive:false});
   el.addEventListener('touchend', () => { if(!dragging) return; dragging=false; const track=document.getElementById('fcarTrack'); if(track) track.style.transition=''; if(lockAxis==='x'){ if(dx<-40) carGoTo(_carIdx+1); else if(dx>40) carGoTo(_carIdx-1); else carGoTo(_carIdx); } dx=0; lockAxis=null; carAutoplay(); });
   el.addEventListener('touchcancel', () => { dragging=false; dx=0; lockAxis=null; const track=document.getElementById('fcarTrack'); if(track){track.style.transition=''; carGoTo(_carIdx);} carAutoplay(); });
-  el.addEventListener('click', e => { if(Math.abs(dx)>5) return; const slide=e.target.closest('.fcar-slide'); if(!slide) return; const s=_carItems[_carIdx]; if(s) window.location.href=`sobral_post.html?id=${s.id}`; });
+  el.addEventListener('click', e => { 
+    if(Math.abs(dx)>5) return; 
+    const slide=e.target.closest('.fcar-slide'); 
+    if(!slide) return; 
+    const s=_carItems[_carIdx]; 
+    if(s) { window.location.href = s.isNews ? 'sobral_noticias.html' : `sobral_post.html?id=${s.id}`; } });
 }
 
 function toggleCarousel() {
@@ -724,6 +756,7 @@ async function toggleReaction(spotId, reaction) {
 /* ── BOOT ────────────────────────────────────────────────────────────────── */
 window.addEventListener('load', async () => {
   const ok = await loadSpots();
+  await loadFeaturedNews();
   if (!ok) {
     const l = document.getElementById('loading');
     l.querySelector('.lsp').style.display = 'none';
