@@ -8,6 +8,7 @@ const CAT_COLORS={religioso:'#9B8EC4',cultura:'#C8871A',historico:'#7B9E6B',natu
 let USER=null,PROFILE=null,SUBS=[],REACTIONS=[],SPOTS_MAP={};
 let currentTab='mymap';
 let currentFavFilter='all';
+let isMyProfile = false;
 let profileMap=null;
 
 function toggleDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id)?.classList.toggle('open'));}
@@ -36,15 +37,20 @@ async function init(){
   if(!session){location.href='sobral_login.html?redirect=sobral_perfil.html';return;}
   USER=session.user;
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const profileId = urlParams.get('id');
+  const targetUserId = profileId || USER.id;
+  isMyProfile = !profileId || (USER && profileId === USER.id);
+
   const[{data:prof},{data:subs},{data:reacts}]=await Promise.all([
-    supa.from('profiles').select('*').eq('id',USER.id).single(),
-    supa.from('submissions').select('*').eq('user_id',USER.id).order('created_at',{ascending:false}),
-    supa.from('reactions').select('*').eq('user_id',USER.id).order('created_at',{ascending:false})
+    supa.from('profiles').select('*').eq('id', targetUserId).single(),
+    supa.from('submissions').select('*').eq('user_id', targetUserId).order('created_at',{ascending:false}),
+    supa.from('reactions').select('*').eq('user_id', targetUserId).order('created_at',{ascending:false})
   ]);
-  PROFILE=prof||{role:'user',full_name:USER.user_metadata?.full_name||''};
+  PROFILE=prof||{id: targetUserId, role:'user',full_name:USER.user_metadata?.full_name||''};
   SUBS=subs||[];
   REACTIONS=reacts||[];
-
+  
   const ids=[...new Set(REACTIONS.map(r=>r.spot_id).filter(Boolean))];
   if(ids.length){
     const{data:spots}=await supa.from('spots').select('id,name,cat,color,lat,lng,photo').in('id',ids);
@@ -64,7 +70,7 @@ async function init(){
 
 function renderPage(){
   const avatarSrc=PROFILE.avatar_url||USER.user_metadata?.avatar_url||USER.user_metadata?.picture||'';
-  const name=PROFILE.full_name||USER.user_metadata?.full_name||USER.email?.split('@')[0]||'Usuário';
+  const name=PROFILE.full_name||'Usuário';
   const isAdmin=PROFILE.role==='admin';
   const likeCount=REACTIONS.filter(r=>r.reaction==='like').length;
   const beenCount=REACTIONS.filter(r=>r.reaction==='been').length;
@@ -75,7 +81,7 @@ function renderPage(){
       <div class="profile-inner">
         <div class="avatar-wrap">
           ${avatarSrc?`<div class="avatar"><img src="${avatarSrc}" alt="${name}"></div>`:`<div class="avatar-placeholder">${name.charAt(0).toUpperCase()}</div>`}
-          <div class="role-badge ${isAdmin?'admin':''}">${isAdmin?'Admin':'Usuário'}</div>
+          <div class="role-badge ${isAdmin?'admin':''}">${isAdmin?'Admin':(PROFILE.role || 'Usuário')}</div>
         </div>
         <div class="profile-info">
           <div class="profile-name">${name}</div>
@@ -95,18 +101,20 @@ function renderPage(){
             </button>
           </div>
         </div>
+        ${isMyProfile ? `
         <div style="padding-bottom:16px;flex-shrink:0">
           <button class="btn btn-secondary btn-sm" onclick="showTab('settings')" style="font-size:12px"><i data-lucide="settings" style="width:12px;height:12px;pointer-events:none"></i> Editar Perfil</button>
         </div>
+        ` : ''}
       </div>
     </div>
 
     <div class="profile-tabs">
       <div class="profile-tabs-inner">
         <button class="ptab" data-tab="mymap"       onclick="showTab('mymap')"><i data-lucide="map"      style="width:14px;height:14px;pointer-events:none"></i> Meu Mapa</button>
-        <button class="ptab" data-tab="favorites"   onclick="showTab('favorites')"><i data-lucide="heart"    style="width:14px;height:14px;pointer-events:none"></i> Favoritos</button>
+        <button class="ptab" data-tab="favorites"   onclick="showTab('favorites')"><i data-lucide="heart"    style="width:14px;height:14px;pointer-events:none"></i> Reações</button>
         <button class="ptab" data-tab="submissions" onclick="showTab('submissions')"><i data-lucide="map-pin" style="width:14px;height:14px;pointer-events:none"></i> Envios</button>
-        <button class="ptab" data-tab="settings"    onclick="showTab('settings')"><i data-lucide="settings" style="width:14px;height:14px;pointer-events:none"></i> Configurações</button>
+        ${isMyProfile ? `<button class="ptab" data-tab="settings"    onclick="showTab('settings')"><i data-lucide="settings" style="width:14px;height:14px;pointer-events:none"></i> Configurações</button>` : ''}
       </div>
     </div>
 
@@ -159,7 +167,7 @@ function renderMyMap(){
   if(!allSpots.length){
     c.classList.remove('tab-fade');void c.offsetWidth;
     c.innerHTML=`<div class="empty">
-      <div class="empty-icon"><i data-lucide="map" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div>
+      <div class="empty-icon"><i data-lucide="route" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div>
       <h3>Nenhum ponto no seu roteiro</h3>
       <p>Marque lugares como "Eu Fui" ou "Eu Vou" no mapa para criar seu roteiro pessoal.</p>
       <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="map" style="width:14px;height:14px;pointer-events:none"></i> Explorar o Mapa</a>
@@ -232,7 +240,7 @@ function renderFavorites(){
     .map(p=>`<button class="fav-pill${currentFavFilter===p.key?' active':''}" onclick="setFavFilter('${p.key}')">${p.label}</button>`).join('');
 
   if(!filtered.length){
-    const msg=currentFavFilter==='all'?'Explore o mapa e marque lugares que você gostou, visitou ou quer visitar!':currentFavFilter==='like'?'Curta locais no mapa para eles aparecerem aqui.':currentFavFilter==='been'?'Marque lugares que você já visitou no mapa.':'Planeje sua visita marcando lugares como "Eu Vou".';
+    const msg=currentFavFilter==='all'?'Explore o mapa e marque lugares que você gostou, visitou ou quer visitar!':currentFavFilter==='like'?'Reaja com "Gostei" em locais no mapa para eles aparecerem aqui.':currentFavFilter==='been'?'Marque lugares que você já visitou no mapa.':'Planeje sua visita marcando lugares como "Eu Vou".';
     return `<div class="fav-pills">${pills}</div><div class="empty"><div class="empty-icon"><i data-lucide="heart" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div><h3>Nenhum local aqui</h3><p>${msg}</p><a href="index.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="map" style="width:14px;height:14px;pointer-events:none"></i> Explorar o Mapa</a></div>`;
   }
 
@@ -262,8 +270,14 @@ function setFavFilter(filter){
 
 /* ── Envios ──────────────────────────────────────────────────────── */
 function renderSubmissions(){
-  if(!SUBS.length) return `<div class="empty"><div class="empty-icon"><i data-lucide="map-pin" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div><h3>Nenhum envio ainda</h3><p>Envie um ponto turístico ou evento para que ele apareça no mapa!</p><a href="sobral_submeter.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="plus" style="width:14px;height:14px;pointer-events:none"></i> Enviar Ponto ou Evento</a></div>`;
-  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><div style="font-size:14px;color:var(--muted)">${SUBS.length} envio${SUBS.length!==1?'s':''}</div><a href="sobral_submeter.html" class="btn btn-primary btn-sm"><i data-lucide="plus" style="width:12px;height:12px;pointer-events:none"></i> Nova</a></div>
+  if(!SUBS.length) return `<div class="empty"><div class="empty-icon"><i data-lucide="map-pin" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div><h3>Nenhum envio ainda</h3><p>${isMyProfile ? 'Envie um ponto turístico ou evento para que ele apareça no mapa!' : 'Este usuário ainda não enviou nenhum ponto.'}</p>${isMyProfile ? `<a href="sobral_submeter.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="plus" style="width:14px;height:14px;pointer-events:none"></i> Enviar Ponto ou Evento</a>` : ''}</div>`;
+  
+  const header = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <div style="font-size:14px;color:var(--muted)">${SUBS.length} envio${SUBS.length!==1?'s':''}</div>
+    ${isMyProfile ? `<a href="sobral_submeter.html" class="btn btn-primary btn-sm"><i data-lucide="plus" style="width:12px;height:12px;pointer-events:none"></i> Nova</a>` : ''}
+  </div>`;
+
+  return `${header}
   <div class="cards-grid">${SUBS.map(s=>`
     <div class="sub-card">
       <div class="sub-photo">
@@ -277,8 +291,8 @@ function renderSubmissions(){
         ${s.status==='approved'?`<br><a href="sobral_post.html?id=${s.id}" style="color:var(--ochre);font-size:11px">Ver publicado →</a>`:''}
         </div>
         <div class="sub-actions">
-          ${s.status!=='approved'?`<a href="sobral_submeter.html?edit=${s.id}" class="btn btn-sm btn-secondary"><i data-lucide="pencil" style="width:13px;height:13px;pointer-events:none"></i></a>`:''}
-          <button class="btn btn-sm btn-danger" onclick="deleteSub('${s.id}')"><i data-lucide="trash-2" style="width:13px;height:13px;pointer-events:none"></i></button>
+          ${isMyProfile && s.status!=='approved'?`<a href="sobral_submeter.html?edit=${s.id}" class="btn btn-sm btn-secondary"><i data-lucide="pencil" style="width:13px;height:13px;pointer-events:none"></i></a>`:''}
+          ${isMyProfile ? `<button class="btn btn-sm btn-danger" onclick="deleteSub('${s.id}')"><i data-lucide="trash-2" style="width:13px;height:13px;pointer-events:none"></i></button>` : ''}
         </div>
       </div>
     </div>`).join('')}</div>`;

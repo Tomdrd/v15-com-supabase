@@ -383,18 +383,18 @@ function renderRankingCard() {
         const pct = Math.round((r.correct / r.total) * 100);
         const data = new Date(r.played_at).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
         return `
-          <div class="rank-row ${isMe?'me':''}">
+          <a href="sobral_perfil.html?id=${r.user_id}" class="rank-row ${isMe?'me':''}">
             <div class="rank-pos ${posClass}">${pos}</div>
             <div class="rank-avatar ${avatarBorder}">${avatarHtml}</div>
             <div class="rank-info">
-              <div class="rank-name">${nome}${isMe?' <span style="color:var(--ochre);font-size:10px">(você)</span>':''}</div>
+              <div class="rank-name">${nome}${isMe?' <span style="color:var(--ochre);font-size:10px;font-weight:400">(você)</span>':''}</div>
               <div class="rank-meta">${pct}% de acertos · ${data}</div>
             </div>
             <div class="rank-score">
               <div class="rank-pts">${r.score}</div>
               <div class="rank-label">pts</div>
             </div>
-          </div>`;
+          </a>`;
       }).join('');
 
   const paginacao = total > POR_PAGINA ? `
