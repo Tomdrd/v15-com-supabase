@@ -754,29 +754,32 @@ async function toggleReaction(spotId, reaction) {
 }
 
 /* ── BOOT ────────────────────────────────────────────────────────────────── */
-window.addEventListener('load', async () => {
-  const ok = await loadSpots();
-  await loadFeaturedNews();
-  if (!ok) {
-    const l = document.getElementById('loading');
-    l.querySelector('.lsp').style.display = 'none';
-    const err = document.createElement('div');
-    err.style.cssText = 'font-size:13px;color:#e55;margin-top:8px;text-align:center;max-width:260px;line-height:1.5';
-    err.textContent = 'Não foi possível carregar os dados. Verifique sua conexão e recarregue a página.';
-    l.appendChild(err);
-    return;
-  }
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    // Inicia as chamadas de dados essenciais
+    const spotsLoaded = await loadSpots();
 
-  initMap();
-  buildCarousel();
-  startRT();
-  initAuth();
-  initDpDrag();
-  lucide.createIcons();
-  initInfiniteScroll();
-  restorePersistentGeo();
-  const l = document.getElementById('loading');
-  l.classList.add('fade');
-  setTimeout(() => l.remove(), 700);
-  setTimeout(maybeShowOnboarding, 1200);
+    // Se a carga principal falhar, o erro é lançado e capturado pelo catch.
+    if (!spotsLoaded) {
+      throw new Error("Falha ao carregar os pontos turísticos. O toast de erro já foi exibido.");
+    }
+
+    // Carrega dados secundários em paralelo e inicializa o resto da aplicação
+    await Promise.all([
+      loadFeaturedNews(),
+      initAuth()
+    ]);
+
+    initMap();
+    buildCarousel();
+    startRT();
+    initDpDrag();
+    lucide.createIcons();
+    initInfiniteScroll();
+    restorePersistentGeo();
+
+    setTimeout(maybeShowOnboarding, 1200);
+  } catch (error) {
+    console.error("Erro durante a inicialização:", error.message);
+  }
 });
