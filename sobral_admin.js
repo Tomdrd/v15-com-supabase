@@ -220,10 +220,11 @@ let currentView = 'dashboard', editingId = null, coordPickerMap = null, coordMar
 function navigate(view, id = null) {
   if (!requireAuth()) return;
   currentView = view; editingId = id;
+  if (coordPickerMap) { coordPickerMap.remove(); coordPickerMap = null; coordMarker = null; }
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const nm = { dashboard:0, list:1, events:2, new:3, messages:4, moderation:5, pages:6, backup:7 };
+  const nm = { dashboard:0, list:1, events:2, news:3, 'news-featured':4, new:5, messages:6, moderation:7, pages:8, backup:9 };
   const btns = document.querySelectorAll('.nav-btn');
-  if (view === 'edit') btns[3]?.classList.add('active');
+  if (view === 'edit') btns[5]?.classList.add('active');
   else if (nm[view] !== undefined) btns[nm[view]]?.classList.add('active');
   const main = document.getElementById('mainContent');
   if      (view === 'dashboard')  main.innerHTML = renderDashboard();
