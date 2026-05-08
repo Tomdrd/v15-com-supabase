@@ -1592,10 +1592,17 @@ body {
     padding: 4px 9px
   }
 
-  /* Wrapper volume + botão fica no meio */
-  .quiz-header > div[style] {
+  /* Controle de volume fica no meio-direita da linha 2 */
+  .vol-ctrl {
     order: 3;
     margin-left: auto
+  }
+
+  /* Popover abre para a esquerda em telas pequenas para não sair da tela */
+  .vol-popover {
+    right: 0;
+    left: auto;
+    max-width: calc(100vw - 32px)
   }
 
   /* Timer fica no final da linha 2 */
