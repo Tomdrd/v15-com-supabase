@@ -140,6 +140,7 @@ let rankPag = 0;
 let rankAll = [];
 let timerInterval = null;
 let isMuted = localStorage.getItem('quizMuted') === 'true';
+let volumeGlobal = parseFloat(localStorage.getItem('quizVolume') ?? '0.8');
 
 /* ── INIT ────────────────────────────────────────────────────────────────── */
 (async () => {
@@ -238,7 +239,7 @@ async function doLogout() {
 }
 
 /* ── ÁUDIO ───────────────────────────────────────────────────────────────── */
-function playAudio(src, volume = 0.9) { // Aumentei o volume padrão para 0.9 para melhor audibilidade
+function playAudio(src, volume = volumeGlobal) {
   if (isMuted) return null;
   // Envolve a reprodução em um try-catch para evitar erros caso o navegador
   // bloqueie o autoplay de áudio antes de uma interação do usuário.
@@ -259,11 +260,28 @@ function toggleSound() {
   isMuted = !isMuted;
   localStorage.setItem('quizMuted', isMuted);
   if (isMuted) pararLeitura();
+  _atualizarBtnSom();
+  const slider = document.getElementById('volumeSlider');
+  if (slider) slider.value = isMuted ? 0 : volumeGlobal;
+}
+
+function setVolume(val) {
+  volumeGlobal = Math.max(0, Math.min(1, parseFloat(val)));
+  localStorage.setItem('quizVolume', volumeGlobal);
+  isMuted = volumeGlobal === 0;
+  localStorage.setItem('quizMuted', isMuted);
+  if (isMuted) pararLeitura();
+  _atualizarBtnSom();
+}
+
+function _atualizarBtnSom() {
   const btn = document.getElementById('soundBtn');
-  if (btn) {
-    btn.innerHTML = `<i data-lucide="${isMuted ? 'volume-x' : 'volume-2'}"></i>`;
-    lucide.createIcons();
-  }
+  if (!btn) return;
+  const icon = (isMuted || volumeGlobal === 0)
+    ? 'volume-x'
+    : volumeGlobal < 0.4 ? 'volume-1' : 'volume-2';
+  btn.innerHTML = `<i data-lucide="${icon}"></i>`;
+  lucide?.createIcons();
 }
 
 /* ── TTS — LEITURA DE PERGUNTAS ──────────────────────────────────────────── */
@@ -282,7 +300,7 @@ function lerPergunta(texto, opts = []) {
       u.lang = 'pt-BR';
       u.rate = 1.2;
       u.pitch = 1.0;
-      u.volume = 1.0;
+      u.volume = volumeGlobal;
       speechSynthesis.speak(u);
     });
   };
@@ -565,9 +583,16 @@ function renderQuestao() {
           <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
         </div>
         ${streakHtml}
-        <button class="quiz-sound-btn" id="soundBtn" onclick="toggleSound()" title="Ativar/desativar som">
-          <i data-lucide="${isMuted ? 'volume-x' : 'volume-2'}"></i>
-        </button>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="quiz-sound-btn" id="soundBtn" onclick="toggleSound()" title="Ativar/desativar som">
+            <i data-lucide="${(isMuted || volumeGlobal === 0) ? 'volume-x' : volumeGlobal < 0.4 ? 'volume-1' : 'volume-2'}"></i>
+          </button>
+          <input type="range" id="volumeSlider"
+            min="0" max="1" step="0.05"
+            value="${isMuted ? 0 : volumeGlobal}"
+            oninput="setVolume(this.value)"
+            style="width:64px;accent-color:var(--ochre);cursor:pointer;height:3px;opacity:0.9;vertical-align:middle">
+        </div>
         <div class="quiz-timer-wrap">
           <svg class="quiz-timer-svg" viewBox="0 0 44 44">
             <circle class="timer-bg" cx="22" cy="22" r="18"/>

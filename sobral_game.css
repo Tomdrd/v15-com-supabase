@@ -1519,6 +1519,54 @@ body {
   .result-grid {
     grid-template-columns: 1fr 1fr
   }
+
+  /* ── Quiz header responsivo ───────────────── */
+  .quiz-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    row-gap: 10px
+  }
+
+  /* Progresso ocupa linha inteira */
+  .quiz-prog {
+    flex: 1 1 100%;
+    order: 1
+  }
+
+  /* Streak fica na linha 2, empurrado para a esquerda */
+  .streak-badge {
+    order: 2;
+    font-size: 11px;
+    padding: 4px 9px
+  }
+
+  /* Wrapper volume + botão fica no meio */
+  .quiz-header > div[style] {
+    order: 3;
+    margin-left: auto
+  }
+
+  /* Timer fica no final da linha 2 */
+  .quiz-timer-wrap {
+    order: 4;
+    width: 44px;
+    height: 44px
+  }
+
+  .quiz-timer-num {
+    font-size: 14px
+  }
+
+  /* Botão de som menor */
+  .quiz-sound-btn {
+    width: 36px;
+    height: 36px
+  }
+
+  .quiz-sound-btn i {
+    width: 16px;
+    height: 16px
+  }
 }
 
 @media(max-width:420px) {
@@ -1532,5 +1580,26 @@ body {
 
   .hub-pills {
     gap: 6px
+  }
+
+  /* Slider mais compacto */
+  #volumeSlider {
+    width: 52px !important
+  }
+
+  /* Questão menor em telas muito pequenas */
+  .quiz-q {
+    font-size: 15px
+  }
+
+  .opt {
+    padding: 11px 12px;
+    font-size: 13px
+  }
+
+  .opt-letter {
+    width: 26px;
+    height: 26px;
+    font-size: 11px
   }
 }
