@@ -140,7 +140,8 @@ let rankPag = 0;
 let rankAll = [];
 let timerInterval = null;
 let isMuted = localStorage.getItem('quizMuted') === 'true';
-let volumeGlobal = parseFloat(localStorage.getItem('quizVolume') ?? '0.8');
+let volumeSfx = parseFloat(localStorage.getItem('quizVolSfx') ?? '1');
+let volumeVoz = parseFloat(localStorage.getItem('quizVolVoz') ?? '1');
 
 /* ── INIT ────────────────────────────────────────────────────────────────── */
 (async () => {
@@ -239,7 +240,7 @@ async function doLogout() {
 }
 
 /* ── ÁUDIO ───────────────────────────────────────────────────────────────── */
-function playAudio(src, volume = volumeGlobal) {
+function playAudio(src, volume = volumeSfx) {
   if (isMuted) return null;
   // Envolve a reprodução em um try-catch para evitar erros caso o navegador
   // bloqueie o autoplay de áudio antes de uma interação do usuário.
@@ -261,25 +262,50 @@ function toggleSound() {
   localStorage.setItem('quizMuted', isMuted);
   if (isMuted) pararLeitura();
   _atualizarBtnSom();
-  const slider = document.getElementById('volumeSlider');
-  if (slider) slider.value = isMuted ? 0 : volumeGlobal;
+  const sfx = document.getElementById('sliderSfx');
+  const voz = document.getElementById('sliderVoz');
+  if (sfx) sfx.value = isMuted ? 0 : volumeSfx;
+  if (voz) voz.value = isMuted ? 0 : volumeVoz;
 }
 
-function setVolume(val) {
-  volumeGlobal = Math.max(0, Math.min(1, parseFloat(val)));
-  localStorage.setItem('quizVolume', volumeGlobal);
-  isMuted = volumeGlobal === 0;
+function setSfx(val) {
+  volumeSfx = Math.max(0, Math.min(1, parseFloat(val)));
+  localStorage.setItem('quizVolSfx', volumeSfx);
+  isMuted = volumeSfx === 0 && volumeVoz === 0;
   localStorage.setItem('quizMuted', isMuted);
-  if (isMuted) pararLeitura();
   _atualizarBtnSom();
+}
+
+function setVoz(val) {
+  volumeVoz = Math.max(0, Math.min(1, parseFloat(val)));
+  localStorage.setItem('quizVolVoz', volumeVoz);
+  isMuted = volumeSfx === 0 && volumeVoz === 0;
+  localStorage.setItem('quizMuted', isMuted);
+  if (volumeVoz === 0) pararLeitura();
+  _atualizarBtnSom();
+}
+
+function toggleVolPopover() {
+  const pop = document.getElementById('volPopover');
+  if (!pop) return;
+  const isOpen = pop.classList.toggle('open');
+  if (isOpen) setTimeout(() => document.addEventListener('click', _closeVolPop, { once: true }), 0);
+}
+
+function _closeVolPop(e) {
+  const ctrl = document.getElementById('volCtrl');
+  if (ctrl && ctrl.contains(e.target)) {
+    setTimeout(() => document.addEventListener('click', _closeVolPop, { once: true }), 0);
+    return;
+  }
+  document.getElementById('volPopover')?.classList.remove('open');
 }
 
 function _atualizarBtnSom() {
   const btn = document.getElementById('soundBtn');
   if (!btn) return;
-  const icon = (isMuted || volumeGlobal === 0)
-    ? 'volume-x'
-    : volumeGlobal < 0.4 ? 'volume-1' : 'volume-2';
+  const avg = (volumeSfx + volumeVoz) / 2;
+  const icon = isMuted || avg === 0 ? 'volume-x' : avg < 0.4 ? 'volume-1' : 'volume-2';
   btn.innerHTML = `<i data-lucide="${icon}"></i>`;
   lucide?.createIcons();
 }
@@ -300,7 +326,7 @@ function lerPergunta(texto, opts = []) {
       u.lang = 'pt-BR';
       u.rate = 1.2;
       u.pitch = 1.0;
-      u.volume = volumeGlobal;
+      u.volume = volumeVoz;
       speechSynthesis.speak(u);
     });
   };
@@ -583,15 +609,24 @@ function renderQuestao() {
           <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
         </div>
         ${streakHtml}
-        <div style="display:flex;align-items:center;gap:6px">
-          <button class="quiz-sound-btn" id="soundBtn" onclick="toggleSound()" title="Ativar/desativar som">
-            <i data-lucide="${(isMuted || volumeGlobal === 0) ? 'volume-x' : volumeGlobal < 0.4 ? 'volume-1' : 'volume-2'}"></i>
+        <div class="vol-ctrl" id="volCtrl">
+          <button class="quiz-sound-btn" id="soundBtn" onclick="toggleVolPopover()" title="Volume">
+            <i data-lucide="${isMuted ? 'volume-x' : ((volumeSfx+volumeVoz)/2) < 0.4 ? 'volume-1' : 'volume-2'}"></i>
           </button>
-          <input type="range" id="volumeSlider"
-            min="0" max="1" step="0.05"
-            value="${isMuted ? 0 : volumeGlobal}"
-            oninput="setVolume(this.value)"
-            style="width:64px;accent-color:var(--ochre);cursor:pointer;height:3px;opacity:0.9;vertical-align:middle">
+          <div class="vol-popover" id="volPopover">
+            <div class="vol-row">
+              <i data-lucide="music" style="width:13px;height:13px;flex-shrink:0"></i>
+              <span class="vol-row-label">Efeitos</span>
+              <input type="range" id="sliderSfx" min="0" max="1" step="0.05"
+                value="${isMuted ? 0 : volumeSfx}" oninput="setSfx(this.value)">
+            </div>
+            <div class="vol-row">
+              <i data-lucide="mic" style="width:13px;height:13px;flex-shrink:0"></i>
+              <span class="vol-row-label">Voz</span>
+              <input type="range" id="sliderVoz" min="0" max="1" step="0.05"
+                value="${isMuted ? 0 : volumeVoz}" oninput="setVoz(this.value)">
+            </div>
+          </div>
         </div>
         <div class="quiz-timer-wrap">
           <svg class="quiz-timer-svg" viewBox="0 0 44 44">

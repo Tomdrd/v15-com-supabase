@@ -1502,6 +1502,58 @@ body {
   }
 }
 
+/* ── VOLUME POPOVER ──────────────────────────────────────────────────────── */
+.vol-ctrl {
+  position: relative;
+  flex-shrink: 0
+}
+
+.vol-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: none;
+  flex-direction: column;
+  gap: 11px;
+  min-width: 168px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.55);
+  z-index: 500;
+  animation: fadeIn .18s ease
+}
+
+.vol-popover.open {
+  display: flex
+}
+
+.vol-row {
+  display: flex;
+  align-items: center;
+  gap: 8px
+}
+
+.vol-row-label {
+  font-size: 11px;
+  color: var(--muted);
+  width: 40px;
+  flex-shrink: 0
+}
+
+.vol-row input[type=range] {
+  flex: 1;
+  accent-color: var(--ochre);
+  cursor: pointer;
+  height: 3px
+}
+
+.vol-row svg {
+  color: var(--ochre);
+  flex-shrink: 0
+}
+
 /* ── RESPONSIVE ──────────────────────────────────── */
 @media(max-width:700px) {
   .tb-nav {
