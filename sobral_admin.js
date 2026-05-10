@@ -78,6 +78,7 @@ function updateBadge() {
   if (el) el.textContent = _cache.filter(s => s.type !== 'event').length;
   const ev = document.getElementById('eventCountBadge');
   if (ev) ev.textContent = _cache.filter(s => s.type === 'event').length;
+  updateNewsBadge();
 }
 
 function updateNewsBadge() {
@@ -96,7 +97,9 @@ function updateNewsBadge() {
   }
 
   // Contagem de Destaques (is_featured === true)
-  const featCount = _newsCache.filter(n => n.is_featured).length;
+  const featNewsCount = _newsCache.filter(n => n.is_featured).length;
+  const featSpotsCount = _cache.filter(s => s.isFeatured).length;
+  const featCount = featNewsCount + featSpotsCount;
   if (featCount > 0) {
     featBadge.textContent = featCount;
     featBadge.style.display = '';
