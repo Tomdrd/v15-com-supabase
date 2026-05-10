@@ -6,23 +6,37 @@
   <title>Quiz Sobral Cultural — O Desafio da Princesa do Norte</title>
   <meta name="description" content="Teste seus conhecimentos sobre a história, cultura e geografia de Sobral!">
 
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://unpkg.com">
+
   <!-- Open Graph / WhatsApp -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://sobralcultural.vercel.app/sobral_game.html">
   <meta property="og:title" content="Quiz Sobral Cultural — O Desafio da Princesa do Norte">
   <meta property="og:description" content="Teste seus conhecimentos sobre a história, cultura e geografia de Sobral!">
-  <meta property="og:image" content="https://sobralcultural.vercel.app/tumb3.jpg">
+  <meta property="og:image" content="https://sobralcultural.vercel.app/tumb3.webp">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://sobralcultural.vercel.app/tumb3.jpg">
+  <meta name="twitter:image" content="https://sobralcultural.vercel.app/tumb3.webp">
 
-  <script src="head.js"></script>
-  <script src="navigate.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts — não bloqueante -->
+  <link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap">
+  <noscript>
+  <!-- CSS global (evita FOUC com head.js defer) -->
+  <link rel="stylesheet" href="topbar.css">
+  <link rel="stylesheet" href="icons.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap"></noscript>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="https://unpkg.com/lucide@latest" async></script>
   <link rel="stylesheet" href="sobral_game.css">
+
+  <script src="head.js" defer></script>
+  <script src="navigate.js" defer></script>
 </head>
 <body>
 
@@ -62,7 +76,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="sobral_game.js"></script>
-<script src="footer.js"></script>
+<script src="sobral_game.js" defer></script>
+<script src="footer.js" defer></script>
 </body>
 </html>

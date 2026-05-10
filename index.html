@@ -1,33 +1,52 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sobral Cultural</title>
+  <meta name="description" content="Mapeamento cultural e turístico de Sobral, Ceará.">
+
+  <!-- Preconnect para domínios externos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://nrohpfggqcbscyoigpiz.supabase.co">
+
+  <!-- Google Fonts — não bloqueante -->
+  <link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap"></noscript>
+
+  <!-- Leaflet CSS preload -->
+  <link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript>
+
+  <!-- CSS local -->
+  <link rel="stylesheet" href="topbar.css">
+  <link rel="stylesheet" href="icons.css">
+  <link rel="stylesheet" href="index.css">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sobralcultural.vercel.app/">
+  <meta property="og:title" content="Sobral Cultural">
+  <meta property="og:description" content="Mapeamento cultural e turístico de Sobral, Ceará.">
+  <meta property="og:image" content="https://sobralcultural.vercel.app/tumb.webp">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://sobralcultural.vercel.app/">
+  <meta name="twitter:title" content="Sobral Cultural">
+  <meta name="twitter:description" content="Mapeamento cultural e turístico de Sobral, Ceará.">
+  <meta name="twitter:image" content="https://sobralcultural.vercel.app/tumb.webp">
+
+  <!-- Scripts externos com defer -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+
+  <!-- Scripts locais -->
   <script src="splash.js"></script>
-  <script src="head.js"></script>
-<meta charset="UTF-8">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Sobral Cultural</title>
-<meta name="description" content="Mapeamento cultural e turístico de Sobral, Ceará.">
-
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://sobralcultural.vercel.app/">
-<meta property="og:title" content="Sobral Cultural">
-<meta property="og:description" content="Mapeamento cultural e turístico de Sobral, Ceará.">
-<meta property="og:image" content="https://sobralcultural.vercel.app/tumb.jpg">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:url" content="https://sobralcultural.vercel.app/">
-<meta name="twitter:title" content="Sobral Cultural">
-<meta name="twitter:description" content="Mapeamento cultural e turístico de Sobral, Ceará.">
-<meta name="twitter:image" content="https://sobralcultural.vercel.app/tumb.jpg">
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<link rel="stylesheet" href="index.css">
+  <script src="head.js" defer></script>
 </head>
 <body>
 
@@ -49,7 +68,7 @@
     </a>
     <div id="authChip"></div>
   </nav>
-  <button class="hbg" id="hbg" onclick="toggleDrw()" aria-label="Menu">
+  <button class="hbg" id="hbg" onclick="toggleDrw()" aria-label="Abrir menu de navegação">
     <span></span><span></span><span></span>
   </button>
 </header>
@@ -113,10 +132,10 @@
                 <div id="dpEvtBadge"></div>
               </div>
               <div style="display:flex;gap:6px;flex-shrink:0">
-                <button class="btn-xd" id="dpShare" title="Compartilhar">
+                <button class="btn-xd" id="dpShare" title="Compartilhar" aria-label="Compartilhar">
                   <i data-lucide="share-2" class="icon-sm"></i>
                 </button>
-                <button class="btn-xd" onclick="closeDetail()">
+                <button class="btn-xd" onclick="closeDetail()" aria-label="Fechar painel">
                   <i data-lucide="x" class="icon-sm"></i>
                 </button>
               </div>
@@ -169,8 +188,8 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="index.js"></script>
-<script src="footer.js"></script>
+<script src="index.js" defer></script>
+<script src="footer.js" defer></script>
 
 <!-- ONBOARDING -->
 <div id="onboarding" class="ob-overlay">

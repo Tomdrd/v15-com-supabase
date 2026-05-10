@@ -25,7 +25,7 @@
   }
 
   // ── Open Graph ────────────────────────────────────────
-  const OG_IMAGE = 'https://sobralcultural.vercel.app/tumb.jpg';
+  const OG_IMAGE = 'https://sobralcultural.vercel.app/tumb.webp';
 
   // og:image, og:url e campos estáticos podem ser injetados imediatamente
   if (!document.querySelector('meta[property="og:type"]')) {
@@ -105,6 +105,7 @@
   if (!window.lucide) {
     const script = document.createElement('script');
     script.src = 'https://unpkg.com/lucide@latest';
+    script.async = true;
     script.onload = initIcons;
     head.appendChild(script);
   } else {
