@@ -286,16 +286,15 @@ function initDpDrag() {
 
   handle.addEventListener('touchmove', e => {
     if (!_dpDragging) return;
+    e.preventDefault();
     const dy = e.touches[0].clientY - _dpDragStartY;
-    if (dy > 0) dp.style.transform = `translateY(${dy}px)`;
-    else if (dy < -30) dp.classList.add('expanded');
     if (dy > 0) {
       dp.style.transform = `translateY(${dy}px)`;
     } else if (dy < -30) {
       dp.classList.add('expanded');
       hideCarouselSmooth();
     }
-  }, { passive: true });
+  }, { passive: false });
 
   handle.addEventListener('touchend', e => {
     if (!_dpDragging) return;

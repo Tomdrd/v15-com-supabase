@@ -1562,11 +1562,12 @@ body.has-carousel-hidden .app-body {
 
 /* ── DETAIL PANEL — drag handle & expanded state ─── */
 .dp-handle {
-  padding: 10px 0 4px;
+  padding: 16px 0 16px;
   display: flex;
   justify-content: center;
   cursor: grab;
-  flex-shrink: 0
+  flex-shrink: 0;
+  touch-action: none;
 }
 
 .dp-handle:active {
