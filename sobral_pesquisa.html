@@ -9,31 +9,34 @@
 
   <script src="head.js" defer></script>
   <meta charset="UTF-8">
-  <link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap">
-  <noscript><link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap">
-  <noscript>
-  <!-- CSS global (evita FOUC com head.js defer) -->
-  <link rel="stylesheet" href="topbar.css">
-  <link rel="stylesheet" href="icons.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap"></noscript></noscript>
+  
+  </noscript>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pesquisa de Satisfação — Sobral Cultural</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
   <link rel="stylesheet" href="sobral_game.css">
   <link rel="stylesheet" href="sobral_pesquisa.css">
+
+  <!-- Google Fonts — não bloqueante -->
+  <link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap"></noscript>
+
+  <!-- CSS local -->
+  <link rel="stylesheet" href="topbar.css">
+  <link rel="stylesheet" href="icons.css">
 </head>
 <body>
 
 <!-- TOPBAR -->
 <div class="topbar">
   <a href="index.html" class="tb-logo">
-    <img src="logo.png" alt="Sobral Cultural" class="tb-logo-img">
+    <img src="logo.png" alt="Sobral Cultural" width="142" height="40" class="tb-logo-img">
     <div class="tb-logo-text">
       <span class="tb-logo-name">Sobral <em>Cultural</em></span>
     </div>
   </a>
   <nav class="tb-nav"></nav>
-  <button class="hbg" id="hbg" onclick="toggleDrw()"><span></span><span></span><span></span></button>
+  <button class="hbg" aria-label="Abrir menu de navegação" id="hbg" onclick="toggleDrw()"><span></span><span></span><span></span></button>
 </div>
 <div class="dov" id="dov" onclick="closeDrw()"></div>
 <div class="drw" id="drw"></div>

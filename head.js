@@ -85,15 +85,7 @@
   // ── PWA manifest ─────────────────────────────────────
   link({ rel: 'manifest', href: base + 'manifest.json' });
 
-  // ── topbar.css
-  if (!document.querySelector('link[href*="topbar.css"]')) {
-    link({ rel: 'stylesheet', href: base + 'topbar.css' });
-  }
 
-  // ── icons.css ─────────────────────────────────────────
-  if (!document.querySelector('link[href*="icons.css"]')) {
-    link({ rel: 'stylesheet', href: base + 'icons.css' });
-  }
 
   // ── Lucide ────────────────────────────────────────────
   function initIcons() {

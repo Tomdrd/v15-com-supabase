@@ -107,7 +107,7 @@ function renderGrid() {
         <div class="card-img-wrap" style="
           height:140px;border-radius:9px;overflow:hidden;
           background:var(--panel);margin:-4px -4px 0">
-          <img src="${n.image_url}" alt="${n.title}"
+          <img src="${n.image_url}" alt="${n.title}" loading="lazy"
                style="width:100%;height:100%;object-fit:cover;display:block"
                onerror="this.parentElement.style.display='none'">
         </div>` : `
@@ -168,7 +168,7 @@ function openDetail(id) {
       border-radius:14px;overflow:hidden;
       max-height:320px;margin-bottom:24px;
       background:var(--panel)">
-      <img src="${n.image_url}" alt="${n.title}"
+      <img src="${n.image_url}" alt="${n.title}" loading="lazy"
            style="width:100%;height:100%;object-fit:cover;display:block;max-height:320px"
            onerror="this.parentElement.style.display='none'">
     </div>` : '';
