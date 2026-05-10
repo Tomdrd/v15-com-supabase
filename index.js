@@ -2,18 +2,6 @@ const SU='https://nrohpfggqcbscyoigpiz.supabase.co';
 const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA';
 const supa = supabase.createClient(SU, SK);
 
-// ── Utilitário: transforma URL do Supabase Storage em WebP redimensionado ─────────────────
-// Usa a API de render do Supabase para servir imagens otimizadas automaticamente
-function imgUrl(url, { width = 640, quality = 75 } = {}) {
-  if (!url) return url;
-  // Só transforma URLs do nosso Supabase Storage
-  if (!url.includes(SU)) return url;
-  // Evita re-transformar URLs já transformadas
-  if (url.includes('/render/image/')) return url;
-  return url
-    .replace('/storage/v1/object/public/', '/storage/v1/render/image/public/')
-    + `?width=${width}&quality=${quality}&format=webp`;
-}
 
 const CL = { todos:'Todos', religioso:'Religioso', cultura:'Cultura', historico:'Histórico', natureza:'Natureza', lazer:'Lazer' };
 
@@ -210,7 +198,7 @@ function appendListItems() {
     const newHtml = pageItems.map((s, i) => `
       <div class="sc" id="card-${s.id}" onclick="focusSpot('${s.id}')" style="${disableAnim ? 'animation:none;' : `animation-delay:${i * 40}ms;`}">
         <div class="sc-thumb" style="background:${s.color}22">
-        ${s.photo ? `<img src="${imgUrl(s.photo, {width:400})}" alt="${s.name}" loading="lazy">` : `<div class="sc-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
+        ${s.photo ? `<img src="${s.photo}" alt="${s.name}" loading="lazy">` : `<div class="sc-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
         </div>
         <div class="sc-body">
           <div class="sc-ic" style="background:${s.color}22"><div class="sc-dot" style="background:${s.color}"></div></div>
@@ -327,7 +315,7 @@ function openD(id) {
 
   const photoEl = document.getElementById('dpPhoto');
   photoEl.innerHTML = s.photo
-    ? `<img src="${imgUrl(s.photo, {width:600})}" alt="${s.name}" loading="lazy">`
+    ? `<img src="${s.photo}" alt="${s.name}" loading="lazy">`
     : `<div class="dp-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`;
   photoEl.onclick = () => window.location.href = `sobral_post.html?id=${s.id}`;
 
@@ -585,8 +573,8 @@ function buildCarousel() {
     <div class="fcar-slide" data-i="${i}">
       ${s.photo
         ? i === 0
-          ? `<img src="${imgUrl(s.photo, {width:800})}" alt="${s.name}" draggable="false" fetchpriority="high" loading="eager">`
-          : `<img src="${imgUrl(s.photo, {width:800})}" alt="${s.name}" draggable="false" loading="lazy">`
+          ? `<img src="${s.photo}" alt="${s.name}" draggable="false" fetchpriority="high" loading="eager">`
+          : `<img src="${s.photo}" alt="${s.name}" draggable="false" loading="lazy">`
         : `<div class="fcar-slide-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
       <div class="fcar-grad"></div>
       <div class="fcar-info">
