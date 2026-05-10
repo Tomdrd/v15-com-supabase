@@ -9,9 +9,13 @@
   <!-- Preconnect para domínios externos -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <link rel="preconnect" href="https://nrohpfggqcbscyoigpiz.supabase.co">
+  <link rel="preconnect" href="https://nrohpfggqcbscyoigpiz.supabase.co" crossorigin>
+  <link rel="dns-prefetch" href="https://nrohpfggqcbscyoigpiz.supabase.co">
+
+  <!-- Preload do Lucide em versão fixa para cache de longo prazo -->
+  <link rel="preload" as="script" href="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin>
 
 <!-- Leaflet CSS preload -->
   <link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
