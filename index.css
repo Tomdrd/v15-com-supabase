@@ -264,7 +264,8 @@ header {
 /* LAYOUT */
 .app-body {
   display: flex;
-  height: 100vh;
+  height: 100vh; /* Fallback */
+  height: 100dvh;
   padding-top: var(--H);
   overflow: hidden
 }
@@ -1045,6 +1046,12 @@ header {
   outline: none !important;
 }
 
+.leaflet-bar a.leaflet-disabled {
+  cursor: default !important;
+  background-color: rgba(255, 255, 255, .04) !important;
+  color: rgba(245, 237, 216, .15) !important;
+}
+
 .leaflet-bar a:first-child {
   border-bottom: 1px solid rgba(200, 135, 26, .2);
 }
@@ -1539,6 +1546,7 @@ body.has-carousel-hidden .app-body {
   body.has-carousel .app-body {
     padding-top: calc(var(--H) + clamp(220px, 28vh, 380px));
     height: calc(100vh - 58px);
+    height: calc(100dvh - 58px);
   }
 
   .sidebar {
