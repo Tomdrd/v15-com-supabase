@@ -36,7 +36,7 @@ const COLORS = ['#1B6B6B','#6440B4','#B54A2A','#3C7828','#C8871A','#1A5F8B','#8B
 // ══════════════════════════════════════════
 let _cache = [];
 let _newsCache = [];
-let _pendingPhoto = null; // foto pendente de upload (era window._pendingPhoto)
+let _pendingPhoto = undefined; // foto pendente de upload (era window._pendingPhoto)
 
 function mapRow(r) {
   return { id:r.id, name:r.name, cat:r.cat, color:r.color,
@@ -223,6 +223,7 @@ let currentView = 'dashboard', editingId = null, coordPickerMap = null, coordMar
 function navigate(view, id = null) {
   if (!requireAuth()) return;
   currentView = view; editingId = id;
+  _pendingPhoto = undefined;
   if (coordPickerMap) { coordPickerMap.remove(); coordPickerMap = null; coordMarker = null; }
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   const nm = { dashboard:0, list:1, events:2, news:3, 'news-featured':4, new:5, messages:6, moderation:7, pages:8, backup:9 };
