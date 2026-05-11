@@ -572,7 +572,7 @@ function buildCarousel() {
   document.getElementById('fcarTrack').innerHTML = _carItems.map((s, i) => `
     <div class="fcar-slide" data-i="${i}">
       ${s.photo
-        ? `<img src="${s.photo}" crossorigin="anonymous" alt="${s.name}" style="display:block; width:100%; height:100%; object-fit:cover;" ${i === 0 ? '' : 'loading="lazy"'}>`
+        ? `<img src="${s.photo}" alt="${s.name}" style="display:block; width:100%; height:100%; object-fit:cover;" ${i === 0 ? '' : 'loading="lazy"'}>`
         : `<div class="fcar-slide-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
       <div class="fcar-grad"></div>
       <div class="fcar-info">
