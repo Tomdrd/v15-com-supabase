@@ -1386,7 +1386,6 @@ header {
   object-fit: cover;
   filter: brightness(.7);
   transition: transform .6s ease, filter .4s;
-  pointer-events: none;
 }
 
 .fcar-slide:hover img {
