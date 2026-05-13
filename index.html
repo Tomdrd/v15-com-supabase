@@ -9,10 +9,7 @@
   <!-- Preconnect para domínios externos -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://unpkg.com" crossorigin>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="preconnect" href="https://nrohpfggqcbscyoigpiz.supabase.co" crossorigin>
-  <link rel="dns-prefetch" href="https://nrohpfggqcbscyoigpiz.supabase.co">
 
   <!-- Preload do Lucide em versão fixa para cache de longo prazo -->
   <link rel="preload" as="script" href="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin>
@@ -40,6 +37,30 @@
 
   <!-- Scripts externos com defer -->
   <script src="cache.js"></script>
+  <script>
+    try {
+      const cachedFeatured = localStorage.getItem('sc_featured_news');
+      const cachedSpots = localStorage.getItem('sc_spots');
+      let firstImage = null;
+      if (cachedFeatured) {
+        const data = JSON.parse(cachedFeatured).data;
+        if (data && data.length > 0) firstImage = data[0].photo;
+      }
+      if (!firstImage && cachedSpots) {
+        const spots = JSON.parse(cachedSpots).data;
+        const featured = spots.filter(s => s.isFeatured);
+        if (featured.length > 0) firstImage = featured[0].photo;
+      }
+      if (firstImage) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = firstImage;
+        link.fetchPriority = 'high';
+        document.head.appendChild(link);
+      }
+    } catch(e) {}
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 
