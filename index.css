@@ -1267,7 +1267,7 @@ header {
   left: 0;
   right: 0;
   z-index: 1100;
-  height: clamp(220px, 28vh, 380px);
+  height: 220px;
   overflow: hidden;
   background: var(--deep);
   border-bottom: 1px solid rgba(200, 135, 26, .2);
@@ -1482,7 +1482,7 @@ header {
 
 /* adjust app body when carousel visible */
 body.has-carousel .app-body {
-  padding-top: calc(var(--H) + clamp(220px, 28vh, 380px));
+  padding-top: calc(var(--H) + 220px);
 }
 
 /* adjust app body when carousel is hidden */
@@ -1581,7 +1581,7 @@ body.has-carousel-hidden .app-body {
   }
 
   body.has-carousel .app-body {
-    padding-top: calc(var(--H) + clamp(220px, 28vh, 380px));
+    padding-top: calc(var(--H) + 220px);
     height: calc(100vh - 58px);
     height: calc(100dvh - 58px);
   }
