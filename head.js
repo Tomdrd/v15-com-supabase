@@ -97,6 +97,7 @@
   if (!window.lucide) {
     const script = document.createElement('script');
     script.src = 'https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js';
+    script.crossOrigin = 'anonymous';
     script.async = true;
     script.onload = initIcons;
     head.appendChild(script);

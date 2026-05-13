@@ -587,7 +587,7 @@ function buildCarousel() {
     </button>`;
   document.getElementById('fcarTrack').innerHTML = _carItems.map((s, i) => {
     let img = s.photo;
-    if (img && img.startsWith('http') && !img.includes('supabase.co')) {
+    if (img && img.startsWith('http') && !img.includes('supabase.co') && !img.includes('postimg.cc')) {
       img = 'https://wsrv.nl/?url=' + encodeURIComponent(img) + '&w=800&output=webp';
     }
     return `
