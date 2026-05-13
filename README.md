@@ -24,6 +24,18 @@ A aplicação foi construída com um foco em leveza, performance e arquitetura *
 
 ---
 
+## ⚡ Performance e Caching
+
+O Sobral Cultural implementa uma arquitetura agressiva de performance para garantir pontuações acima de 70+ no Mobile e 80+ no Desktop (PageSpeed Insights):
+
+- **Cache Local Síncrono (`cache.js`)**: Entidades estáticas e listas grandes (como Pontos Turísticos e Notícias) são salvas no `localStorage` com política de *Time-to-Live* (TTL). O script de cache é injetado síncronamente no `<head>` para evitar condições de corrida (Race Conditions), provendo dados instantâneos ao inicializar a página.
+- **Invalidação em Tempo Real (Realtime Invalidation)**: Através de *listeners* do `postgres_changes`, o cache local detecta alterações e é apagado automaticamente sempre que houver manipulações pelo painel administrativo, forçando um *refresh* transparente dos dados.
+- **Proxy Dinâmico de Imagens (CDN)**: Para evitar penalizações de peso (Payloads), requisições de imagens originárias de portais de notícias externos são automaticamente roteadas através da CDN pública `wsrv.nl`. O roteador converte as imagens (muitas vezes *JPGs* pesados) para `WebP` on-the-fly, as redimensionando para 800px, garantindo reduções de até 65% em peso.
+- **Preload de Maior Tempo de Renderização (LCP)**: Um script acoplado ao cabeçalho interroga o *localStorage* em busca da imagem de capa (primeiro item do carrossel), gerando uma requisição do tipo `<link rel="preload" as="image" fetchpriority="high">` imediatamente no carregamento da página, contornando a demora de descoberta.
+- **Zero CLS (Cumulative Layout Shift)**: A renderização do layout foi projetada definindo estruturalmente propriedades dimensionais e classes antecipadas (`has-carousel`), garantindo estabilidade absoluta e pontuação perfeita de CLS durante o bloqueio da renderização principal.
+
+---
+
 ## ⚙️ Requisitos Técnicos
 
 - **Navegador Moderno:** Suporte a ES6 modules, CSS Variables, Fetch API e recursos básicos de geolocalização.
