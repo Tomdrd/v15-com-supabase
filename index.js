@@ -585,10 +585,15 @@ function buildCarousel() {
     <button class="fcar-toggle-btn" onclick="toggleCarousel()" title="Ocultar Destaques">
       <i data-lucide="chevron-up"></i>
     </button>`;
-  document.getElementById('fcarTrack').innerHTML = _carItems.map((s, i) => `
+  document.getElementById('fcarTrack').innerHTML = _carItems.map((s, i) => {
+    let img = s.photo;
+    if (img && img.startsWith('http') && !img.includes('supabase.co')) {
+      img = 'https://wsrv.nl/?url=' + encodeURIComponent(img) + '&w=800&output=webp';
+    }
+    return `
     <div class="fcar-slide" data-i="${i}">
-      ${s.photo
-        ? `<img src="${s.photo}" alt="${s.name}" style="display:block; width:100%; height:100%; object-fit:cover;" ${i === 0 ? 'fetchpriority="high" decoding="sync"' : 'loading="lazy" decoding="async"'}>`
+      ${img
+        ? `<img src="${img}" alt="${s.name}" style="display:block; width:100%; height:100%; object-fit:cover;" ${i === 0 ? 'fetchpriority="high" decoding="sync"' : 'loading="lazy" decoding="async"'}>`
         : `<div class="fcar-slide-ph" style="background:${s.color}22;color:${s.color}">${s.name.charAt(0)}</div>`}
       <div class="fcar-grad"></div>
       <div class="fcar-info">
@@ -596,7 +601,8 @@ function buildCarousel() {
         <div class="fcar-name">${s.name}</div>
         <div class="fcar-cat">${s.isNews ? 'Matéria Especial' : (CL[s.cat] || s.cat)}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   renderCarDots(); carGoTo(0); carAutoplay(); initCarSwipe(); lucide.createIcons({ nodes: [el.querySelector('.fcar-toggle-btn')] });
 }
 

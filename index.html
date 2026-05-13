@@ -52,6 +52,9 @@
         if (featured.length > 0) firstImage = featured[0].photo;
       }
       if (firstImage) {
+        if (firstImage.startsWith('http') && !firstImage.includes('supabase.co')) {
+          firstImage = 'https://wsrv.nl/?url=' + encodeURIComponent(firstImage) + '&w=800&output=webp';
+        }
         const link = document.createElement('link');
         link.rel = 'preload';
         link.as = 'image';
