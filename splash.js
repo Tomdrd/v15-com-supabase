@@ -9,7 +9,7 @@
   
   // Se já foi exibido nesta sessão OU não for PWA (opcional), encerra aqui
   // Remova "!IS_PWA" se quiser que apareça também no navegador comum
-  if (sessionStorage.getItem(SPLASH_KEY) || !IS_PWA) return;
+  if (sessionStorage.getItem(SPLASH_KEY) || IS_PWA) return;
 
   // 2. Injeção de Estilos CSS
   const style = document.createElement('style');

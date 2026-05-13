@@ -1279,6 +1279,8 @@ header {
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Carrossel com conteúdo e visível */
@@ -1364,7 +1366,8 @@ header {
 
 .fcar-track {
   display: flex;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   will-change: transform;
   transition: transform .45s cubic-bezier(.4, 0, .2, 1);
   user-select: none;
