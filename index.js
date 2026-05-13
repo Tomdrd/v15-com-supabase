@@ -361,8 +361,7 @@ function openD(id) {
   dp.classList.add('open');
   document.getElementById('stbar').classList.add('hidden');
   lucide.createIcons();
-  // mostra o raio sempre que houver localização ativa (com ou sem login)
-  showRadius(s.id);
+  // mostra reações sempre que houver localização ativa (com ou sem login)
   renderReactionBtns(s.id);
 }
 
@@ -394,7 +393,7 @@ function hlCard(id) {
 }
 
 /* ── GEO ────────────────────────────────────────────────────────────────── */
-let _radiusCircle = null;
+
 
 function setGeoUiState(enabled, locating = false) {
   const btn = document.getElementById('btnGeo');
@@ -414,7 +413,6 @@ function applyUserLocation(pos, { focus = false, notify = false } = {}) {
   uLng = pos.coords.longitude;
   localStorage.setItem(GEO_LAST_KEY, JSON.stringify({ lat: uLat, lng: uLng, ts: Date.now() }));
   if (uMk) uMk.remove();
-  if (_radiusCircle) { _radiusCircle.remove(); _radiusCircle = null; }
   uMk = L.marker([uLat, uLng], {
     icon: L.divIcon({ html: '<div class="user-dot"></div>', className: '', iconSize: [14, 14], iconAnchor: [7, 7] })
   }).addTo(map);
@@ -481,17 +479,6 @@ function getUserLocation() {
   }, { timeout: 10000, enableHighAccuracy: true });
 }
 
-// raio visual ao abrir um painel com localização ativa
-function showRadius(spotId) {
-  if (uLat === null) return;
-  const s = gs().find(x => x.id === spotId); if (!s) return;
-  if (_radiusCircle) _radiusCircle.remove();
-  const dist = d(uLat, uLng, s.lat, s.lng);
-  _radiusCircle = L.circle([uLat, uLng], {
-    radius: dist, color: 'rgba(200,135,26,.5)', fillColor: 'rgba(200,135,26,.05)',
-    fillOpacity: 1, weight: 1, dashArray: '4 4'
-  }).addTo(map);
-}
 
 /* ── FILTERS ─────────────────────────────────────────────────────────────── */
 function setCat(c) {
