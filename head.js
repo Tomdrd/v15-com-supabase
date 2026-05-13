@@ -12,6 +12,14 @@
     ? scripts[0].src.replace('head.js', '')
     : './';
 
+  // ── Cache Script ─────────────────────────────────────
+  if (!document.querySelector('script[src*="cache.js"]')) {
+    const cacheScript = document.createElement('script');
+    cacheScript.src = base + 'cache.js';
+    cacheScript.async = false;
+    head.insertBefore(cacheScript, head.firstChild);
+  }
+
   // ── Helpers ───────────────────────────────────────────
   function meta(attrs) {
     const el = document.createElement('meta');

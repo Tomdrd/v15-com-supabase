@@ -276,6 +276,17 @@ function showEmptyDb() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 window.addEventListener('load', async () => {
   try {
+    const cachedNews = window.CACHE ? window.CACHE.get('sc_news_list') : null;
+    if (cachedNews) {
+      allNews = cachedNews;
+      if (allNews.length > 0) {
+        renderGrid();
+      } else {
+        showEmptyDb();
+      }
+      return;
+    }
+
     const [rssRes, editRes] = await Promise.all([
       supa.from('news_summaries').select('*').order('published_at', { ascending: false }).limit(30),
       supa.from('news').select('*').eq('is_published', true).order('created_at', { ascending: false }).limit(30)
@@ -311,6 +322,8 @@ window.addEventListener('load', async () => {
     }));
 
     allNews = [...normalizedRSS, ...normalizedEdit].sort((a, b) => b.sortDate - a.sortDate);
+
+    if (window.CACHE) window.CACHE.set('sc_news_list', allNews, 3 * 60 * 1000);
 
     if (allNews.length > 0) {
       renderGrid();

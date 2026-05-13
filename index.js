@@ -33,6 +33,11 @@ let _listAppendTimeout = null;
 let FEATURED_NEWS = [];
 
 async function loadFeaturedNews() {
+  const cached = window.CACHE ? window.CACHE.get('sc_featured_news') : null;
+  if (cached) {
+    FEATURED_NEWS = cached;
+    return;
+  }
   const { data, error } = await supa.from('news').select('id, title, cover_image').eq('is_published', true).eq('is_featured', true).order('created_at', { ascending: false });
   if (!error && data) {
     FEATURED_NEWS = data.map(n => ({
@@ -43,6 +48,7 @@ async function loadFeaturedNews() {
       photo: n.cover_image,
       isNews: true
     }));
+    if (window.CACHE) window.CACHE.set('sc_featured_news', FEATURED_NEWS, 5 * 60 * 1000);
   }
 }
 
@@ -58,15 +64,25 @@ const mr = r => ({
 });
 
 async function loadSpots() {
+  const cached = window.CACHE ? window.CACHE.get('sc_spots') : null;
+  if (cached) {
+    SPOTS = cached;
+    return true;
+  }
   const { data, error } = await supa.from('spots').select('*').order('created_at', { ascending: true });
   if (error) { console.error('loadSpots:', error.message); toast('Erro ao carregar os pontos turísticos. Tente recarregar a página.', true); return false; }
   SPOTS = (data || []).map(mr);
+  if (window.CACHE) window.CACHE.set('sc_spots', SPOTS, 10 * 60 * 1000);
   return true;
 }
 const gs = () => SPOTS;
 
 function startRT() {
   supa.channel('mt').on('postgres_changes', { event: '*', schema: 'public', table: 'spots' }, async () => {
+    if (window.CACHE) {
+      window.CACHE.del('sc_spots');
+      window.CACHE.del('sc_featured_news');
+    }
     await loadSpots(); refreshM(); buildList(); buildCarousel();
   }).subscribe();
 }
