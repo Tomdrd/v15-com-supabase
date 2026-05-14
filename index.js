@@ -450,7 +450,7 @@ function applyUserLocation(pos, { focus = false, notify = false } = {}) {
   if (notify) toast('Localização ativa e persistente.');
 }
 
-function startPersistentGeoWatch() {
+function startPersistentGeoWatch(highAccuracy = true) {
   if (!navigator.geolocation || _geoWatchId !== null) return;
   _geoWatchId = navigator.geolocation.watchPosition(
     pos => {
@@ -458,13 +458,19 @@ function startPersistentGeoWatch() {
       setGeoUiState(true, false);
     },
     e => {
+      if (highAccuracy && (e.code === 2 || e.code === 3)) {
+        if (_geoWatchId !== null) { navigator.geolocation.clearWatch(_geoWatchId); _geoWatchId = null; }
+        startPersistentGeoWatch(false);
+        return;
+      }
+
       setGeoUiState(false, false);
       if (e.code === 1) {
         localStorage.removeItem(GEO_PREF_KEY);
         if (_geoWatchId !== null) { navigator.geolocation.clearWatch(_geoWatchId); _geoWatchId = null; }
       }
     },
-    { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+    { enableHighAccuracy: highAccuracy, maximumAge: 10000, timeout: 15000 }
   );
 }
 
@@ -484,24 +490,49 @@ function restorePersistentGeo() {
   if (localStorage.getItem(GEO_PREF_KEY) === '1') startPersistentGeoWatch();
 }
 
-function getUserLocation() {
+function getUserLocation(highAccuracy = true) {
   if (!navigator.geolocation) { toast('Geolocalização não suportada.', true); return; }
   setGeoUiState(false, true);
   navigator.geolocation.getCurrentPosition(p => {
     localStorage.setItem(GEO_PREF_KEY, '1');
     applyUserLocation(p, { focus: true, notify: true });
     setGeoUiState(true, false);
-    startPersistentGeoWatch();
-  }, e => {
+    startPersistentGeoWatch(highAccuracy);
+  }, async e => {
+    // Fallback: se alta precisão falhar, tenta com baixa precisão para desktops/GNOME Web
+    if (highAccuracy && (e.code === 2 || e.code === 3)) {
+      console.warn("Falha de geolocalização com alta precisão. Tentando baixa precisão (fallback para IP)...");
+      getUserLocation(false);
+      return;
+    }
+    
+    // Último recurso: Desktops sem Wi-Fi (ex: Linux via cabo) falham até na baixa precisão nativa.
+    if (!highAccuracy && (e.code === 2 || e.code === 3)) {
+      console.warn("Falha nativa completa. Usando fallback de IP público...");
+      try {
+        const res = await fetch('https://get.geojs.io/v1/ip/geo.json');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.latitude && data.longitude) {
+            localStorage.setItem(GEO_PREF_KEY, '1');
+            applyUserLocation({ coords: { latitude: parseFloat(data.latitude), longitude: parseFloat(data.longitude) } }, { focus: true, notify: false });
+            setGeoUiState(true, false);
+            toast('Localização aproximada (via provedor de rede).');
+            return; // Sucesso: aborta o fluxo antes de exibir o erro
+          }
+        }
+      } catch (_) {}
+    }
+
     setGeoUiState(false, false);
     if (e.code === 1) localStorage.removeItem(GEO_PREF_KEY);
         const errorMap = {
           1: "Permissão negada.",
-          2: "Localização indisponível.",
-          3: "Tempo esgotado. Tente em local aberto."
+          2: "Localização indisponível no dispositivo.",
+          3: "Tempo esgotado. Verifique o GPS ou as configurações do sistema."
         };
         toast(errorMap[e.code] || "Erro ao localizar.", true);
-      }, { timeout: 15000, enableHighAccuracy: true, maximumAge: 30000 });
+      }, { timeout: 15000, enableHighAccuracy: highAccuracy, maximumAge: 30000 });
 }
 
 
