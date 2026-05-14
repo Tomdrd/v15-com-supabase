@@ -507,16 +507,6 @@ function closeSbMob() {
   document.getElementById('sbBack').style.display = 'none';
 }
 
-/* ── ONBOARDING (primeira visita) ────────────────────────────────────────── */
-function maybeShowOnboarding() {
-  if (localStorage.getItem('sc_onboarded')) return;
-  const ov = document.getElementById('onboarding');
-  if (ov) { ov.classList.add('show'); localStorage.setItem('sc_onboarded', '1'); }
-}
-function closeOnboarding() {
-  const ov = document.getElementById('onboarding');
-  if (ov) ov.classList.remove('show');
-}
 
 /* ── UTILS ───────────────────────────────────────────────────────────────── */
 function d(a, b, c, e) {
@@ -792,7 +782,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     initInfiniteScroll();
     restorePersistentGeo();
 
-    setTimeout(maybeShowOnboarding, 1200);
   } catch (error) {
     console.error("Erro durante a inicialização:", error.message);
   }
