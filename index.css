@@ -1,6 +1,6 @@
 :root {
   --ochre: #C8871A;
-  --terra: #B54A2A;
+  ao: #B54A2A;
   --cream: #F5EDD8;
   --deep: #1A1410;
   --mid: #2E2118;
@@ -96,7 +96,8 @@ header {
   gap: 6px
 }
 
-.nl {
+.nl,
+.btn-geo {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -107,38 +108,20 @@ header {
   text-decoration: none;
   transition: .15s;
   border: 1px solid transparent;
-  white-space: nowrap
+  white-space: nowrap;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit
 }
 
-.nl:hover {
+.nl:hover,
+.btn-geo:hover {
   background: rgba(200, 135, 26, .1);
   color: var(--cream);
   border-color: rgba(200, 135, 26, .2)
 }
 
-.btn-geo {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--terra);
-  color: #fff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  transition: .2s;
-  white-space: nowrap
-}
-
-.btn-geo:hover {
-  background: #c55530
-}
-
-.btn-geo.locating {
-  background: var(--teal);
+#btnGeo.locating, .btn-geo.locating {
   animation: bp 1s infinite
 }
 
