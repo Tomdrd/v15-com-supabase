@@ -84,7 +84,7 @@ function removePhoto(){
   pendingPhoto=null;
   document.getElementById('photoArea').innerHTML=`<div class="drop-zone" id="dropZone"><input type="file" accept="image/*" onchange="handlePhoto(this.files[0])"><div class="drop-zone-icon"><i data-lucide="upload-cloud" style="width:40px;height:40px;stroke-width:1"></i></div><p>Arraste ou clique para enviar uma foto</p><small>JPG, PNG, WEBP — máximo 5 MB</small></div>`;
   setupDropZone();
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 }
 
 // SUBMIT

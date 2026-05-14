@@ -152,7 +152,7 @@ let volumeVoz = parseFloat(localStorage.getItem('quizVolVoz') ?? '1');
     if (logout) logout.style.display = 'flex';
   }
   renderHub();
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 })();
 
 supa.auth.onAuthStateChange((_ev, sess) => {
@@ -307,7 +307,7 @@ function _atualizarBtnSom() {
   const avg = (volumeSfx + volumeVoz) / 2;
   const icon = isMuted || avg === 0 ? 'volume-x' : avg < 0.4 ? 'volume-1' : 'volume-2';
   btn.innerHTML = `<i data-lucide="${icon}"></i>`;
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 }
 
 /* ── TTS — LEITURA DE PERGUNTAS ──────────────────────────────────────────── */
@@ -411,7 +411,7 @@ async function renderHub() {
       </div>
     </div>
   `;
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 }
 
 /* ── GATE ────────────────────────────────────────────────────────────────── */
@@ -433,7 +433,7 @@ function renderGate() {
       </div>
     </div>
   `;
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 }
 
 /* ── RANKING CARD ────────────────────────────────────────────────────────── */
@@ -505,7 +505,7 @@ function mudaPag(dir) {
   const hub = document.querySelector('.hub-cols');
   if (hub) {
     hub.children[0].outerHTML = renderRankingCard();
-    lucide?.createIcons();
+    window.lucide?.createIcons();
   }
 }
 
@@ -662,7 +662,7 @@ function renderQuestao() {
       </div>
     </div>
   `;
-  lucide?.createIcons();
+  window.lucide?.createIcons();
   iniciarTimer();
   lerPergunta(p.q, p.opts);
 }
@@ -763,12 +763,12 @@ function mostrarFeedback(ok, iconHtml, textoHtml, curiosidade) {
   if (!fb) return;
   fb.className = `quiz-feedback show ${ok ? 'ok' : 'ko'}`;
   fb.innerHTML = `${iconHtml}<div class="fb-body">${textoHtml}<small>${curiosidade}</small></div>`;
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 }
 
 function mostrarBotaoNext() {
   const btn = document.getElementById('btnNext');
-  if (btn) { btn.style.display = 'inline-flex'; lucide?.createIcons(); }
+  if (btn) { btn.style.display = 'inline-flex'; window.lucide?.createIcons(); }
 }
 
 async function proximaQuestao() {
@@ -847,7 +847,7 @@ async function encerrarQuiz() {
       </div>
     </div>
   `;
-  lucide?.createIcons();
+  window.lucide?.createIcons();
   if (novoRecorde) lancarConfetti();
 }
 

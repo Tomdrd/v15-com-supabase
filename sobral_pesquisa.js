@@ -116,7 +116,7 @@ function renderHub() {
         </div>
       </div>
     </div>`;
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 }
 
 // ── COMEÇA O FORMULÁRIO ──────────────────────────────
@@ -214,7 +214,7 @@ function renderPergunta() {
       </div>
     </div>`;
 
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 }
 
 // ── INTERAÇÕES ───────────────────────────────────────
@@ -328,7 +328,7 @@ function renderAgradecimento() {
       </div>
     </div>`;
 
-  lucide?.createIcons();
+  window.lucide?.createIcons();
   carregarGraficos();
 }
 
@@ -361,7 +361,7 @@ async function verResultados() {
       </div>
     </div>`;
 
-  lucide?.createIcons();
+  window.lucide?.createIcons();
   carregarGraficos();
 }
 
@@ -516,7 +516,7 @@ async function carregarGraficos() {
 
     </div>`;
 
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 }
 
 // ── INIT ─────────────────────────────────────────────

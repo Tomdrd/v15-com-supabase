@@ -70,11 +70,11 @@ async function renderPage(){
       </div>
     </div>`;
   if(s.lat&&s.lng){setTimeout(()=>initPostLocation(s,cc),200);}
-  lucide?.createIcons();
+  window.lucide?.createIcons();
   // load reactions
   initReactions(s.id);
 }
-function renderNF(){document.getElementById('root').innerHTML=`<div class="nf"><div style="margin-bottom:16px"><i data-lucide="map" style="width:60px;height:60px;stroke-width:1;opacity:.5"></i></div><h2>Ponto não encontrado</h2><p>Este ponto turístico não existe ou foi removido.</p><a href="index.html" class="btn-nf">← Voltar ao Mapa</a></div>`;lucide?.createIcons();}
+function renderNF(){document.getElementById('root').innerHTML=`<div class="nf"><div style="margin-bottom:16px"><i data-lucide="map" style="width:60px;height:60px;stroke-width:1;opacity:.5"></i></div><h2>Ponto não encontrado</h2><p>Este ponto turístico não existe ou foi removido.</p><a href="index.html" class="btn-nf">← Voltar ao Mapa</a></div>`;window.lucide?.createIcons();}
 function sharePost(){if(navigator.share)navigator.share({title:document.title,url:location.href}).catch(()=>copyLink());else copyLink();}
 function copyLink(){navigator.clipboard?.writeText(location.href).then(()=>alert('Link copiado! ✓'));}
 
@@ -134,7 +134,7 @@ async function initPostLocation(s,cc){
   const infoEl=document.getElementById('locRouteInfo');
   if(!origin||!infoEl){
     if(infoEl) infoEl.innerHTML='<i data-lucide="navigation" class="icon-xs"></i> Ative sua localização para ver tempo de rota';
-    lucide?.createIcons();
+    window.lucide?.createIcons();
     return;
   }
   const userMk=L.marker([origin.lat,origin.lng],{icon:L.divIcon({html:'<div class="post-user-dot"></div>',className:'',iconSize:[14,14],iconAnchor:[7,7]})}).addTo(mm);
@@ -143,7 +143,7 @@ async function initPostLocation(s,cc){
   const drive=await fetchOsrmRoute(origin,{lat:s.lat,lng:s.lng},'driving').catch(()=>null);
   if(!drive){
     infoEl.innerHTML='<i data-lucide="route-off" class="icon-xs"></i> Rota indisponível no momento';
-    lucide?.createIcons();
+    window.lucide?.createIcons();
     return;
   }
   const latlngs=drive.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
@@ -154,7 +154,7 @@ async function initPostLocation(s,cc){
   const walkTxt=`a pé ${fmtDuration(walkDuration)}`;
   const driveTxt=`carro ${fmtDuration(drive.duration)}`;
   infoEl.innerHTML=`<i data-lucide="route" class="icon-xs"></i> <strong>${walkTxt} · ${driveTxt}</strong> <em>(${fd(drive.distance)})</em>`;
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 }
 
 // ── AUTH + REACTIONS ──────────────────────
@@ -190,7 +190,7 @@ async function renderReactions(spotId) {
       <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Entre para curtir e marcar que você foi ou quer visitar!</div>
       <a href="sobral_login.html?redirect=${encodeURIComponent(location.href)}" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13.5px;font-weight:600"><i data-lucide="user" style="width:14px;height:14px;pointer-events:none"></i> Entrar ou Criar Conta</a>
     </div>`;
-    lucide?.createIcons();
+    window.lucide?.createIcons();
     return;
   }
 
@@ -202,7 +202,7 @@ async function renderReactions(spotId) {
   <div style="font-size:11.5px;color:var(--muted)">
     ${likeCount} curtiu · ${beenCount} já foi · ${goingCount} quer ir
   </div>`;
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 }
 
 async function toggleR(reaction) {

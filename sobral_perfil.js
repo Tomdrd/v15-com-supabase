@@ -122,7 +122,7 @@ function renderPage(){
 
   setActiveTab(currentTab);
   renderTab(currentTab);
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 }
 
 function setActiveTab(tab){
@@ -154,7 +154,7 @@ function renderTab(tab){
   void c.offsetWidth;
   c.innerHTML=html;
   c.classList.add('tab-fade');
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 }
 
 /* ── Meu Mapa ─────────────────────────────────────────────────────────── */
@@ -172,7 +172,7 @@ function renderMyMap(){
       <p>Marque lugares como "Eu Fui" ou "Eu Vou" no mapa para criar seu roteiro pessoal.</p>
       <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;background:var(--ochre);color:var(--deep);padding:10px 20px;border-radius:9px;text-decoration:none;font-size:13px;font-weight:600"><i data-lucide="map" style="width:14px;height:14px;pointer-events:none"></i> Explorar o Mapa</a>
     </div>`;
-    c.classList.add('tab-fade');lucide?.createIcons();return;
+    c.classList.add('tab-fade');window.lucide?.createIcons();return;
   }
 
   const beenIds=new Set(beenSpots.map(s=>s.id));
@@ -204,7 +204,7 @@ function renderMyMap(){
     <div style="font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:500">Roteiro (${allSpots.length} ponto${allSpots.length!==1?'s':''})</div>
     <div style="display:flex;flex-direction:column;gap:8px">${routeList}</div>`;
   c.classList.add('tab-fade');
-  lucide?.createIcons();
+  window.lucide?.createIcons();
   initProfileMap();
 }
 
@@ -265,7 +265,7 @@ function setFavFilter(filter){
   c.classList.remove('tab-fade');void c.offsetWidth;
   c.innerHTML=renderFavorites();
   c.classList.add('tab-fade');
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 }
 
 /* ── Envios ──────────────────────────────────────────────────────── */

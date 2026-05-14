@@ -56,7 +56,7 @@ function setLoading(btnId,label,loading){
 }
 
 /* ── UTILITÁRIOS ── */
-function togglePwd(id,btn){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.innerHTML=i.type==='text'?'<i data-lucide="eye" style="width:16px;height:16px;pointer-events:none"></i>':'<i data-lucide="eye-off" style="width:16px;height:16px;pointer-events:none"></i>';lucide?.createIcons();}
+function togglePwd(id,btn){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.innerHTML=i.type==='text'?'<i data-lucide="eye" style="width:16px;height:16px;pointer-events:none"></i>':'<i data-lucide="eye-off" style="width:16px;height:16px;pointer-events:none"></i>';window.lucide?.createIcons();}
 
 function checkStrength(pwd){
   const bar=document.getElementById('strengthBar');

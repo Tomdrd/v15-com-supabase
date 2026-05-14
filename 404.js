@@ -21,5 +21,5 @@ function goBack() {
 
 // Inicializa os ícones Lucide
 document.addEventListener('DOMContentLoaded', () => {
-  lucide?.createIcons();
+  window.lucide?.createIcons();
 });
