@@ -132,11 +132,11 @@
 
   // ── Configuração do Menu Global ──────────────
   const MENU_ITEMS = [
-    { label: 'Sobre', href: 'sobral_sobre.html', icon: 'info' },
-    { label: 'Contato', href: 'sobral_contato.html', icon: 'mail' },
     { label: 'Notícias', href: 'sobral_noticias.html', icon: 'newspaper' },
     { label: 'Quiz', href: 'sobral_game.html', icon: 'gamepad-2' },
     { label: 'App', href: '#', icon: 'download', onclick: 'installPWA(event)' },
+    { label: 'Contato', href: 'sobral_contato.html', icon: 'mail' },
+    { label: 'Sobre', href: 'sobral_sobre.html', icon: 'info' },
   ];
 
   // Função para injetar os menus
