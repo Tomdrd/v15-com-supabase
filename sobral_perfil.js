@@ -28,6 +28,68 @@ function toast(msg,type=''){const t=document.getElementById('toast');t.textConte
     .fav-pill{padding:6px 14px;border-radius:20px;font-size:12.5px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:'Plus Jakarta Sans',sans-serif;transition:.15s}
     .fav-pill:hover{color:var(--cream);border-color:rgba(200,135,26,.4)}
     .fav-pill.active{background:rgba(200,135,26,.15);border-color:var(--ochre);color:var(--ochre)}
+
+    /* VARIÁVEIS PADRÃO DO PERFIL (Sobral Cultural) */
+    body {
+      --border: rgba(200,135,26,0.25);
+      --input-bg: rgba(255,255,255,0.04);
+    }
+
+    /* TRANSIÇÃO SUAVE ENTRE TEMAS */
+    body, .profile-hero, .sub-card, .reaction-card, .empty, .edit-form, input, textarea, select {
+      transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    /* MODO ESCURO (Dark Mode Clean / Zinc) */
+    body.theme-dark {
+      --deep: #09090b;
+      --mid: #18181b;
+      --cream: #f4f4f5;
+      --muted: #a1a1aa;
+      --border: #27272a;
+      --input-bg: #09090b;
+      background-color: var(--deep);
+      color: var(--cream);
+    }
+    body.theme-dark .profile-hero { background: var(--mid); border-bottom: 1px solid var(--border); }
+    body.theme-dark .sub-card, body.theme-dark .reaction-card, body.theme-dark .empty, body.theme-dark .edit-form { background: var(--mid); border: 1px solid var(--border); border-radius: 12px; }
+    body.theme-dark input, body.theme-dark textarea, body.theme-dark select { background: var(--input-bg); border: 1px solid var(--border); color: var(--cream); }
+    body.theme-dark input:focus, body.theme-dark textarea:focus, body.theme-dark select:focus { border-color: var(--ochre); }
+    body.theme-dark .fav-pill { border-color: var(--border); color: var(--muted); }
+    body.theme-dark .fav-pill:hover { border-color: var(--muted); color: var(--cream); }
+    body.theme-dark .fav-pill.active { border-color: var(--ochre); color: var(--ochre); background: rgba(200,135,26,.12); }
+    body.theme-dark .route-item { border-bottom: 1px solid var(--border); }
+    body.theme-dark .route-num { background: var(--deep); border-color: var(--border); color: var(--cream); }
+    body.theme-dark hr { border-top-color: var(--border) !important; }
+
+    /* MODO CLARO (Light Mode Elegante) */
+    body.theme-light {
+      --deep: #f4f4f5;
+      --mid: #ffffff;
+      --cream: #18181b;
+      --muted: #71717a;
+      --border: #e4e4e7;
+      --input-bg: #f4f4f5;
+      background-color: var(--deep);
+      color: var(--cream);
+    }
+    body.theme-light .profile-hero { background: var(--mid); border-bottom: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+    body.theme-light .ptab { color: var(--muted); }
+    body.theme-light .ptab.active { color: var(--ochre); font-weight: 600; }
+    body.theme-light .ptab:hover { background: rgba(0,0,0,0.03); }
+    body.theme-light .pstat-btn:hover { background: rgba(0,0,0,0.04); }
+    body.theme-light .sub-card, body.theme-light .reaction-card, body.theme-light .empty, body.theme-light .edit-form { background: var(--mid); border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.02); border-radius: 12px; }
+    body.theme-light input, body.theme-light textarea, body.theme-light select { background: var(--input-bg); border: 1px solid var(--border); color: var(--cream); }
+    body.theme-light input:focus, body.theme-light textarea:focus, body.theme-light select:focus { background: var(--mid); border-color: var(--ochre); box-shadow: 0 0 0 3px rgba(200,135,26,0.1); }
+    body.theme-light .fav-pill { border-color: var(--border); color: var(--muted); background: var(--mid); }
+    body.theme-light .fav-pill:hover { border-color: #a1a1aa; color: var(--cream); }
+    body.theme-light .fav-pill.active { border-color: var(--ochre); color: var(--ochre); background: rgba(200,135,26,0.08); }
+    body.theme-light .route-item { border-bottom: 1px solid var(--border); }
+    body.theme-light .route-item:hover { background: rgba(0,0,0,0.02); }
+    body.theme-light .route-num { background: var(--mid); border-color: var(--border); color: var(--cream); }
+    body.theme-light hr { border-top-color: var(--border) !important; }
+    body.theme-light .profile-name { color: var(--cream); }
+    body.theme-light .empty-icon i { opacity: 0.2; }
   `;
   document.head.appendChild(s);
 })();
@@ -64,6 +126,10 @@ async function init(){
   PROFILE=prof||{id: targetUserId, role:'user',full_name: USER?.user_metadata?.full_name || 'Usuário'};
   SUBS=subs||[];
   REACTIONS=reacts||[];
+
+  document.body.classList.remove('theme-light', 'theme-dark');
+  if(PROFILE.theme === 'light') document.body.classList.add('theme-light');
+  else if(PROFILE.theme === 'dark') document.body.classList.add('theme-dark');
   
   const ids=[...new Set(REACTIONS.map(r=>r.spot_id).filter(Boolean))];
   if(ids.length){
@@ -333,6 +399,15 @@ function renderSettings(){
       </div>
       <small style="color:var(--muted);font-size:11px;display:block;margin-top:6px">Apenas letras, números e traços. Ex: carlos-silva</small>
     </div>
+    <div class="fg">
+      <label>Tema do Perfil</label>
+      <select id="sTheme" style="width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--cream);font-family:inherit;font-size:14px;margin-top:4px;outline:none;cursor:pointer">
+        <option value="default" ${PROFILE.theme==='default'||!PROFILE.theme?'selected':''}>Padrão (Sobral)</option>
+        <option value="dark" ${PROFILE.theme==='dark'?'selected':''}>Modo Escuro (Dark)</option>
+        <option value="light" ${PROFILE.theme==='light'?'selected':''}>Modo Claro (Light)</option>
+      </select>
+      <small style="color:var(--muted);font-size:11px;display:block;margin-top:6px">Altera as cores da sua página de perfil para você e seus visitantes.</small>
+    </div>
     <div class="fg"><label>E-mail (não editável)</label><input value="${USER.email}" disabled style="opacity:.5"></div>
     <div style="display:flex;gap:10px;margin-top:4px">
       <button class="btn btn-primary" onclick="saveProfile()"><i data-lucide="save" style="width:14px;height:14px;pointer-events:none"></i> Salvar Alterações</button>
@@ -352,15 +427,21 @@ async function saveProfile(){
   const name=document.getElementById('sName').value.trim();
   const bio=document.getElementById('sBio').value.trim();
   const user=document.getElementById('sUser').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,'');
+  const theme=document.getElementById('sTheme').value;
   
   if(user && user !== PROFILE.username){
     const { data: exist } = await supa.from('profiles').select('id').eq('username', user).single();
     if(exist){ toast('Esse nome de usuário já está em uso.', 'err'); return; }
   }
 
-  const{error}=await supa.from('profiles').upsert({id:USER.id,full_name:name,bio,username:user,updated_at:new Date().toISOString()},{onConflict:'id'});
+  const{error}=await supa.from('profiles').upsert({id:USER.id,full_name:name,bio,username:user,theme:theme,updated_at:new Date().toISOString()},{onConflict:'id'});
   if(error){toast('Erro: '+error.message,'err');return;}
-  PROFILE={...PROFILE,full_name:name,bio,username:user};
+  PROFILE={...PROFILE,full_name:name,bio,username:user,theme:theme};
+  
+  document.body.classList.remove('theme-light', 'theme-dark');
+  if(theme === 'light') document.body.classList.add('theme-light');
+  else if(theme === 'dark') document.body.classList.add('theme-dark');
+
   toast('Perfil atualizado! ✓','ok');
   renderPage();
 }
