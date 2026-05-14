@@ -477,7 +477,10 @@ function restorePersistentGeo() {
         applyUserLocation({ coords: { latitude: p.lat, longitude: p.lng } }, { focus: false, notify: false });
       }
     }
-  } catch (_) {}
+      } catch (error) {
+        setGeoUiState(false, false);
+        toast('A sessão de localização expirou. Por favor, ative novamente.', true);
+      }
   if (localStorage.getItem(GEO_PREF_KEY) === '1') startPersistentGeoWatch();
 }
 
@@ -492,8 +495,13 @@ function getUserLocation() {
   }, e => {
     setGeoUiState(false, false);
     if (e.code === 1) localStorage.removeItem(GEO_PREF_KEY);
-    toast(e.code === 1 ? 'Permissão negada.' : 'Erro ao localizar.', true);
-  }, { timeout: 10000, enableHighAccuracy: true });
+        const errorMap = {
+          1: "Permissão negada.",
+          2: "Localização indisponível.",
+          3: "Tempo esgotado. Tente em local aberto."
+        };
+        toast(errorMap[e.code] || "Erro ao localizar.", true);
+      }, { timeout: 15000, enableHighAccuracy: true, maximumAge: 30000 });
 }
 
 
