@@ -696,8 +696,8 @@ async function renderAuthChip() {
     const isAdmin = prof?.role === 'admin';
     ['adminLink','drawerAdminLink','drawerAdminSec'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display=isAdmin?'':'none'; });
   } else {
-    chip.innerHTML = `<a href="sobral_login.html?redirect=/" class="btn-login">Entrar</a>`;
-    if (drawerSection) drawerSection.innerHTML = `<a href="sobral_login.html?redirect=/" class="drw-lnk"><div class="drw-ic"><i data-lucide="user"></i></div> Entrar / Criar Conta</a>`;
+    chip.innerHTML = `<a href="sobral_login.html?redirect=/" class="nl"><i data-lucide="user"></i> Perfil</a>`;
+    if (drawerSection) drawerSection.innerHTML = `<a href="sobral_login.html?redirect=/" class="drw-lnk"><div class="drw-ic"><i data-lucide="user"></i></div> Perfil</a>`;
     ['adminLink','drawerAdminLink','drawerAdminSec'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
   }
   lucide.createIcons();
