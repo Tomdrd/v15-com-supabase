@@ -150,7 +150,14 @@
     if (desktopNav) {
       // Salva o HTML dos botões especiais que devem ser preservados.
       const specialButtonsHTML = Array.from(desktopNav.querySelectorAll('.btn-geo, #adminLink, #authChip'))
-        .map(el => el.outerHTML)
+        .map(el => {
+          if (el.classList.contains('btn-geo') || el.id === 'btnGeo') {
+            // Transforma completamente em uma âncora (tag a) para herdar o visual nativo do menu (.nl)
+            // Trocamos o ícone para "navigation" (seta de GPS)
+            return `<a href="#" id="btnGeo" class="nl" style="color: var(--gold);" onclick="event.preventDefault(); if(window.getUserLocation) getUserLocation();"><i data-lucide="navigation"></i> <span class="geo-txt">Localizar</span></a>`;
+          }
+          return el.outerHTML;
+        })
         .join('');
       
       let menuHtml = MENU_ITEMS.map(item => {

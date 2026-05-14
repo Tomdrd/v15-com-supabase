@@ -400,13 +400,29 @@ function setGeoUiState(enabled, locating = false) {
   const bnavGeo = document.querySelector('.bnav-item[data-page="geo"]');
   if (btn) {
     btn.classList.toggle('locating', locating);
-    btn.style.background = enabled ? '#1B6B6B' : '';
+    // Só aplica o fundo verde se não for o botão do menu desktop padronizado (.nl)
+    if (!btn.classList.contains('nl')) {
+      btn.style.background = enabled ? '#1B6B6B' : '';
+    }
   }
   if (bnavGeo) {
     bnavGeo.classList.toggle('bnav-locating', locating);
     const txt = bnavGeo.querySelector('span');
     if (txt) txt.textContent = enabled ? 'Localizado' : 'Localizar';
   }
+
+  // Atualiza os botões de localização (agora buscando também pelo ID no desktop)
+  document.querySelectorAll('.btn-geo, #btnGeo').forEach(geoBtn => {
+    geoBtn.classList.toggle('locating', locating);
+    const txt = geoBtn.querySelector('.geo-txt');
+    if (txt) txt.textContent = enabled ? 'Localizado' : 'Localizar';
+    // Para botões padronizados do menu, destaca com a classe active
+    if (geoBtn.classList.contains('nl')) {
+      geoBtn.classList.toggle('active', enabled);
+      // Se localizado tira a cor inline para herdar o estilo de hover/active. Se não, volta a ser dourado.
+      geoBtn.style.color = enabled ? '' : 'var(--gold)';
+    }
+  });
 }
 
 function applyUserLocation(pos, { focus = false, notify = false } = {}) {
