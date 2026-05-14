@@ -34,20 +34,34 @@ function toast(msg,type=''){const t=document.getElementById('toast');t.textConte
 
 async function init(){
   const{data:{session}}=await supa.auth.getSession();
-  if(!session){location.href='sobral_login.html?redirect=sobral_perfil.html';return;}
-  USER=session.user;
+  USER=session?.user || null;
 
   const urlParams = new URLSearchParams(window.location.search);
   const profileId = urlParams.get('id');
-  const targetUserId = profileId || USER.id;
-  isMyProfile = !profileId || (USER && profileId === USER.id);
+  const profileUser = urlParams.get('username');
+
+  let targetUserId = null;
+  if (profileUser) {
+    const { data: u } = await supa.from('profiles').select('id').eq('username', profileUser).single();
+    if (u) targetUserId = u.id;
+    else { document.getElementById('root').innerHTML=`<div class="empty" style="margin-top:100px;text-align:center"><h3>Perfil não encontrado</h3><a href="index.html" class="btn btn-primary" style="margin-top:14px">Voltar ao mapa</a></div>`; return; }
+  } else if (profileId) {
+    targetUserId = profileId;
+  } else if (USER) {
+    targetUserId = USER.id;
+  } else {
+    location.href='sobral_login.html?redirect=sobral_perfil.html';
+    return;
+  }
+
+  isMyProfile = USER && targetUserId === USER.id;
 
   const[{data:prof},{data:subs},{data:reacts}]=await Promise.all([
     supa.from('profiles').select('*').eq('id', targetUserId).single(),
     supa.from('submissions').select('*').eq('user_id', targetUserId).order('created_at',{ascending:false}),
     supa.from('reactions').select('*').eq('user_id', targetUserId).order('created_at',{ascending:false})
   ]);
-  PROFILE=prof||{id: targetUserId, role:'user',full_name:USER.user_metadata?.full_name||''};
+  PROFILE=prof||{id: targetUserId, role:'user',full_name: USER?.user_metadata?.full_name || 'Usuário'};
   SUBS=subs||[];
   REACTIONS=reacts||[];
   
@@ -69,7 +83,7 @@ async function init(){
 }
 
 function renderPage(){
-  const avatarSrc=PROFILE.avatar_url||USER.user_metadata?.avatar_url||USER.user_metadata?.picture||'';
+  const avatarSrc=PROFILE.avatar_url||USER?.user_metadata?.avatar_url||USER?.user_metadata?.picture||'';
   const name=PROFILE.full_name||'Usuário';
   const isAdmin=PROFILE.role==='admin';
   const likeCount=REACTIONS.filter(r=>r.reaction==='like').length;
@@ -86,6 +100,11 @@ function renderPage(){
         <div class="profile-info">
           <div class="profile-name">${name}</div>
           ${PROFILE.bio ? `<div class="profile-bio">${PROFILE.bio}</div>` : ''}
+          <div style="margin-top:6px;margin-bottom:12px">
+            <a href="${PROFILE.username ? window.location.origin + '/' + PROFILE.username : window.location.origin + '/sobral_perfil.html?id=' + PROFILE.id}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;color:var(--ochre);font-size:12.5px;font-weight:600;text-decoration:none;background:rgba(200,135,26,.1);padding:6px 12px;border-radius:20px;">
+              <i data-lucide="link" style="width:13px;height:13px"></i> ${PROFILE.username ? window.location.host + '/' + PROFILE.username : 'Copiar link do perfil'}
+            </a>
+          </div>
           <div class="profile-stats">
             <button class="pstat-btn" onclick="showTab('submissions')" title="Ver Envios">
               <div class="pstat-num">${SUBS.length}</div><div class="pstat-lbl">Envios</div>
@@ -306,6 +325,14 @@ function renderSettings(){
     <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border)"><i data-lucide="settings" style="width:16px;height:16px"></i> Editar Perfil</h3>
     <div class="fg"><label>Nome Completo</label><input id="sName" value="${name}" placeholder="Seu nome"></div>
     <div class="fg"><label>Bio / Descrição</label><textarea id="sBio" rows="3" placeholder="Conte um pouco sobre você…">${bio}</textarea></div>
+    <div class="fg">
+      <label>URL Personalizada (Nome de Usuário)</label>
+      <div style="display:flex;align-items:center;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding-left:12px;overflow:hidden;margin-top:4px">
+        <span style="color:var(--muted);font-size:13px;white-space:nowrap">${window.location.host}/</span>
+        <input id="sUser" value="${PROFILE.username || ''}" placeholder="seunome" style="border:none;background:transparent;padding:10px 8px;flex:1;min-width:0;color:var(--cream);font-family:inherit" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_-]/g,'')">
+      </div>
+      <small style="color:var(--muted);font-size:11px;display:block;margin-top:6px">Apenas letras, números e traços. Ex: carlos-silva</small>
+    </div>
     <div class="fg"><label>E-mail (não editável)</label><input value="${USER.email}" disabled style="opacity:.5"></div>
     <div style="display:flex;gap:10px;margin-top:4px">
       <button class="btn btn-primary" onclick="saveProfile()"><i data-lucide="save" style="width:14px;height:14px;pointer-events:none"></i> Salvar Alterações</button>
@@ -324,9 +351,16 @@ function renderSettings(){
 async function saveProfile(){
   const name=document.getElementById('sName').value.trim();
   const bio=document.getElementById('sBio').value.trim();
-  const{error}=await supa.from('profiles').upsert({id:USER.id,full_name:name,bio,updated_at:new Date().toISOString()},{onConflict:'id'});
+  const user=document.getElementById('sUser').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,'');
+  
+  if(user && user !== PROFILE.username){
+    const { data: exist } = await supa.from('profiles').select('id').eq('username', user).single();
+    if(exist){ toast('Esse nome de usuário já está em uso.', 'err'); return; }
+  }
+
+  const{error}=await supa.from('profiles').upsert({id:USER.id,full_name:name,bio,username:user,updated_at:new Date().toISOString()},{onConflict:'id'});
   if(error){toast('Erro: '+error.message,'err');return;}
-  PROFILE={...PROFILE,full_name:name,bio};
+  PROFILE={...PROFILE,full_name:name,bio,username:user};
   toast('Perfil atualizado! ✓','ok');
   renderPage();
 }
