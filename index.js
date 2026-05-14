@@ -404,7 +404,6 @@ function setGeoUiState(enabled, locating = false) {
   }
   if (bnavGeo) {
     bnavGeo.classList.toggle('bnav-locating', locating);
-    bnavGeo.style.color = enabled ? 'var(--teal)' : '';
     const txt = bnavGeo.querySelector('span');
     if (txt) txt.textContent = enabled ? 'Localizado' : 'Localizar';
   }
