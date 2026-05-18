@@ -140,6 +140,8 @@ function placeM() {
     m.bindPopup(mkPopup(s), { maxWidth: 210 });
     m.on('click', () => focusSpot(s.id));
     m.addTo(map);
+    // Acessibilidade: label no elemento DOM do marcador
+    setTimeout(() => { m.getElement()?.setAttribute('aria-label', s.name); }, 0);
     markers[s.id] = m;
   });
   updCnt();
@@ -155,7 +157,12 @@ function refreshM() {
       const m = L.marker([s.lat, s.lng], { icon: mkIco(s) });
       m.bindPopup(mkPopup(s), { maxWidth: 210 });
       m.on('click', () => focusSpot(s.id));
-      if (map) { m.addTo(map); markers[s.id] = m; }
+      if (map) {
+        m.addTo(map);
+        // Acessibilidade: label no elemento DOM do marcador
+        setTimeout(() => { m.getElement()?.setAttribute('aria-label', s.name); }, 0);
+        markers[s.id] = m;
+      }
     }
   });
   updCnt();

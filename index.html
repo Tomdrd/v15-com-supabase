@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sobral Cultural</title>
   <meta name="description" content="Mapeamento cultural e turístico de Sobral, Ceará.">
 
@@ -15,7 +15,7 @@
   <link rel="preload" as="script" href="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" crossorigin>
 
 <!-- Leaflet CSS preload -->
-  <link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="preload" as="style" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript>
 
   <!-- CSS local -->
@@ -129,7 +129,7 @@
 <!-- FEATURED CAROUSEL (inner markup injected by JS) -->
 <div class="fcarousel" id="fcarousel"></div>
 
-<div class="app-body">
+<main class="app-body" id="app-main">
   <div class="sidebar" id="sb">
     <div class="sb-hd">
       <h2>Pontos Turísticos</h2>
@@ -187,7 +187,7 @@
       </div>
     </div>
   </div>
-</div>
+</main>
 
 <!-- BOTTOM NAV (mobile) -->
 <nav class="bnav" id="bnav">
