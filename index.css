@@ -1,6 +1,6 @@
 :root {
   --ochre: #C8871A;
-  ao: #B54A2A;
+  --terra: #B54A2A;
   --cream: #F5EDD8;
   --deep: #1A1410;
   --mid: #2E2118;
@@ -121,7 +121,8 @@ header {
   border-color: rgba(200, 135, 26, .2)
 }
 
-#btnGeo.locating, .btn-geo.locating {
+#btnGeo.locating,
+.btn-geo.locating {
   animation: bp 1s infinite
 }
 
@@ -261,7 +262,8 @@ header {
 /* LAYOUT */
 .app-body {
   display: flex;
-  height: 100vh; /* Fallback */
+  height: 100vh;
+  /* Fallback */
   height: 100dvh;
   padding-top: var(--H);
   overflow: hidden
@@ -401,12 +403,39 @@ header {
   flex-direction: column;
   overflow: hidden;
 }
-.sc-skeleton .sk-thumb { height: 70px; }
-.sc-skeleton .sk-body { padding: 10px; display: flex; gap: 9px; align-items: flex-start; }
-.sc-skeleton .sk-ic { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
-.sc-skeleton .sk-info { flex: 1; }
-.sc-skeleton .sk-line { height: 12px; border-radius: 4px; }
-.sc-skeleton .sk-line.short { width: 60%; height: 10px; margin-top: 6px; }
+
+.sc-skeleton .sk-thumb {
+  height: 70px;
+}
+
+.sc-skeleton .sk-body {
+  padding: 10px;
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+}
+
+.sc-skeleton .sk-ic {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.sc-skeleton .sk-info {
+  flex: 1;
+}
+
+.sc-skeleton .sk-line {
+  height: 12px;
+  border-radius: 4px;
+}
+
+.sc-skeleton .sk-line.short {
+  width: 60%;
+  height: 10px;
+  margin-top: 6px;
+}
 
 /* Shimmer Animation */
 .shimmer {
@@ -414,6 +443,7 @@ header {
   overflow: hidden;
   background-color: rgba(255, 255, 255, .06);
 }
+
 .shimmer::after {
   content: '';
   position: absolute;
@@ -429,9 +459,11 @@ header {
   0% {
     left: -150%;
   }
+
   50% {
     left: -150%;
   }
+
   100% {
     left: 150%;
   }
@@ -970,6 +1002,7 @@ header {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg)
   }
@@ -1287,6 +1320,7 @@ header {
   background: transparent;
   overflow: visible;
 }
+
 .fcarousel.is-hiding .fcar-track,
 .fcarousel.is-hiding .fcar-dots,
 .fcarousel.is-hiding .fcar-grad,
@@ -1320,15 +1354,18 @@ header {
   z-index: 10;
   pointer-events: all;
 }
+
 .fcar-toggle-btn:hover {
   background: rgba(26, 20, 16, .9);
   transform: translateX(-50%) translateY(-2px);
 }
+
 .fcar-toggle-btn svg {
   width: 12px;
   height: 12px;
   transition: transform .3s;
 }
+
 .fcarousel.is-hiding .fcar-toggle-btn svg {
   transform: rotate(180deg);
 }
