@@ -136,7 +136,7 @@ async function init(){
   if (profileUser) {
     const { data: u } = await supa.from('profiles').select('id').eq('username', profileUser).single();
     if (u) targetUserId = u.id;
-    else { document.getElementById('root').innerHTML=`<div class="empty" style="margin-top:100px;text-align:center"><h3>Perfil não encontrado</h3><a href="index.html" class="btn btn-primary" style="margin-top:14px">Voltar ao mapa</a></div>`; return; }
+    else { window.location.href = '/404.html'; return; }
   } else if (profileId) {
     targetUserId = profileId;
   } else if (USER) {
