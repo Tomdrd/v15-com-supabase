@@ -134,6 +134,7 @@
   const MENU_ITEMS = [
     { label: 'Notícias', href: 'sobral_noticias.html', icon: 'newspaper' },
     { label: 'Quiz', href: 'sobral_game.html', icon: 'gamepad-2' },
+    { label: 'Chat', href: 'sobral_chat.html', icon: 'message-circle' },
     { label: 'App', href: '#', icon: 'download', onclick: 'installPWA(event)' },
     { label: 'Contato', href: 'sobral_contato.html', icon: 'mail' },
     { label: 'Sobre', href: 'sobral_sobre.html', icon: 'info' },
@@ -214,5 +215,13 @@
       lucide.createIcons();
     }
   });
+
+  // ── Notificações Globais de Chat ──────────────────────
+  if (!document.querySelector('script[src*="notifications.js"]')) {
+    const notifScript = document.createElement('script');
+    notifScript.src = base + 'notifications.js';
+    notifScript.defer = true;
+    head.appendChild(notifScript);
+  }
 
 })();

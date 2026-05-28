@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+  <script src="cache.js"></script>
+  <script src="splash.js"></script>
+  <script src="head.js" defer></script>
+  <script src="navigate.js" defer></script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat — Sobral Cultural</title>
+  <meta name="description" content="Converse com membros próximos a você no Sobral Cultural.">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+
+  <link rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap">
+  <noscript><link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap"></noscript>
+
+  <link rel="stylesheet" href="topbar.css">
+  <link rel="stylesheet" href="icons.css">
+  <link rel="stylesheet" href="sobral_chat.css">
+</head>
+<body>
+
+<!-- ── TOPBAR ─────────────────────────────────────────────────── -->
+<header class="topbar" id="topbar">
+  <a href="/" class="tb-logo">
+    <img src="logo.png" alt="Sobral Cultural" class="tb-logo-img">
+    <span class="tb-logo-name">Sobral <em>Cultural</em></span>
+  </a>
+  <nav class="tb-nav hn" id="mainNav"></nav>
+  <button class="hbg" id="hbg" onclick="toggleDrw()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<!-- ── DRAWER MOBILE ──────────────────────────────────────────── -->
+<div class="dov" id="dov" onclick="closeDrw()"></div>
+<nav class="drw" id="drw">
+  <div class="drw-inner" id="drawerInner"></div>
+</nav>
+
+<!-- ── TOAST ─────────────────────────────────────────────────── -->
+<div id="toast" class="toast"></div>
+
+<!-- ── APP ROOT ───────────────────────────────────────────────── -->
+<div id="chatApp">
+
+  <!-- Estado: Não logado -->
+  <div id="stateNoAuth" class="state-screen" style="display:none">
+    <div class="state-icon"><i data-lucide="lock" style="width:40px;height:40px;stroke-width:1.5"></i></div>
+    <h2>Área exclusiva para membros</h2>
+    <p>Faça login para acessar o chat e conversar com pessoas próximas a você.</p>
+    <a href="sobral_login.html?redirect=sobral_chat.html" class="btn-state">Entrar / Criar conta</a>
+  </div>
+
+  <!-- Estado: Sem localização -->
+  <div id="stateNoGeo" class="state-screen" style="display:none">
+    <div class="state-icon"><i data-lucide="map-pin" style="width:40px;height:40px;stroke-width:1.5"></i></div>
+    <h2>Localização necessária</h2>
+    <p>O chat por proximidade precisa da sua localização para encontrar pessoas perto de você. Sua posição é usada apenas durante a sessão.</p>
+    <button class="btn-state" id="btnActivateGeo" onclick="activateLocation()">
+      <i data-lucide="navigation"></i> Ativar Localização
+    </button>
+  </div>
+
+  <!-- Estado: Localizando -->
+  <div id="stateLocating" class="state-screen" style="display:none">
+    <div class="state-icon locating-pulse">🛰️</div>
+    <h2>Obtendo sua localização…</h2>
+    <p>Aguarde enquanto localizamos você.</p>
+  </div>
+
+  <!-- Interface Principal do Chat -->
+  <div id="chatMain" class="chat-layout" style="display:none">
+
+    <!-- ── SIDEBAR: Lista de usuários próximos ── -->
+    <aside class="chat-sidebar" id="chatSidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">
+          <i data-lucide="users"></i>
+          <span>Próximos a você</span>
+        </div>
+        <div class="sidebar-meta" id="sidebarMeta">
+          <span id="myDistBadge" class="dist-badge-my"></span>
+        </div>
+      </div>
+
+      <div class="sidebar-search">
+        <i data-lucide="search"></i>
+        <input type="text" id="searchUsers" placeholder="Buscar membros…" oninput="filterUsers(this.value)">
+      </div>
+
+      <div class="user-list" id="userList">
+        <div class="user-list-loading">
+          <div class="skeleton-user"></div>
+          <div class="skeleton-user"></div>
+          <div class="skeleton-user"></div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="btn-refresh" id="btnRefresh" onclick="refreshNearby()">
+          <i data-lucide="refresh-cw"></i> Atualizar lista
+        </button>
+      </div>
+    </aside>
+
+    <!-- ── ÁREA DO CHAT ── -->
+    <main class="chat-area" id="chatArea">
+
+      <!-- Placeholder: nenhuma conversa selecionada -->
+      <div class="chat-empty" id="chatEmpty">
+        <div class="chat-empty-icon"><i data-lucide="message-circle" style="width:48px;height:48px;stroke-width:1.5"></i></div>
+        <h3>Selecione uma conversa</h3>
+        <p>Escolha um membro próximo na lista ao lado para começar a conversar.</p>
+      </div>
+
+      <!-- Conversa ativa -->
+      <div class="chat-conversation" id="chatConversation" style="display:none">
+
+        <!-- Header da conversa -->
+        <div class="conv-header" id="convHeader">
+          <button class="btn-back-mobile" id="btnBackMobile" onclick="backToList()">
+            <i data-lucide="arrow-left"></i>
+          </button>
+          <div class="conv-avatar" id="convAvatar"></div>
+          <div class="conv-info">
+            <div class="conv-name" id="convName"></div>
+            <div class="conv-dist" id="convDist"></div>
+          </div>
+          <div class="conv-options">
+            <button class="btn-conv-opt" onclick="toggleConvOptions()" aria-label="Opções da conversa">
+              <i data-lucide="more-vertical"></i>
+            </button>
+            <div class="conv-opt-menu" id="convOptMenu">
+              <button onclick="promptBlockUser()">
+                <i data-lucide="slash"></i> Bloquear Usuário
+              </button>
+              <button class="danger" onclick="openReportModal()">
+                <i data-lucide="alert-triangle"></i> Denunciar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensagens -->
+        <div class="messages-area" id="messagesArea">
+          <div class="messages-loading" id="messagesLoading">
+            <div class="skeleton-msg right"></div>
+            <div class="skeleton-msg left"></div>
+            <div class="skeleton-msg right"></div>
+          </div>
+        </div>
+
+        <!-- Input de mensagem -->
+        <div class="message-input-wrap" id="messageInputWrap">
+          <div class="message-input-inner">
+            <textarea
+              id="msgInput"
+              class="message-input"
+              placeholder="Digite uma mensagem…"
+              rows="1"
+              maxlength="1000"
+              onkeydown="handleMsgKey(event)"
+              oninput="autoResizeInput(this)"
+            ></textarea>
+            <button class="btn-send" id="btnSend" onclick="sendMessage()" aria-label="Enviar">
+              <i data-lucide="send"></i>
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /chat-conversation -->
+    </main><!-- /chat-area -->
+
+  </div><!-- /chatMain -->
+
+  <!-- ── MODAL DENÚNCIA ─────────────────────────────────────────── -->
+  <div class="modal-overlay" id="reportModal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Denunciar Usuário</h3>
+        <button class="btn-close-modal" onclick="closeReportModal()"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <p>Por que você está denunciando este membro? A denúncia é anônima e o usuário será bloqueado da sua lista.</p>
+        <div class="report-options">
+          <label class="radio-label">
+            <input type="radio" name="reportReason" value="Spam / Comercial">
+            <span>Spam / Comercial</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="reportReason" value="Conteúdo Ofensivo">
+            <span>Conteúdo Ofensivo</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="reportReason" value="Assédio">
+            <span>Assédio</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="reportReason" value="Perfil Falso / Fake">
+            <span>Perfil Falso / Fake</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="reportReason" value="Outro" id="radioReportOther">
+            <span>Outro</span>
+          </label>
+        </div>
+        <textarea id="reportDetails" class="report-details" placeholder="Detalhes (opcional)..." rows="3" maxlength="300"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeReportModal()">Cancelar</button>
+        <button class="btn-primary danger" onclick="submitReport()">Enviar Denúncia</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /chatApp -->
+
+<script src="sobral_chat.js" defer></script>
+</body>
+</html>
