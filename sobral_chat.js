@@ -117,6 +117,20 @@ async function init() {
   const { data: prof } = await supa.from('profiles').select('*').eq('id', USER.id).single();
   MY_PROFILE = prof || { id: USER.id, full_name: USER.user_metadata?.full_name || 'Você' };
 
+  // Garante par de chaves E2EE
+  if (typeof SobralCrypto !== 'undefined' && !SobralCrypto.hasKeys(USER.id)) {
+    const keys = await SobralCrypto.generateKeyPair();
+    SobralCrypto.savePrivateKey(USER.id, keys.privateKey);
+    await supa.from('profiles').update({ public_key: keys.publicKey }).eq('id', USER.id);
+  }
+
+  // Garante par de chaves E2EE
+  if (typeof SobralCrypto !== 'undefined' && !SobralCrypto.hasKeys(USER.id)) {
+    const keys = await SobralCrypto.generateKeyPair();
+    SobralCrypto.savePrivateKey(USER.id, keys.privateKey);
+    await supa.from('profiles').update({ public_key: keys.publicKey }).eq('id', USER.id);
+  }
+
   // 1. Tenta usar a última localização salva no banco se for recente (menos de LOC_TTL_MIN min)
   if (MY_PROFILE.location_updated_at && MY_PROFILE.lat && MY_PROFILE.lng) {
     const lastUpdate = new Date(MY_PROFILE.location_updated_at);
@@ -225,7 +239,7 @@ async function loadNearbyUsers() {
 
   const { data: profiles, error } = await supa
     .from('profiles')
-    .select('id, full_name, avatar_url, bio, lat, lng, location_updated_at')
+    .select('id, full_name, avatar_url, bio, lat, lng, location_updated_at, public_key')
     .eq('location_active', true)
     .gte('location_updated_at', cutoff)
     .neq('id', USER.id);
@@ -428,6 +442,13 @@ async function loadMessages() {
   }
 
   MESSAGES = data || [];
+  const privKey = typeof SobralCrypto !== 'undefined' ? SobralCrypto.loadPrivateKey(USER.id) : null;
+  if (privKey) {
+    for (const msg of MESSAGES) {
+      const encPayload = SobralCrypto.deserializePayload(msg.text);
+      if (encPayload) msg.text = await SobralCrypto.decrypt(encPayload, privKey);
+    }
+  }
   renderMessages();
 }
 
@@ -526,12 +547,17 @@ async function sendMessage() {
   MESSAGES.push(tempMsg);
   renderMessages();
 
+  let textToSend = text;
+  if (typeof SobralCrypto !== 'undefined' && ACTIVE_USER?.public_key) {
+    const payload = await SobralCrypto.encrypt(text, ACTIVE_USER.public_key);
+    textToSend = SobralCrypto.serializePayload(payload);
+  }
   const { data, error } = await supa
     .from('chat_messages')
     .insert({
       conversation_id: ACTIVE_CONV.id,
       sender_id: USER.id,
-      text
+      text: textToSend
     })
     .select()
     .single();
@@ -544,15 +570,16 @@ async function sendMessage() {
     return;
   }
 
-  // Substitui temporário pelo real
-  MESSAGES = MESSAGES.filter(m => m.id !== tempMsg.id);
-  MESSAGES.push(data);
+  // Substitui temporário pelo real, mantendo texto legível para o remetente
+  const idx = MESSAGES.findIndex(m => m.id === tempMsg.id);
+  if (idx !== -1) MESSAGES[idx] = { ...data, text };
+  else { MESSAGES = MESSAGES.filter(m => m.id !== tempMsg.id); MESSAGES.push({ ...data, text }); }
   renderMessages();
 
   // Atualiza last_message
   await supa.from('chat_conversations').update({
     last_message_at: data.created_at,
-    last_message_text: text.substring(0, 80)
+    last_message_text: '[mensagem criptografada]'
   }).eq('id', ACTIVE_CONV.id);
 }
 
@@ -567,10 +594,14 @@ function subscribeRealtime() {
       schema: 'public',
       table: 'chat_messages',
       filter: `conversation_id=eq.${ACTIVE_CONV.id}`
-    }, (payload) => {
+    }, async (payload) => {
       const msg = payload.new;
-      // Se não for minha, adiciona à tela
       if (msg.sender_id !== USER.id) {
+        const rtPrivKey = typeof SobralCrypto !== 'undefined' ? SobralCrypto.loadPrivateKey(USER.id) : null;
+        if (rtPrivKey) {
+          const encPayload = SobralCrypto.deserializePayload(msg.text);
+          if (encPayload) msg.text = await SobralCrypto.decrypt(encPayload, rtPrivKey);
+        }
         MESSAGES.push(msg);
         renderMessages();
         markMessagesAsRead(); // Marca como lida assim que chega
