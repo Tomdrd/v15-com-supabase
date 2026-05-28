@@ -1,3 +1,5 @@
 webp_output/
 .env
 .env.save
+.vercel
+.env*.local
