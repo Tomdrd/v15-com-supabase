@@ -130,7 +130,13 @@ async function init(){
 
   const urlParams = new URLSearchParams(window.location.search);
   const profileId = urlParams.get('id');
-  const profileUser = urlParams.get('username');
+  let profileUser = urlParams.get('username');
+
+  // Vercel rewrite limpa a search querystring mas mantém o pathname. Extrai do pathname se for URL amigável.
+  const path = window.location.pathname;
+  if (!profileUser && path !== '/' && !path.endsWith('.html')) {
+    profileUser = path.split('/').filter(Boolean).pop();
+  }
 
   let targetUserId = null;
   if (profileUser) {
@@ -138,7 +144,9 @@ async function init(){
     if (u) targetUserId = u.id;
     else { window.location.href = '/404.html'; return; }
   } else if (profileId) {
-    targetUserId = profileId;
+    const { data: u } = await supa.from('profiles').select('id').eq('id', profileId).single();
+    if (u) targetUserId = u.id;
+    else { window.location.href = '/404.html'; return; }
   } else if (USER) {
     targetUserId = USER.id;
   } else {
