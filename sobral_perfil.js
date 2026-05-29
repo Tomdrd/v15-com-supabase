@@ -13,6 +13,8 @@ let isMyProfile = false;
 let profileMap=null;
 let ALBUM_POINTS=[];
 let ALBUM_PHOTOS=[];
+let ALBUM_PHOTO_LIKE_COUNTS = {};
+let ALBUM_PHOTO_MY_LIKES = new Set();
 let selectedAlbumSpot=null;
 
 function toggleDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id)?.classList.toggle('open'));}
@@ -202,6 +204,8 @@ async function init(){
     ALBUM_PHOTOS = [];
   }
 
+  await loadAlbumPhotoLikes();
+  await normalizeAlbumPhotoUrls();
   renderPage();
 }
 
@@ -508,19 +512,80 @@ function renderPhotos(){
     const hasPhoto = !!photo?.photo_url;
     const statusClass = photo ? (photo.status === 'verified' ? 'verified' : photo.status === 'pending' ? 'pending' : photo.status === 'rejected' ? 'rejected' : 'sent') : 'empty';
     const statusLabel = photo ? (photo.status === 'verified' ? 'Foto aceita' : photo.status === 'pending' ? 'Aguardando análise' : photo.status === 'rejected' ? 'Foto inválida' : 'Foto enviada') : '';
-    const preview = hasPhoto ? `<img src="${photo.photo_url}" alt="${spot.name}">` : `<div class="photo-slot-empty"><div><i data-lucide="camera" style="width:28px;height:28px"></i></div><div>Envie uma foto do local</div></div>`;
+    const preview = hasPhoto ? `<img src="${photo.photo_url}" alt="${spot.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=\"photo-slot-empty\"><div><i data-lucide=\"alert-circle\" style=\"width:28px;height:28px\"></i></div><div>Erro ao carregar a foto</div></div>'">` : `<div class="photo-slot-empty"><div><i data-lucide="camera" style="width:28px;height:28px"></i></div><div>Envie uma foto do local</div></div>`;
     const clickable = isMyProfile ? ' photo-slot-clickable' : '';
     const clickAction = isMyProfile ? ` onclick="choosePhotoForSpot('${spot.id}')"` : '';
     const icon = CAT_ICONS[spot.cat] || 'map-pin';
+    const likeCount = photo?.id ? (ALBUM_PHOTO_LIKE_COUNTS[photo.id] || 0) : 0;
+    const hasLiked = photo?.id ? ALBUM_PHOTO_MY_LIKES.has(photo.id) : false;
+    const likeButton = hasPhoto && photo?.id ? `<button class="photo-like-btn${hasLiked ? ' active' : ''}" onclick="event.stopPropagation();toggleAlbumPhotoLike('${photo.id}')"><i data-lucide="heart" style="width:16px;height:16px"></i>${isMyProfile && likeCount ? `<span>${likeCount}</span>` : ''}</button>` : '';
 
     return `<div class="photo-slot${clickable}"${clickAction}>
       <div class="photo-slot-head"><div class="slot-index"><i data-lucide="${icon}" style="width:16px;height:16px"></i></div><div class="slot-title">${spot.name}</div></div>
       <div class="photo-slot-preview">${preview}</div>
+      ${likeButton ? `<div class="photo-slot-actions">${likeButton}</div>` : ''}
       ${hasPhoto ? `<div class="photo-slot-status ${statusClass}">${statusLabel}</div>` : ''}
     </div>`;
   }).join('');
 
   return `<div class="photos-intro"><p>Envie apenas fotos tiradas no próprio ponto turístico. A imagem precisa ter localização registrada para ser aceita. Fotos sem dados de localização não serão enviadas.</p><div class="photos-progress">${completed} de ${ALBUM_POINTS.length} fotos aceitas</div></div><div class="photos-grid">${cards}</div>`;
+}
+
+async function loadAlbumPhotoLikes(){
+  ALBUM_PHOTO_LIKE_COUNTS = {};
+  ALBUM_PHOTO_MY_LIKES = new Set();
+  if(!ALBUM_PHOTOS.length || !USER) return;
+
+  const photoIds = ALBUM_PHOTOS.map(p=>p.id).filter(Boolean);
+  if(!photoIds.length) return;
+
+  if(isMyProfile){
+    const { data, error } = await supa.from('album_photo_likes').select('id,user_id,photo_id').in('photo_id', photoIds);
+    if(error){ console.error('loadAlbumPhotoLikes', error.message); return; }
+    (data || []).forEach(r => {
+      ALBUM_PHOTO_LIKE_COUNTS[r.photo_id] = (ALBUM_PHOTO_LIKE_COUNTS[r.photo_id] || 0) + 1;
+      if(r.user_id === USER.id) ALBUM_PHOTO_MY_LIKES.add(r.photo_id);
+    });
+  } else {
+    const { data, error } = await supa.from('album_photo_likes').select('photo_id').eq('user_id', USER.id).in('photo_id', photoIds);
+    if(error){ console.error('loadAlbumPhotoLikes', error.message); return; }
+    (data || []).forEach(r => ALBUM_PHOTO_MY_LIKES.add(r.photo_id));
+  }
+}
+
+async function normalizeAlbumPhotoUrls(){
+  if(!ALBUM_PHOTOS.length) return;
+  await Promise.all(ALBUM_PHOTOS.map(async photo => {
+    if(photo.photo_path){
+      try {
+        const { data, error } = await supa.storage.from('spots-photos').createSignedUrl(photo.photo_path, 60 * 60);
+        if(!error && data?.signedUrl){
+          photo.photo_url = data.signedUrl;
+        }
+      } catch (err) {
+        console.error('normalizeAlbumPhotoUrls', err);
+      }
+    }
+  }));
+}
+
+async function toggleAlbumPhotoLike(photoId){
+  if(!USER){ toast('Entre para curtir esta foto.','err'); return; }
+  const liked = ALBUM_PHOTO_MY_LIKES.has(photoId);
+  if(liked){
+    const { error } = await supa.from('album_photo_likes').delete().eq('user_id', USER.id).eq('photo_id', photoId);
+    if(error){ toast('Erro ao remover curtida: ' + error.message,'err'); return; }
+    ALBUM_PHOTO_MY_LIKES.delete(photoId);
+    ALBUM_PHOTO_LIKE_COUNTS[photoId] = Math.max(0, (ALBUM_PHOTO_LIKE_COUNTS[photoId] || 0) - 1);
+    toast('Curtida removida','ok');
+  } else {
+    const { error } = await supa.from('album_photo_likes').insert({ user_id: USER.id, photo_id: photoId });
+    if(error){ toast('Erro ao curtir foto: ' + error.message,'err'); return; }
+    ALBUM_PHOTO_MY_LIKES.add(photoId);
+    ALBUM_PHOTO_LIKE_COUNTS[photoId] = (ALBUM_PHOTO_LIKE_COUNTS[photoId] || 0) + 1;
+    toast('Foto curtida','ok');
+  }
+  if(currentTab === 'photos') renderTab('photos');
 }
 
 function choosePhotoForSpot(spotId){
@@ -534,7 +599,7 @@ function choosePhotoForSpot(spotId){
 function handleAlbumPhoto(file){
   if(!file) return;
   if(!selectedAlbumSpot){ toast('Selecione um slot antes de enviar.','err'); return; }
-  if(!file.type.startsWith('image/')){ toast('Escolha uma imagem válida.','err'); return; }
+  if(file.type && !file.type.startsWith('image/')){ toast('Escolha uma imagem válida.','err'); return; }
   processAlbumPhoto(file, selectedAlbumSpot);
 }
 
@@ -545,7 +610,12 @@ async function processAlbumPhoto(file, spotId){
   toast('Validando localização da foto...');
   let gps = null;
   try { gps = await parseImageGPS(file); } catch (err) { gps = null; }
-  if(!gps){ toast('Foto sem localização registrada ou formato não suportado. Use uma imagem com localização.', 'err'); selectedAlbumSpot = null; return; }
+  if(!gps){
+    console.debug('parseImageGPS failed', { name: file.name, type: file.type, size: file.size });
+    toast('Foto sem localização registrada ou formato não suportado. Use uma imagem JPEG com localização.', 'err');
+    selectedAlbumSpot = null;
+    return;
+  }
 
   const distance = getDistanceMeters(gps.lat, gps.lng, spot.lat, spot.lng);
   if(distance > 50){ toast(`Foto fora do local (aprox. ${Math.round(distance)} m).`, 'err'); selectedAlbumSpot = null; return; }
@@ -564,6 +634,7 @@ async function processAlbumPhoto(file, spotId){
     user_id: USER.id,
     spot_id: spot.id,
     photo_url: urlData.publicUrl,
+    photo_path: path,
     photo_lat: gps.lat,
     photo_lng: gps.lng,
     status: 'verified',
@@ -579,7 +650,11 @@ async function processAlbumPhoto(file, spotId){
 
   toast('Foto enviada com sucesso!','ok');
   selectedAlbumSpot = null;
-  try { const { data: album } = await supa.from('album_photos').select('*').eq('user_id', USER.id); ALBUM_PHOTOS = album || []; } catch (err) { ALBUM_PHOTOS = ALBUM_PHOTOS || []; }
+  try {
+    const { data: album } = await supa.from('album_photos').select('*').eq('user_id', USER.id);
+    ALBUM_PHOTOS = album || [];
+    await normalizeAlbumPhotoUrls();
+  } catch (err) { ALBUM_PHOTOS = ALBUM_PHOTOS || []; }
   if(currentTab === 'photos') renderTab('photos');
 }
 
@@ -593,20 +668,23 @@ function getDistanceMeters(lat1, lng1, lat2, lng2){
 }
 
 function parseImageGPS(file){
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
+    if(file.type !== 'image/jpeg' && file.type !== 'image/jpg') return resolve(null);
     const reader = new FileReader();
     reader.onload = () => {
       const view = new DataView(reader.result);
-      if(view.getUint16(0) !== 0xFFD8) return resolve(null);
+      if(view.byteLength < 4 || view.getUint16(0) !== 0xFFD8) return resolve(null);
       let offset = 2;
-      while(offset < view.byteLength){
+      while(offset + 4 <= view.byteLength){
         if(view.getUint8(offset) !== 0xFF) break;
         const marker = view.getUint8(offset + 1);
         const length = view.getUint16(offset + 2);
+        if(length < 2 || offset + 2 + length > view.byteLength) break;
         if(marker === 0xE1){
           const exifStart = offset + 4;
-          if(getString(view, exifStart, 4) !== 'Exif') return resolve(null);
+          if(exifStart + 4 > view.byteLength || getString(view, exifStart, 4) !== 'Exif') return resolve(null);
           const tiffOffset = exifStart + 6;
+          if(tiffOffset + 8 > view.byteLength) return resolve(null);
           const little = view.getUint16(tiffOffset) === 0x4949;
           const firstIFD = tiffOffset + getUint32(view, tiffOffset + 4, little);
           const gpsTagOffset = findTagOffset(view, firstIFD, 0x8825, tiffOffset, little);
@@ -626,8 +704,11 @@ function parseImageGPS(file){
 
 function getString(view, start, length){
   let out = '';
-  for(let i = 0; i < length; i++){
-    const char = view.getUint8(start + i);
+  const max = Math.min(length, view.byteLength - start);
+  for(let i = 0; i < max; i++){
+    const position = start + i;
+    if(position < 0 || position >= view.byteLength) break;
+    const char = view.getUint8(position);
     if(char === 0) break;
     out += String.fromCharCode(char);
   }
@@ -635,13 +716,16 @@ function getString(view, start, length){
 }
 
 function getUint32(view, offset, little){
+  if(offset < 0 || offset + 4 > view.byteLength) return 0;
   return little ? view.getUint32(offset, true) : view.getUint32(offset, false);
 }
 
 function findTagOffset(view, dirOffset, tag, tiffOffset, little){
+  if(dirOffset < 0 || dirOffset + 2 > view.byteLength) return 0;
   const entries = view.getUint16(dirOffset, little);
   let pointer = dirOffset + 2;
   for(let i = 0; i < entries; i++){
+    if(pointer + 12 > view.byteLength) break;
     if(view.getUint16(pointer, little) === tag) return pointer;
     pointer += 12;
   }
@@ -649,16 +733,18 @@ function findTagOffset(view, dirOffset, tag, tiffOffset, little){
 }
 
 function readGPSInfo(view, offset, little, tiffOffset){
+  if(offset < 0 || offset + 2 > view.byteLength) return null;
   const entries = view.getUint16(offset, little);
   let lat = null, lng = null, latRef = '', lngRef = '';
   let pointer = offset + 2;
   for(let i = 0; i < entries; i++){
+    if(pointer + 12 > view.byteLength) break;
     const tag = view.getUint16(pointer, little);
     const type = view.getUint16(pointer + 2, little);
     const count = view.getUint32(pointer + 4, little);
     const valueOffset = view.getUint32(pointer + 8, little);
-    if(tag === 1) latRef = getString(view, tiffOffset + valueOffset, count).trim();
-    if(tag === 3) lngRef = getString(view, tiffOffset + valueOffset, count).trim();
+    if(tag === 1) latRef = readAsciiValue(view, pointer + 8, tiffOffset, valueOffset, count, little).trim();
+    if(tag === 3) lngRef = readAsciiValue(view, pointer + 8, tiffOffset, valueOffset, count, little).trim();
     if(tag === 2) lat = readRationalArray(view, tiffOffset + valueOffset, count, little);
     if(tag === 4) lng = readRationalArray(view, tiffOffset + valueOffset, count, little);
     pointer += 12;
@@ -669,11 +755,22 @@ function readGPSInfo(view, offset, little, tiffOffset){
   return { lat: latitude, lng: longitude };
 }
 
+function readAsciiValue(view, valuePointer, tiffOffset, valueOffset, count){
+  const typeSize = 1; // ASCII
+  const inlineBytes = count * typeSize <= 4;
+  if(inlineBytes){
+    return getString(view, valuePointer, count);
+  }
+  return getString(view, tiffOffset + valueOffset, count);
+}
+
 function readRationalArray(view, offset, count, little){
   const values = [];
   for(let i = 0; i < count; i++){
-    const num = getUint32(view, offset + i * 8, little);
-    const den = getUint32(view, offset + i * 8 + 4, little);
+    const base = offset + i * 8;
+    if(base + 8 > view.byteLength) break;
+    const num = getUint32(view, base, little);
+    const den = getUint32(view, base + 4, little);
     values.push(den ? num / den : 0);
   }
   return values;

@@ -56,6 +56,10 @@ html{scroll-behavior:smooth}body{font-family:'Plus Jakarta Sans',sans-serif;back
 .photo-slot-status.rejected{color:#E8938A}
 .photo-slot-actions{display:flex;align-items:center;justify-content:flex-end;padding:0 16px 16px}
 .photo-slot-actions .btn{width:100%}
+.photo-like-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--border);border-radius:999px;background:rgba(255,255,255,.05);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:.2s;line-height:1}
+.photo-like-btn:hover{border-color:rgba(200,135,26,.4);color:var(--ochre)}
+.photo-like-btn.active{border-color:rgba(200,135,26,.4);background:rgba(200,135,26,.12);color:var(--ochre)}
+.photo-like-btn span{display:inline-flex;align-items:center;min-width:18px;justify-content:center;font-size:12px;color:inherit}
 .sub-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:.2s}
 .sub-card:hover{border-color:rgba(200,135,26,.4);transform:translateY(-2px)}
 .sub-photo{height:120px;overflow:hidden;background:var(--mid);position:relative}
