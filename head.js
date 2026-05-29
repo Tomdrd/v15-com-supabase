@@ -78,7 +78,7 @@
   }
 
   // ── Favicon ───────────────────────────────────────────
-  link({ rel: 'icon', href: base + 'favicon.ico', type: 'image/x-icon' });
+  link({ rel: 'icon', href: base + 'favicon.ico?v=2', type: 'image/x-icon' });
   link({ rel: 'apple-touch-icon', sizes: '180x180', href: base + 'icon-180.png' });
   link({ rel: 'icon', type: 'image/png', sizes: '192x192', href: base + 'icon-192.png' });
 
