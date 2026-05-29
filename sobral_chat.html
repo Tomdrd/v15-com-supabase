@@ -65,7 +65,7 @@
   <div id="stateNoGeo" class="state-screen" style="display:none">
     <div class="state-icon"><i data-lucide="map-pin" style="width:40px;height:40px;stroke-width:1.5"></i></div>
     <h2>Localização necessária</h2>
-    <p>O chat por proximidade precisa da sua localização para encontrar pessoas perto de você. Sua posição é usada apenas durante a sessão.</p>
+    <p>Para iniciar conversas com membros próximos, precisamos da sua localização. A lista de usuários é exibida mesmo antes de ativar.</p>
     <button class="btn-state" id="btnActivateGeo" onclick="activateLocation()">
       <i data-lucide="navigation"></i> Ativar Localização
     </button>
@@ -86,11 +86,16 @@
       <div class="sidebar-header">
         <div class="sidebar-title">
           <i data-lucide="users"></i>
-          <span>Próximos a você</span>
+          <span>Todos os membros</span>
         </div>
         <div class="sidebar-meta" id="sidebarMeta">
           <span id="myDistBadge" class="dist-badge-my"></span>
         </div>
+      </div>
+
+      <div class="location-banner" id="locationBanner" style="display:none">
+        <span>Ative sua localização para conversar com membros próximos.</span>
+        <button class="btn-small" onclick="activateLocation()">Ativar localização</button>
       </div>
 
       <div class="sidebar-search">

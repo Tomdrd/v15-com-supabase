@@ -133,11 +133,12 @@ async function init() {
   if (MY_PROFILE.location_updated_at && MY_PROFILE.lat && MY_PROFILE.lng) {
     const lastUpdate = new Date(MY_PROFILE.location_updated_at);
     const diffMins = (new Date() - lastUpdate) / 1000 / 60;
-    
+
     if (diffMins < LOC_TTL_MIN && MY_PROFILE.location_active) {
       MY_LAT = MY_PROFILE.lat;
       MY_LNG = MY_PROFILE.lng;
-      showState('chatApp');
+      showState('chatMain');
+      updateLocationBanner();
       startLocationWatcher();
       loadNearbyUsers();
       return;
@@ -157,8 +158,10 @@ async function init() {
     }
   }
 
-  // 3. Caso contrário, pede para clicar no botão "Ativar Localização"
-  showState('stateNoGeo');
+  // 3. Ainda assim, mostra a lista de membros e permite ativar geolocalização
+  showState('chatMain');
+  updateLocationBanner();
+  loadNearbyUsers();
 }
 
 // ── Ativar localização ────────────────────────────────────────────
@@ -185,6 +188,7 @@ async function activateLocation() {
       // Mostra interface principal
       document.getElementById('chatMain').style.display = 'flex';
       showState('chatMain');
+      updateLocationBanner();
       loadNearbyUsers();
 
       // Atualiza localização periodicamente (a cada 5 min)
@@ -202,7 +206,14 @@ async function activateLocation() {
 function startLocationWatcher() {
   document.getElementById('chatMain').style.display = 'flex';
   showState('chatMain');
+  updateLocationBanner();
   setInterval(updateLocationSilent, 5 * 60 * 1000);
+}
+
+function updateLocationBanner() {
+  const banner = document.getElementById('locationBanner');
+  if (!banner) return;
+  banner.style.display = MY_LAT != null && MY_LNG != null ? 'none' : 'flex';
 }
 
 async function updateLocationSilent() {
@@ -215,6 +226,7 @@ async function updateLocationSilent() {
       lng: MY_LNG,
       location_updated_at: new Date().toISOString()
     }).eq('id', USER.id);
+    updateLocationBanner();
   }, () => {}, { timeout: 10000 });
 }
 
@@ -227,8 +239,6 @@ async function loadNearbyUsers() {
     <div class="skeleton-user shimmer" style="opacity:.4"></div>`;
 
   // Limite temporal: localização atualizada há menos de LOC_TTL_MIN min
-  const cutoff = new Date(Date.now() - LOC_TTL_MIN * 60 * 1000).toISOString();
-
   // Busca bloqueios (onde eu bloqueei ou fui bloqueado)
   const { data: blocks } = await supa.from('chat_blocks').select('blocker_id, blocked_id');
   const blockedIds = new Set(
@@ -238,8 +248,6 @@ async function loadNearbyUsers() {
   const { data: profiles, error } = await supa
     .from('profiles')
     .select('id, full_name, avatar_url, bio, lat, lng, location_updated_at, public_key')
-    .eq('location_active', true)
-    .gte('location_updated_at', cutoff)
     .neq('id', USER.id);
 
   if (error) {
@@ -248,18 +256,25 @@ async function loadNearbyUsers() {
     return;
   }
 
-  // Calcula distância e filtra ≤ MAX_DIST_KM, e ignora bloqueados
   NEARBY_USERS = (profiles || [])
-    .filter(p => p.lat != null && p.lng != null && !blockedIds.has(p.id))
-    .map(p => ({
-      ...p,
-      distance: haversine(MY_LAT, MY_LNG, p.lat, p.lng)
-    }))
-    .sort((a, b) => a.distance - b.distance);
+    .filter(p => !blockedIds.has(p.id))
+    .map(p => {
+      const hasDistance = MY_LAT != null && MY_LNG != null && p.lat != null && p.lng != null;
+      return {
+        ...p,
+        distance: hasDistance ? haversine(MY_LAT, MY_LNG, p.lat, p.lng) : null
+      };
+    })
+    .sort((a, b) => {
+      if (a.distance === null && b.distance === null) return (a.full_name || '').localeCompare(b.full_name || '');
+      if (a.distance === null) return 1;
+      if (b.distance === null) return -1;
+      return a.distance - b.distance;
+    });
 
-  // Badge com raio
+  // Badge com total de membros
   document.getElementById('myDistBadge').innerHTML =
-    `<i data-lucide="map-pin" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-top:-2px"></i> ${NEARBY_USERS.length} membro${NEARBY_USERS.length !== 1 ? 's' : ''} próximo${NEARBY_USERS.length !== 1 ? 's' : ''}`;
+    `<i data-lucide="map-pin" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-top:-2px"></i> ${NEARBY_USERS.length} membro${NEARBY_USERS.length !== 1 ? 's' : ''} cadastrado${NEARBY_USERS.length !== 1 ? 's' : ''}`;
   window.lucide?.createIcons();
 
   FILTERED_USERS = NEARBY_USERS;
@@ -272,27 +287,28 @@ function renderUserList(users) {
     listEl.innerHTML = `
       <div class="list-empty">
         <div class="list-empty-icon"><i data-lucide="globe"></i></div>
-        <strong>Nenhum membro próximo</strong><br>
-        Não há membros com localização ativa em um raio de ${MAX_DIST_KM} km.
+        <strong>Nenhum membro encontrado</strong><br>
+        Verifique a busca ou tente novamente mais tarde.
       </div>`;
     window.lucide?.createIcons();
     return;
   }
 
   listEl.innerHTML = users.map((u, i) => {
-    const tooFar  = u.distance > MAX_DIST_KM;
-    const distStr = fmtDist(u.distance);
+    const hasLocation = u.distance !== null;
+    const tooFar  = hasLocation && u.distance > MAX_DIST_KM;
+    const distStr = hasLocation ? fmtDist(u.distance) : 'Sem localização';
     const isActive = ACTIVE_USER?.id === u.id;
 
     return `
-      <div class="user-card${isActive ? ' active' : ''}"
+      <div class="user-card${isActive ? ' active' : ''}${tooFar ? ' far' : ''}${!hasLocation ? ' no-location' : ''}"
            id="ucard-${u.id}"
            onclick="openChat('${u.id}')"
            style="animation-delay:${i * 0.04}s"
-           title="${tooFar ? `Muito longe (${distStr}). Máximo: ${MAX_DIST_KM} km` : `Abrir conversa com ${u.full_name}`}">
+           title="${tooFar ? `Muito longe (${distStr}). Máximo: ${MAX_DIST_KM} km` : !hasLocation ? 'Esse membro não tem localização ativa' : `Abrir conversa com ${u.full_name}`}" >
         <div class="user-avatar">
           ${avatarHtml(u, 44)}
-          ${!tooFar ? '<div class="online-dot"></div>' : ''}
+          ${hasLocation && !tooFar ? '<div class="online-dot"></div>' : ''}
         </div>
         <div class="user-card-info">
           <div class="user-card-name">${u.full_name || 'Membro'}</div>
@@ -328,9 +344,19 @@ async function openChat(userId) {
   const profile = NEARBY_USERS.find(u => u.id === userId);
   if (!profile) return;
 
+  if (MY_LAT == null || MY_LNG == null) {
+    toast('Ative sua localização para conversar com membros próximos.', 'err');
+    return;
+  }
+
+  if (profile.distance == null) {
+    toast('Não é possível iniciar chat. Esse membro não tem localização ativa.', 'err');
+    return;
+  }
+
   // Verifica distância
   if (profile.distance > MAX_DIST_KM) {
-    toast(`${profile.full_name} está a ${fmtDist(profile.distance)} de você. Máximo permitido: ${MAX_DIST_KM} km.`, 'err');
+    toast(`${profile.full_name} está muito longe. Máximo permitido: ${MAX_DIST_KM} km.`, 'err');
     return;
   }
 
@@ -355,7 +381,7 @@ async function openChat(userId) {
   document.getElementById('convProfileLink').href = profUrl;
   document.getElementById('convProfileLink').target = '_blank';
   document.getElementById('convDist').innerHTML    =
-    `<i data-lucide="map-pin" style="width:11px;height:11px"></i> ${fmtDist(profile.distance)} de distância`;
+    `<i data-lucide="map-pin" style="width:11px;height:11px"></i> ${profile.distance != null ? `${fmtDist(profile.distance)} de distância` : 'Localização indisponível'}`;
 
   window.lucide?.createIcons();
 
