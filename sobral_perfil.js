@@ -2,6 +2,7 @@ const SU='https://nrohpfggqcbscyoigpiz.supabase.co';
 const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA';
 const supa=supabase.createClient(SU,SK);
 const CAT_LABELS={todos:'Todos',religioso:'Religioso',cultura:'Cultura',historico:'Histórico',natureza:'Natureza',lazer:'Lazer'};
+const CAT_ICONS={religioso:'church',cultura:'landmark',historico:'castle',natureza:'trees',lazer:'ferris-wheel',eventos:'calendar-days',event:'calendar-days'};
 const REACTION_LABELS={like:'Gostei',been:'Eu Fui',going:'Eu Vou'};
 const CAT_COLORS={religioso:'#9B8EC4',cultura:'#C8871A',historico:'#7B9E6B',natureza:'#4CAF82',lazer:'#E07B54'};
 
@@ -504,16 +505,18 @@ function renderPhotos(){
 
   const cards = ALBUM_POINTS.map((spot,index) => {
     const photo = photoMap[spot.id];
+    const hasPhoto = !!photo?.photo_url;
     const statusClass = photo ? (photo.status === 'verified' ? 'verified' : photo.status === 'pending' ? 'pending' : photo.status === 'rejected' ? 'rejected' : 'sent') : 'empty';
-    const statusLabel = photo ? (photo.status === 'verified' ? 'Foto aceita' : photo.status === 'pending' ? 'Aguardando análise' : photo.status === 'rejected' ? 'Foto inválida' : 'Foto enviada') : 'Nenhuma foto enviada';
-    const preview = photo?.photo_url ? `<img src="${photo.photo_url}" alt="${spot.name}">` : `<div class="photo-slot-empty"><div><i data-lucide="camera" style="width:28px;height:28px"></i></div><div>Envie uma foto do local</div></div>`;
-    const actionButton = isMyProfile ? `<button class="btn btn-secondary btn-sm" onclick="choosePhotoForSpot('${spot.id}')">${photo ? 'Reenviar foto' : 'Enviar foto'}</button>` : '';
+    const statusLabel = photo ? (photo.status === 'verified' ? 'Foto aceita' : photo.status === 'pending' ? 'Aguardando análise' : photo.status === 'rejected' ? 'Foto inválida' : 'Foto enviada') : '';
+    const preview = hasPhoto ? `<img src="${photo.photo_url}" alt="${spot.name}">` : `<div class="photo-slot-empty"><div><i data-lucide="camera" style="width:28px;height:28px"></i></div><div>Envie uma foto do local</div></div>`;
+    const clickable = isMyProfile ? ' photo-slot-clickable' : '';
+    const clickAction = isMyProfile ? ` onclick="choosePhotoForSpot('${spot.id}')"` : '';
+    const icon = CAT_ICONS[spot.cat] || 'map-pin';
 
-    return `<div class="photo-slot">
-      <div class="photo-slot-head"><div class="slot-index">${index + 1}</div><div class="slot-title">${spot.name}</div></div>
+    return `<div class="photo-slot${clickable}"${clickAction}>
+      <div class="photo-slot-head"><div class="slot-index"><i data-lucide="${icon}" style="width:16px;height:16px"></i></div><div class="slot-title">${spot.name}</div></div>
       <div class="photo-slot-preview">${preview}</div>
-      <div class="photo-slot-status ${statusClass}">${statusLabel}</div>
-      <div class="photo-slot-actions">${actionButton}</div>
+      ${hasPhoto ? `<div class="photo-slot-status ${statusClass}">${statusLabel}</div>` : ''}
     </div>`;
   }).join('');
 
