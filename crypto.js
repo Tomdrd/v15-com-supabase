@@ -9,6 +9,9 @@ const SobralCrypto = (() => {
   const bufToBase64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
   const base64ToBuf = b64 => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
   async function generateKeyPair() {
+    if (!crypto.subtle) {
+      throw new Error('SubtleCrypto não disponível. Certifique-se de estar usando HTTPS ou localhost.');
+    }
     const kp = await crypto.subtle.generateKey(ALGO_RSA, true, ['encrypt', 'decrypt']);
     return { publicKey: bufToBase64(await crypto.subtle.exportKey('spki', kp.publicKey)), privateKey: bufToBase64(await crypto.subtle.exportKey('pkcs8', kp.privateKey)) };
   }

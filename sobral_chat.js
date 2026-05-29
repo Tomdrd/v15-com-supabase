@@ -117,18 +117,16 @@ async function init() {
   const { data: prof } = await supa.from('profiles').select('*').eq('id', USER.id).single();
   MY_PROFILE = prof || { id: USER.id, full_name: USER.user_metadata?.full_name || 'Você' };
 
-  // Garante par de chaves E2EE
+  // Garante par de chaves E2EE (requer HTTPS ou localhost)
   if (typeof SobralCrypto !== 'undefined' && !SobralCrypto.hasKeys(USER.id)) {
-    const keys = await SobralCrypto.generateKeyPair();
-    SobralCrypto.savePrivateKey(USER.id, keys.privateKey);
-    await supa.from('profiles').update({ public_key: keys.publicKey }).eq('id', USER.id);
-  }
-
-  // Garante par de chaves E2EE
-  if (typeof SobralCrypto !== 'undefined' && !SobralCrypto.hasKeys(USER.id)) {
-    const keys = await SobralCrypto.generateKeyPair();
-    SobralCrypto.savePrivateKey(USER.id, keys.privateKey);
-    await supa.from('profiles').update({ public_key: keys.publicKey }).eq('id', USER.id);
+    try {
+      const keys = await SobralCrypto.generateKeyPair();
+      SobralCrypto.savePrivateKey(USER.id, keys.privateKey);
+      await supa.from('profiles').update({ public_key: keys.publicKey }).eq('id', USER.id);
+    } catch (e) {
+      console.warn('E2EE não disponível:', e.message);
+      // Opcional: toast('Criptografia indisponível em conexões inseguras.', 'warn');
+    }
   }
 
   // 1. Tenta usar a última localização salva no banco se for recente (menos de LOC_TTL_MIN min)
@@ -273,10 +271,11 @@ function renderUserList(users) {
   if (!users.length) {
     listEl.innerHTML = `
       <div class="list-empty">
-        <div class="list-empty-icon">🌍</div>
+        <div class="list-empty-icon"><i data-lucide="globe"></i></div>
         <strong>Nenhum membro próximo</strong><br>
         Não há membros com localização ativa em um raio de ${MAX_DIST_KM} km.
       </div>`;
+    window.lucide?.createIcons();
     return;
   }
 
