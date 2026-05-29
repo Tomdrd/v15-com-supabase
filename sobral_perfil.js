@@ -10,6 +10,9 @@ let currentTab='mymap';
 let currentFavFilter='all';
 let isMyProfile = false;
 let profileMap=null;
+let ALBUM_POINTS=[];
+let ALBUM_PHOTOS=[];
+let selectedAlbumSpot=null;
 
 function toggleDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id)?.classList.toggle('open'));}
 function closeDrw(){['hbg','drw','dov'].forEach(id=>document.getElementById(id)?.classList.remove('open'));}
@@ -183,6 +186,21 @@ async function init(){
       if(subs) subs.forEach(s=>{SPOTS_MAP[s.id]={id:s.id,name:s.name,cat:s.cat,color:s.color,photo:s.photo};});
     }
   }
+
+  try {
+    const { data: points } = await supa.from('spots').select('id,name,cat,color,photo,lat,lng').order('id',{ascending:true}).limit(4);
+    ALBUM_POINTS = points || [];
+  } catch (err) {
+    ALBUM_POINTS = [];
+  }
+
+  try {
+    const { data: album } = await supa.from('album_photos').select('*').eq('user_id', targetUserId);
+    ALBUM_PHOTOS = album || [];
+  } catch (err) {
+    ALBUM_PHOTOS = [];
+  }
+
   renderPage();
 }
 
@@ -243,11 +261,13 @@ function renderPage(){
         <button class="ptab" data-tab="mymap"       onclick="showTab('mymap')"><i data-lucide="map"      style="width:14px;height:14px;pointer-events:none"></i> Meu Mapa</button>
         <button class="ptab" data-tab="favorites"   onclick="showTab('favorites')"><i data-lucide="heart"    style="width:14px;height:14px;pointer-events:none"></i> Reações</button>
         <button class="ptab" data-tab="submissions" onclick="showTab('submissions')"><i data-lucide="map-pin" style="width:14px;height:14px;pointer-events:none"></i> Envios</button>
+        <button class="ptab" data-tab="photos" onclick="showTab('photos')"><i data-lucide="camera" style="width:14px;height:14px;pointer-events:none"></i> Fotos</button>
         ${isMyProfile ? `<button class="ptab" data-tab="settings"    onclick="showTab('settings')"><i data-lucide="settings" style="width:14px;height:14px;pointer-events:none"></i> Configurações</button>` : ''}
       </div>
     </div>
 
-    <div class="profile-content" id="tabContent"></div>`;
+    <div class="profile-content" id="tabContent"></div>
+    <input type="file" id="albumPhotoInput" accept="image/*" style="display:none" onchange="handleAlbumPhoto(this.files[0])">`;
 
   setActiveTab(currentTab);
   renderTab(currentTab);
@@ -277,6 +297,7 @@ function renderTab(tab){
   if(tab==='mymap'){ renderMyMap(); return; }
   let html='';
   if(tab==='favorites')   html=renderFavorites();
+  else if(tab==='photos') html=renderPhotos();
   else if(tab==='submissions') html=renderSubmissions();
   else if(tab==='settings')    html=renderSettings();
   c.classList.remove('tab-fade');
@@ -471,6 +492,223 @@ function renderSettings(){
     <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;color:#e89e7e;margin-bottom:12px"><i data-lucide="alert-triangle" style="width:14px;height:14px"></i> Zona de Perigo</h3>
     <button class="btn btn-danger" onclick="confirmDeleteAccount()"><i data-lucide="trash-2" style="width:14px;height:14px;pointer-events:none"></i> Excluir minha conta</button>
   </div>`;
+}
+
+function renderPhotos(){
+  if(!ALBUM_POINTS.length){
+    return `<div class="empty"><div class="empty-icon"><i data-lucide="camera" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div><h3>Fotos indisponíveis</h3><p>Não há pontos turísticos cadastrados para este recurso.</p></div>`;
+  }
+
+  const photoMap = ALBUM_PHOTOS.reduce((map,item)=>{ map[item.spot_id] = item; return map; }, {});
+  const completed = ALBUM_POINTS.filter(p => photoMap[p.id]?.status === 'verified').length;
+
+  const cards = ALBUM_POINTS.map((spot,index) => {
+    const photo = photoMap[spot.id];
+    const statusClass = photo ? (photo.status === 'verified' ? 'verified' : photo.status === 'pending' ? 'pending' : photo.status === 'rejected' ? 'rejected' : 'sent') : 'empty';
+    const statusLabel = photo ? (photo.status === 'verified' ? 'Foto aceita' : photo.status === 'pending' ? 'Aguardando análise' : photo.status === 'rejected' ? 'Foto inválida' : 'Foto enviada') : 'Nenhuma foto enviada';
+    const preview = photo?.photo_url ? `<img src="${photo.photo_url}" alt="${spot.name}">` : `<div class="photo-slot-empty"><div><i data-lucide="camera" style="width:28px;height:28px"></i></div><div>Envie uma foto do local</div></div>`;
+    const actionButton = isMyProfile ? `<button class="btn btn-secondary btn-sm" onclick="choosePhotoForSpot('${spot.id}')">${photo ? 'Reenviar foto' : 'Enviar foto'}</button>` : '';
+
+    return `<div class="photo-slot">
+      <div class="photo-slot-head"><div class="slot-index">${index + 1}</div><div class="slot-title">${spot.name}</div></div>
+      <div class="photo-slot-preview">${preview}</div>
+      <div class="photo-slot-status ${statusClass}">${statusLabel}</div>
+      <div class="photo-slot-actions">${actionButton}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="photos-intro"><p>Envie apenas fotos tiradas no próprio ponto turístico. A imagem precisa ter localização registrada para ser aceita. Fotos sem dados de localização não serão enviadas.</p><div class="photos-progress">${completed} de ${ALBUM_POINTS.length} fotos aceitas</div></div><div class="photos-grid">${cards}</div>`;
+}
+
+function choosePhotoForSpot(spotId){
+  selectedAlbumSpot = spotId;
+  const input = document.getElementById('albumPhotoInput');
+  if(!input){ toast('Erro interno: seletor de fotos não encontrado.','err'); return; }
+  input.value = '';
+  input.click();
+}
+
+function handleAlbumPhoto(file){
+  if(!file) return;
+  if(!selectedAlbumSpot){ toast('Selecione um slot antes de enviar.','err'); return; }
+  if(!file.type.startsWith('image/')){ toast('Escolha uma imagem válida.','err'); return; }
+  processAlbumPhoto(file, selectedAlbumSpot);
+}
+
+async function processAlbumPhoto(file, spotId){
+  const spot = ALBUM_POINTS.find(s => String(s.id) === String(spotId));
+  if(!spot){ toast('Ponto turístico não encontrado.','err'); return; }
+
+  toast('Validando localização da foto...');
+  let gps = null;
+  try { gps = await parseImageGPS(file); } catch (err) { gps = null; }
+  if(!gps){ toast('Foto sem localização registrada ou formato não suportado. Use uma imagem com localização.', 'err'); selectedAlbumSpot = null; return; }
+
+  const distance = getDistanceMeters(gps.lat, gps.lng, spot.lat, spot.lng);
+  if(distance > 50){ toast(`Foto fora do local (aprox. ${Math.round(distance)} m).`, 'err'); selectedAlbumSpot = null; return; }
+
+  let blob;
+  try { blob = await compressImageToWebP(file, 720, 0.72); } catch (err) { toast('Falha ao processar a imagem.','err'); selectedAlbumSpot = null; return; }
+
+  const path = `album-photos/${USER.id}/${spot.id}-${Date.now()}.webp`;
+  const { data: uploadData, error: uploadError } = await supa.storage.from('spots-photos').upload(path, blob, { contentType: blob.type, upsert:true });
+  if(uploadError){ toast('Erro ao enviar a foto: ' + uploadError.message, 'err'); selectedAlbumSpot = null; return; }
+
+  const { data: urlData, error: urlError } = supa.storage.from('spots-photos').getPublicUrl(path);
+  if(urlError){ toast('Erro ao obter URL da foto.','err'); selectedAlbumSpot = null; return; }
+
+  const row = {
+    user_id: USER.id,
+    spot_id: spot.id,
+    photo_url: urlData.publicUrl,
+    photo_lat: gps.lat,
+    photo_lng: gps.lng,
+    status: 'verified',
+    verified_at: new Date().toISOString(),
+    created_at: new Date().toISOString()
+  };
+
+  let { error: saveError } = await supa.from('album_photos').upsert(row, { onConflict:['user_id','spot_id'] });
+  if(saveError){
+    const { error: insertError } = await supa.from('album_photos').insert(row);
+    if(insertError){ toast('Erro ao salvar a foto: ' + insertError.message, 'err'); selectedAlbumSpot = null; return; }
+  }
+
+  toast('Foto enviada com sucesso!','ok');
+  selectedAlbumSpot = null;
+  try { const { data: album } = await supa.from('album_photos').select('*').eq('user_id', USER.id); ALBUM_PHOTOS = album || []; } catch (err) { ALBUM_PHOTOS = ALBUM_PHOTOS || []; }
+  if(currentTab === 'photos') renderTab('photos');
+}
+
+function getDistanceMeters(lat1, lng1, lat2, lng2){
+  const toRad = n => n * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return 6371000 * c;
+}
+
+function parseImageGPS(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const view = new DataView(reader.result);
+      if(view.getUint16(0) !== 0xFFD8) return resolve(null);
+      let offset = 2;
+      while(offset < view.byteLength){
+        if(view.getUint8(offset) !== 0xFF) break;
+        const marker = view.getUint8(offset + 1);
+        const length = view.getUint16(offset + 2);
+        if(marker === 0xE1){
+          const exifStart = offset + 4;
+          if(getString(view, exifStart, 4) !== 'Exif') return resolve(null);
+          const tiffOffset = exifStart + 6;
+          const little = view.getUint16(tiffOffset) === 0x4949;
+          const firstIFD = tiffOffset + getUint32(view, tiffOffset + 4, little);
+          const gpsTagOffset = findTagOffset(view, firstIFD, 0x8825, tiffOffset, little);
+          if(!gpsTagOffset) return resolve(null);
+          const gpsIFDPointer = tiffOffset + getUint32(view, gpsTagOffset + 8, little);
+          const gpsData = readGPSInfo(view, gpsIFDPointer, little, tiffOffset);
+          return resolve(gpsData);
+        }
+        offset += 2 + length;
+      }
+      resolve(null);
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function getString(view, start, length){
+  let out = '';
+  for(let i = 0; i < length; i++){
+    const char = view.getUint8(start + i);
+    if(char === 0) break;
+    out += String.fromCharCode(char);
+  }
+  return out;
+}
+
+function getUint32(view, offset, little){
+  return little ? view.getUint32(offset, true) : view.getUint32(offset, false);
+}
+
+function findTagOffset(view, dirOffset, tag, tiffOffset, little){
+  const entries = view.getUint16(dirOffset, little);
+  let pointer = dirOffset + 2;
+  for(let i = 0; i < entries; i++){
+    if(view.getUint16(pointer, little) === tag) return pointer;
+    pointer += 12;
+  }
+  return 0;
+}
+
+function readGPSInfo(view, offset, little, tiffOffset){
+  const entries = view.getUint16(offset, little);
+  let lat = null, lng = null, latRef = '', lngRef = '';
+  let pointer = offset + 2;
+  for(let i = 0; i < entries; i++){
+    const tag = view.getUint16(pointer, little);
+    const type = view.getUint16(pointer + 2, little);
+    const count = view.getUint32(pointer + 4, little);
+    const valueOffset = view.getUint32(pointer + 8, little);
+    if(tag === 1) latRef = getString(view, tiffOffset + valueOffset, count).trim();
+    if(tag === 3) lngRef = getString(view, tiffOffset + valueOffset, count).trim();
+    if(tag === 2) lat = readRationalArray(view, tiffOffset + valueOffset, count, little);
+    if(tag === 4) lng = readRationalArray(view, tiffOffset + valueOffset, count, little);
+    pointer += 12;
+  }
+  if(!lat || !lng || !latRef || !lngRef) return null;
+  const latitude = convertDMSToDecimal(lat, latRef);
+  const longitude = convertDMSToDecimal(lng, lngRef);
+  return { lat: latitude, lng: longitude };
+}
+
+function readRationalArray(view, offset, count, little){
+  const values = [];
+  for(let i = 0; i < count; i++){
+    const num = getUint32(view, offset + i * 8, little);
+    const den = getUint32(view, offset + i * 8 + 4, little);
+    values.push(den ? num / den : 0);
+  }
+  return values;
+}
+
+function convertDMSToDecimal(values, ref){
+  const decimal = values[0] + values[1] / 60 + values[2] / 3600;
+  return ref === 'S' || ref === 'W' ? -decimal : decimal;
+}
+
+function compressImageToWebP(file, maxWidth = 720, quality = 0.72){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = Math.min(1, maxWidth / img.width);
+        const width = Math.round(img.width * ratio);
+        const height = Math.round(img.height * ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(blob => {
+          if(blob && blob.type === 'image/webp') return resolve(blob);
+          canvas.toBlob(fallback => {
+            if(!fallback) return reject(new Error('Não foi possível gerar a imagem.'));
+            resolve(fallback);
+          }, 'image/jpeg', quality);
+        }, 'image/webp', quality);
+      };
+      img.onerror = () => reject(new Error('Erro ao processar a imagem.'));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error('Erro ao ler o arquivo.'));
+    reader.readAsDataURL(file);
+  });
 }
 
 async function saveProfile(){
