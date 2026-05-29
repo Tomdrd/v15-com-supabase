@@ -228,7 +228,13 @@ function renderPage(){
         <div style="padding-bottom:16px;flex-shrink:0">
           <button class="btn btn-secondary btn-sm" onclick="showTab('settings')" style="font-size:12px"><i data-lucide="settings" style="width:12px;height:12px;pointer-events:none"></i> Editar Perfil</button>
         </div>
-        ` : ''}
+        ` : `
+        <div style="padding-bottom:16px;flex-shrink:0">
+          <button class="btn btn-primary btn-sm" onclick="iniciarConversa('${user.id}', ${user.distance})" style="font-size:12px">
+            <i data-lucide="message-square" style="width:12px;height:12px;pointer-events:none"></i> Enviar Mensagem
+          </button>
+        </div>
+        `}
       </div>
     </div>
 
@@ -518,6 +524,15 @@ async function confirmDeleteAccount(){
 async function doLogout(){
   await supa.auth.signOut();
   location.href='/';
+}
+
+function iniciarConversa(usuarioId, distancia) {
+  const MAX_DIST_KM = 14;
+  if (distancia > MAX_DIST_KM) {
+    alert('Este membro está muito longe para conversar (máximo ' + MAX_DIST_KM + ' km).');
+    return;
+  }
+  window.location.href = `sobral_chat.html?user=${usuarioId}`;
 }
 
 window.onload=init;
