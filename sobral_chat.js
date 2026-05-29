@@ -352,6 +352,9 @@ async function openChat(userId) {
   // Preenche header
   document.getElementById('convAvatar').innerHTML = avatarHtml(profile, 40);
   document.getElementById('convName').textContent  = profile.full_name || 'Membro';
+  const profUrl = profile.username ? `/${profile.username}` : `sobral_perfil.html?id=${profile.id}`;
+  document.getElementById('convProfileLink').href = profUrl;
+  document.getElementById('convProfileLink').target = '_blank';
   document.getElementById('convDist').innerHTML    =
     `<i data-lucide="map-pin" style="width:11px;height:11px"></i> ${fmtDist(profile.distance)} de distância`;
 

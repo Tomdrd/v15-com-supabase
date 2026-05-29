@@ -131,11 +131,13 @@
           <button class="btn-back-mobile" id="btnBackMobile" onclick="backToList()">
             <i data-lucide="arrow-left"></i>
           </button>
-          <div class="conv-avatar" id="convAvatar"></div>
-          <div class="conv-info">
-            <div class="conv-name" id="convName"></div>
-            <div class="conv-dist" id="convDist"></div>
-          </div>
+          <a id="convProfileLink" href="#" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;cursor:pointer;flex:1;min-width:0">
+            <div class="conv-avatar" id="convAvatar"></div>
+            <div class="conv-info">
+              <div class="conv-name" id="convName"></div>
+              <div class="conv-dist" id="convDist"></div>
+            </div>
+          </a>
           <div class="conv-options">
             <button class="btn-conv-opt" onclick="toggleConvOptions()" aria-label="Opções da conversa">
               <i data-lucide="more-vertical"></i>
