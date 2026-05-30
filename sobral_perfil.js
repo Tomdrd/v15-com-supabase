@@ -510,11 +510,9 @@ function renderPhotos(){
   const cards = ALBUM_POINTS.map((spot,index) => {
     const photo = photoMap[spot.id];
     const hasPhoto = !!photo?.photo_url;
-    const statusClass = photo ? (photo.status === 'verified' ? 'verified' : photo.status === 'pending' ? 'pending' : photo.status === 'rejected' ? 'rejected' : 'sent') : 'empty';
-    const statusLabel = photo ? (photo.status === 'verified' ? 'Foto aceita' : photo.status === 'pending' ? 'Aguardando análise' : photo.status === 'rejected' ? 'Foto inválida' : 'Foto enviada') : '';
-    const preview = hasPhoto ? `<img src="${photo.photo_url}" alt="${spot.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=\"photo-slot-empty\"><div><i data-lucide=\"alert-circle\" style=\"width:28px;height:28px\"></i></div><div>Erro ao carregar a foto</div></div>'">` : `<div class="photo-slot-empty"><div><i data-lucide="camera" style="width:28px;height:28px"></i></div><div>Envie uma foto do local</div></div>`;
-    const clickable = isMyProfile ? ' photo-slot-clickable' : '';
-    const clickAction = isMyProfile ? ` onclick="choosePhotoForSpot('${spot.id}')"` : '';
+    const preview = hasPhoto ? `<img src="${photo.photo_url}" alt="${spot.name}" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=\'photo-slot-empty\'><div><i data-lucide=\'alert-circle\' style=\'width:28px;height:28px\'></i></div><div>Erro ao carregar a foto</div></div>'">` : `<div class="photo-slot-empty"><div><i data-lucide="camera" style="width:28px;height:28px"></i></div><div>Envie uma foto do local</div></div>`;
+    const clickable = ' photo-slot-clickable';
+    const clickAction = isMyProfile ? ` onclick="choosePhotoForSpot('${spot.id}')"` : ` onclick="location.href='index.html?id=${spot.id}'"`;
     const icon = CAT_ICONS[spot.cat] || 'map-pin';
     const likeCount = photo?.id ? (ALBUM_PHOTO_LIKE_COUNTS[photo.id] || 0) : 0;
     const hasLiked = photo?.id ? ALBUM_PHOTO_MY_LIKES.has(photo.id) : false;
@@ -524,7 +522,6 @@ function renderPhotos(){
       <div class="photo-slot-head"><div class="slot-index"><i data-lucide="${icon}" style="width:16px;height:16px"></i></div><div class="slot-title">${spot.name}</div></div>
       <div class="photo-slot-preview">${preview}</div>
       ${likeButton ? `<div class="photo-slot-actions">${likeButton}</div>` : ''}
-      ${hasPhoto ? `<div class="photo-slot-status ${statusClass}">${statusLabel}</div>` : ''}
     </div>`;
   }).join('');
 
@@ -618,7 +615,13 @@ async function processAlbumPhoto(file, spotId){
   }
 
   const distance = getDistanceMeters(gps.lat, gps.lng, spot.lat, spot.lng);
-  if(distance > 50){ toast(`Foto fora do local (aprox. ${Math.round(distance)} m).`, 'err'); selectedAlbumSpot = null; return; }
+  console.log(`Validação GPS: Foto(${gps.lat}, ${gps.lng}) vs Local(${spot.lat}, ${spot.lng}) - Distância: ${distance.toFixed(2)}m`);
+  
+  if(distance > 2000){ 
+    toast(`Foto fora do local (distância: ${Math.round(distance)}m). O limite é 2km.`, 'err'); 
+    selectedAlbumSpot = null; 
+    return; 
+  }
 
   let blob;
   try { blob = await compressImageToWebP(file, 720, 0.72); } catch (err) { toast('Falha ao processar a imagem.','err'); selectedAlbumSpot = null; return; }

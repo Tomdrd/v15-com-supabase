@@ -118,8 +118,32 @@ Engajamento dos usuários logados com os pontos turísticos.
 - `reaction` (text): Tipo de reação (`like`, `been` para "Eu fui", `going` para "Eu vou").
 
 ### Tabela: `profiles`
-Informações e controle de papéis dos usuários.
+Informações e controle de papéis dos usuários, além de dados geolocalizados para o Chat.
 - `id` (uuid): FK para o sistema de autenticação nativo.
 - `role` (text): Permissões (ex: `admin` que libera o link do painel administrativo no menu lateral).
+- `lat` / `lng` (float): Última localização enviada pelo usuário.
+- `location_active` (boolean): Se o usuário está visível no mapa de proximidade.
+- `public_key` (text): Chave pública para o sistema de criptografia E2EE do chat.
 
-> **Aviso de Segurança**: As políticas do banco de dados (Row Level Security - RLS) do Supabase devem estar rigorosamente configuradas para evitar inserções de dados diretamente pelo client, restringindo acessos e exclusões apenas a usuários autenticados com as devidas *roles*.
+### Tabelas do Chat por Proximidade
+O sistema de chat 1-a-1 utiliza criptografia de ponta-a-ponta (E2EE) e é sustentado por tabelas com políticas rígidas de segurança (RLS).
+- **`chat_conversations`**: Guarda a relação entre dois usuários (`user1_id`, `user2_id`) e a data da última interação.
+- **`chat_messages`**: Armazena as mensagens (`text`) criptografadas entre os pares, além de metadados (`created_at`, `read_at`).
+- **`chat_blocks`**: Registra bloqueios entre membros (`blocker_id`, `blocked_id`). Usuários bloqueados não aparecem na lista de proximidade.
+- **`chat_reports`**: Tabela de moderação que recebe denúncias de usuários com motivos e detalhes.
+
+### Tabelas da Galeria de Fotos
+O perfil dos membros conta com um feed de imagens georreferenciadas.
+- **`photos`**: Fotos enviadas pelos usuários (`user_id`, `url`, `caption`, `lat`, `lng`).
+- **`photo_likes`**: Interações (curtidas) nas fotos da galeria (`user_id`, `photo_id`).
+
+---
+
+## 🔒 Segurança, Privacidade e Moderação
+
+- **Criptografia Ponta-a-Ponta (E2EE)**: As mensagens enviadas no Chat por Proximidade são criptografadas no lado do cliente (`crypto.js`) utilizando chaves assimétricas. O texto salvo no Supabase é ilegível para administradores e invasores.
+- **Auto-Delete (Mensagens Efêmeras)**: Uma rotina agendada (`pg_cron`) roda a cada hora e elimina do banco de dados qualquer mensagem enviada há mais de 24 horas.
+- **Moderação Integrada**: Usuários possuem ferramentas nativas para Bloquear (encerrando conexões imediatamente) e Denunciar perfis suspeitos (Spam, Assédio, etc.), isolando atores mal-intencionados.
+- **Rate Limiting**: O disparo em massa (Spam) é inibido através de limitadores no frontend e no banco de dados (máximo de 20 mensagens por minuto).
+
+> **Aviso de Segurança**: As políticas do banco de dados (Row Level Security - RLS) do Supabase estão rigorosamente configuradas. Apenas os participantes de uma conversa têm o direito de leitura (`SELECT`) das mensagens criptografadas. Exclusões e denúncias também são vinculadas estritamente ao ID de autenticação da sessão.
