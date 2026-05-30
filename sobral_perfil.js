@@ -516,7 +516,14 @@ function renderPhotos(){
     const icon = CAT_ICONS[spot.cat] || 'map-pin';
     const likeCount = photo?.id ? (ALBUM_PHOTO_LIKE_COUNTS[photo.id] || 0) : 0;
     const hasLiked = photo?.id ? ALBUM_PHOTO_MY_LIKES.has(photo.id) : false;
-    const likeButton = hasPhoto && photo?.id ? `<button class="photo-like-btn${hasLiked ? ' active' : ''}" onclick="event.stopPropagation();toggleAlbumPhotoLike('${photo.id}')"><i data-lucide="heart" style="width:16px;height:16px"></i>${isMyProfile && likeCount ? `<span>${likeCount}</span>` : ''}</button>` : '';
+    let likeButton = '';
+    if(hasPhoto && photo?.id){
+      if(isMyProfile && likeCount > 0){
+        likeButton = `<div style="display:inline-flex;gap:4px"><button class="photo-like-btn${hasLiked ? ' active' : ''}" onclick="event.stopPropagation();toggleAlbumPhotoLike('${photo.id}')"><i data-lucide="heart" style="width:16px;height:16px"></i></button><button class="photo-like-btn" onclick="event.stopPropagation();showPhotoLikes('${photo.id}')"><span>${likeCount} curtidas</span></button></div>`;
+      } else {
+        likeButton = `<button class="photo-like-btn${hasLiked ? ' active' : ''}" onclick="event.stopPropagation();toggleAlbumPhotoLike('${photo.id}')"><i data-lucide="heart" style="width:16px;height:16px"></i></button>`;
+      }
+    }
 
     return `<div class="photo-slot${clickable}"${clickAction}>
       <div class="photo-slot-head"><div class="slot-index"><i data-lucide="${icon}" style="width:16px;height:16px"></i></div><div class="slot-title">${spot.name}</div></div>
@@ -583,6 +590,104 @@ async function toggleAlbumPhotoLike(photoId){
     toast('Foto curtida','ok');
   }
   if(currentTab === 'photos') renderTab('photos');
+}
+
+async function showPhotoLikes(photoId) {
+  if(!USER || !isMyProfile) return;
+  toast('Carregando curtidas...', 'info');
+  
+  const { data: likesData, error: likesError } = await supa
+    .from('album_photo_likes')
+    .select('user_id')
+    .eq('photo_id', photoId)
+    .order('created_at', { ascending: false });
+
+  if(likesError) { toast('Erro ao carregar curtidas: ' + likesError.message, 'err'); return; }
+  
+  const userIds = (likesData || []).map(l => l.user_id);
+  let profilesData = [];
+  
+  if (userIds.length > 0) {
+    const { data: pData, error: pError } = await supa
+      .from('profiles')
+      .select('id, full_name, username, avatar_url')
+      .in('id', userIds);
+      
+    if(!pError) { profilesData = pData || []; }
+  }
+  
+  const mergedData = (likesData || []).map(like => {
+    return {
+      user_id: like.user_id,
+      profiles: profilesData.find(p => p.id === like.user_id) || null
+    };
+  });
+  
+  const t = document.getElementById('toast');
+  if(t) {
+    t.className = 'toast';
+    t.style.bottom = ''; // Limpa caso tenha ficado
+  }
+
+  renderLikesModal(mergedData);
+}
+
+function renderLikesModal(likes) {
+  closePhotoLikesModal();
+  const overlay = document.createElement('div');
+  overlay.id = 'photoLikesModal';
+  overlay.className = 'photo-likes-modal-overlay';
+  overlay.onclick = (e) => { if(e.target === overlay) closePhotoLikesModal(); };
+  
+  const content = document.createElement('div');
+  content.className = 'photo-likes-modal-content';
+  
+  const header = document.createElement('div');
+  header.className = 'photo-likes-header';
+  header.innerHTML = `<h3 style="display:flex;align-items:center;font-size:16px;margin:0;font-family:'Plus Jakarta Sans',sans-serif"><i data-lucide="heart" style="width:16px;height:16px;margin-right:6px"></i> Quem curtiu</h3><button style="background:none;border:none;color:var(--muted);cursor:pointer;padding:4px" onclick="closePhotoLikesModal()"><i data-lucide="x" style="width:20px;height:20px"></i></button>`;
+  
+  const list = document.createElement('div');
+  list.className = 'photo-likes-list';
+  
+  if(likes.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Ninguém curtiu ainda.</div>`;
+  } else {
+    likes.forEach(like => {
+      const p = like.profiles || {};
+      const name = p.full_name || 'Usuário';
+      
+      let avatarHtml = '';
+      if(p.avatar_url){
+        avatarHtml = `<div class="avatar" style="width:40px;height:40px;border-width:2px;flex-shrink:0"><img src="${p.avatar_url}" alt="${name}"></div>`;
+      } else {
+        avatarHtml = `<div class="avatar-placeholder" style="width:40px;height:40px;border-width:2px;font-size:16px;flex-shrink:0">${name.charAt(0).toUpperCase()}</div>`;
+      }
+
+      const link = p.username ? window.location.origin + '/' + p.username : window.location.origin + '/sobral_perfil.html?id=' + (p.id || like.user_id);
+      
+      list.innerHTML += `
+        <a href="${link}" class="photo-likes-user-item">
+          ${avatarHtml}
+          <div class="user-info">
+            <div class="user-name">${name}</div>
+            ${p.username ? `<div class="user-handle">@${p.username}</div>` : ''}
+          </div>
+        </a>
+      `;
+    });
+  }
+  
+  content.appendChild(header);
+  content.appendChild(list);
+  overlay.appendChild(content);
+  document.body.appendChild(overlay);
+  
+  window.lucide?.createIcons();
+}
+
+function closePhotoLikesModal() {
+  const el = document.getElementById('photoLikesModal');
+  if(el) el.remove();
 }
 
 function choosePhotoForSpot(spotId){
