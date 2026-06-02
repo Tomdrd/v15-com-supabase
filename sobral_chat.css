@@ -43,6 +43,7 @@ body {
 /* ── Estado screens ──────────────────────────────────────────── */
 #chatApp {
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   padding-top: var(--chat-H);
   display: flex;
@@ -59,6 +60,7 @@ body {
   text-align: center;
   padding: 40px 24px;
   min-height: calc(100vh - var(--chat-H));
+  min-height: calc(100dvh - var(--chat-H));
   animation: fadeUp .4s ease both;
 }
 
@@ -630,15 +632,7 @@ body {
   border-bottom-left-radius: 4px;
 }
 
-.msg-time {
-  font-size: 10px;
-  opacity: 0.55;
-  margin-top: 3px;
-  display: block;
-  text-align: right;
-}
 
-.msg-row.other .msg-time { text-align: left; }
 
 /* Grupos de mensagem consecutiva */
 .msg-row.mine.grouped .msg-bubble  { border-top-right-radius: 4px; }
@@ -725,6 +719,16 @@ body {
 @media (max-width: 640px) {
   :root { --sidebar-w: 100vw; }
 
+  /* Fixa o app inteiro na viewport visível (sem barra de navegação do browser) */
+  #chatApp {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: auto;
+  }
+
   .chat-layout { position: relative; }
 
   .chat-sidebar {
@@ -743,9 +747,28 @@ body {
     z-index: 10;
     transform: translateX(100%);
     transition: transform .3s cubic-bezier(.4,0,.2,1);
+    display: flex;
+    flex-direction: column;
   }
 
   .chat-area.active-mobile { transform: translateX(0); }
+
+  /* Garante que a área de mensagens expande e o input fica sempre visível */
+  .chat-conversation {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .messages-area {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .message-input-wrap {
+    flex-shrink: 0;
+  }
 
   .btn-back-mobile { display: flex; }
 

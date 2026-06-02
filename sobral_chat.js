@@ -317,7 +317,7 @@ function getFriendActionHtml(user) {
     return `<button class="btn btn-primary btn-sm" style="font-size:11px;white-space:nowrap;flex-shrink:0" onclick="event.stopPropagation();handleFriendAction('${user.id}')"><i data-lucide="user-plus" style="width:12px;height:12px;pointer-events:none"></i> Adicionar</button>`;
   }
   if (rel.status === 'accepted') {
-    return `<button class="btn btn-danger btn-sm" style="font-size:11px;white-space:nowrap;flex-shrink:0" onclick="event.stopPropagation();removeFriendFromChat('${user.id}')"><i data-lucide="user-x" style="width:12px;height:12px;pointer-events:none"></i> Remover</button>`;
+    return '';
   }
   if (rel.status === 'pending') {
     if (rel.sender_id === USER.id) {
@@ -467,7 +467,7 @@ function renderConversationFriendButton(profile) {
     html = `<button id="convFriendBtn" class="btn btn-danger btn-sm" style="font-size:12px;white-space:nowrap" onclick="removeFriendFromChat('${profile.id}')"><i data-lucide="user-x" style="width:12px;height:12px;pointer-events:none"></i> Remover amigo</button>`;
   } else if (rel.status === 'pending') {
     if (rel.sender_id === USER.id) {
-      html = `<button id="convFriendBtn" class="btn btn-secondary btn-sm" style="font-size:12px;white-space:nowrap" onclick="cancelFriendRequestFromChat('${rel.id}','${profile.id}')"><i data-lucide="x-circle" style="width:12px;height:12px;pointer-events:none"></i> Cancelar pedido</button>`;
+      html = '';
     } else {
       html = `<button id="convFriendBtn" class="btn btn-primary btn-sm" style="font-size:12px;white-space:nowrap" onclick="handleFriendAction('${profile.id}','${rel.id}')"><i data-lucide="check-circle" style="width:12px;height:12px;pointer-events:none"></i> Aceitar amizade</button>`;
     }
@@ -539,7 +539,7 @@ function getFriendStatusLabel(userId) {
   const rel = FRIEND_RELATIONS[userId];
   if (!rel) return '';
   if (rel.status === 'accepted') {
-    return `<span class="friend-status friend">Amigo</span>`;
+    return '';
   }
   if (rel.status === 'pending') {
     if (rel.sender_id === USER.id && (FRIEND_FILTER === 'all' || FRIEND_FILTER === 'pending')) {
@@ -782,7 +782,7 @@ function renderMessages() {
       <div class="msg-row ${isMine ? 'mine' : 'other'}${grouped ? ' grouped' : ''}" data-msg="${msg.id}">
         ${miniAvatar}
         <div>
-          <div class="msg-bubble">${escapeHtml(msg.text)}<span class="msg-time">${fmtTime(msg.created_at)}</span></div>
+          <div class="msg-bubble">${escapeHtml(msg.text)}</div>
         </div>
       </div>`;
   });
