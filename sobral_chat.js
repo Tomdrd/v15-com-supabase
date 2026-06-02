@@ -464,7 +464,7 @@ function renderConversationFriendButton(profile) {
   if (!rel) {
     html = `<button id="convFriendBtn" class="btn btn-primary btn-sm" style="font-size:12px;white-space:nowrap" onclick="handleFriendAction('${profile.id}')"><i data-lucide="user-plus" style="width:12px;height:12px;pointer-events:none"></i> Adicionar</button>`;
   } else if (rel.status === 'accepted') {
-    html = `<button id="convFriendBtn" class="btn btn-danger btn-sm" style="font-size:12px;white-space:nowrap" onclick="removeFriendFromChat('${profile.id}')"><i data-lucide="user-x" style="width:12px;height:12px;pointer-events:none"></i> Remover amigo</button>`;
+    html = '';
   } else if (rel.status === 'pending') {
     if (rel.sender_id === USER.id) {
       html = '';
