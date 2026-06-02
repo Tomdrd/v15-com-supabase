@@ -1,7 +1,5 @@
-const SU='https://nrohpfggqcbscyoigpiz.supabase.co';
-const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA';
-const supa=supabase.createClient(SU,SK);
-const CL={todos:'Todos',religioso:'Religioso',cultura:'Cultura',historico:'Histórico',natureza:'Natureza',lazer:'Lazer'};
+const CL = { todos:'Todos', religioso:'Religioso', cultura:'Cultura', historico:'Histórico', natureza:'Natureza', lazer:'Lazer' };
+
 const CC={religioso:'#6440B4',cultura:'#1B6B6B',historico:'#B54A2A',natureza:'#3C7828',lazer:'#C8871A'};
 const CAT_ICON = {
   religioso: 'church',

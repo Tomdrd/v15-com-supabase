@@ -163,7 +163,7 @@
 
   // ── Lógica Principal ──────────────────────────────────────────
   async function initNotifications() {
-    supa = window.supa || window.supabase.createClient(SU, SK);
+    supa = window.supa;
     const { data: { session } } = await supa.auth.getSession();
     USER = session?.user || null;
 

@@ -1,5 +1,5 @@
-const supa=supabase.createClient('https://nrohpfggqcbscyoigpiz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA');
-(async()=>{
+function toggleDrw(){
+
   const{data}=await supa.from('pages').select('content,updated_at').eq('id','termos').single();
   const el=document.getElementById('termsContent');
   if(data?.content){

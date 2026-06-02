@@ -1,6 +1,3 @@
-const SU='https://nrohpfggqcbscyoigpiz.supabase.co';
-const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA';
-const supa=supabase.createClient(SU,SK);
 const CAT_LABELS={todos:'Todos',religioso:'Religioso',cultura:'Cultura',historico:'Histórico',natureza:'Natureza',lazer:'Lazer'};
 const CAT_ICONS={religioso:'church',cultura:'landmark',historico:'castle',natureza:'trees',lazer:'ferris-wheel',eventos:'calendar-days',event:'calendar-days'};
 const REACTION_LABELS={like:'Gostei',been:'Eu Fui',going:'Eu Vou'};
@@ -527,6 +524,10 @@ function renderPhotos(){
     const likeCount = photo?.id ? (ALBUM_PHOTO_LIKE_COUNTS[photo.id] || 0) : 0;
     const hasLiked = photo?.id ? ALBUM_PHOTO_MY_LIKES.has(photo.id) : false;
     let likeButton = '';
+    let deleteButton = '';
+    if(hasPhoto && photo?.id && isMyProfile){
+      deleteButton = `<button class="photo-like-btn photo-delete-btn" title="Excluir foto" onclick="event.stopPropagation();deleteAlbumPhoto('${photo.id}','${spot.id}','${photo.photo_path||''}')"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>`;
+    }
     if(hasPhoto && photo?.id){
       if(isMyProfile && likeCount > 0){
         likeButton = `<div style="display:inline-flex;gap:4px"><button class="photo-like-btn${hasLiked ? ' active' : ''}" onclick="event.stopPropagation();toggleAlbumPhotoLike('${photo.id}')"><i data-lucide="heart" style="width:16px;height:16px"></i></button><button class="photo-like-btn" onclick="event.stopPropagation();showPhotoLikes('${photo.id}')"><span>${likeCount} curtidas</span></button></div>`;
@@ -535,10 +536,12 @@ function renderPhotos(){
       }
     }
 
+    const actionsHtml = (likeButton || deleteButton) ? `<div class="photo-slot-actions">${likeButton}${deleteButton}</div>` : '';
+
     return `<div class="photo-slot${clickable}"${clickAction}>
       <div class="photo-slot-head"><div class="slot-index"><i data-lucide="${icon}" style="width:16px;height:16px"></i></div><div class="slot-title">${spot.name}</div></div>
       <div class="photo-slot-preview">${preview}</div>
-      ${likeButton ? `<div class="photo-slot-actions">${likeButton}</div>` : ''}
+      ${actionsHtml}
     </div>`;
   }).join('');
 
@@ -729,6 +732,27 @@ function renderLikesModal(likes) {
 function closePhotoLikesModal() {
   const el = document.getElementById('photoLikesModal');
   if(el) el.remove();
+}
+
+async function deleteAlbumPhoto(photoId, spotId, photoPath){
+  if(!USER || !isMyProfile) return;
+  if(!confirm('Excluir esta foto? Esta ação não pode ser desfeita.')) return;
+
+  const { error: dbError } = await supa
+    .from('album_photos')
+    .delete()
+    .eq('id', photoId)
+    .eq('user_id', USER.id);
+
+  if(dbError){ toast('Erro ao excluir foto: ' + dbError.message, 'err'); return; }
+
+  if(photoPath){
+    await supa.storage.from('spots-photos').remove([photoPath]);
+  }
+
+  ALBUM_PHOTOS = ALBUM_PHOTOS.filter(p => p.id !== photoId);
+  toast('Foto excluída com sucesso!', 'ok');
+  if(currentTab === 'photos') renderTab('photos');
 }
 
 function choosePhotoForSpot(spotId){

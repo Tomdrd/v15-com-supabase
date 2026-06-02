@@ -5,11 +5,6 @@
 
 'use strict';
 
-// ── Supabase ────────────────────────────────────────────────────
-const SU = 'https://nrohpfggqcbscyoigpiz.supabase.co';
-const SK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA';
-const supa = window.supa = supabase.createClient(SU, SK);
-
 // ── Constantes ──────────────────────────────────────────────────
 const MAX_DIST_KM   = 14;      // distância máxima para conversar
 const GEO_MAX_AGE   = 30 * 60; // posição válida por 30 min (segundos)

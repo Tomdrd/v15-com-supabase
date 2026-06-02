@@ -1,10 +1,7 @@
 // ══════════════════════════════════════════
 //  SUPABASE
 // ══════════════════════════════════════════
-const SUPA_URL = 'https://nrohpfggqcbscyoigpiz.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yb2hwZmdncWNic2N5b2lncGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzAxMTcsImV4cCI6MjA5MTUwNjExN30.OMNV3gRIEOMY15Ay_7K6M0z938TIinMpgErOTXHSFrA';
 const BUCKET  = 'spots-photos';
-const supa    = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 // ══════════════════════════════════════════
 //  CONSTANTES — sem emojis
