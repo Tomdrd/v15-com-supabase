@@ -24,6 +24,8 @@ let MESSAGES     = [];     // mensagens carregadas
 let REALTIME_CH  = null;   // canal Supabase Realtime
 let searchTerm   = '';
 let ALBUM_COUNTS = {}; // { userId: photoCount }
+let FRIEND_RELATIONS = {}; // { userId: friendRequest }
+let FRIEND_FILTER = 'all'; // all, friends, pending, not_friends
 
 // ── Rate Limiting (client-side) ──────────────────────────────────
 const RATE_LIMIT      = 20;   // máx. mensagens
@@ -282,7 +284,195 @@ async function loadNearbyUsers() {
   window.lucide?.createIcons();
 
   FILTERED_USERS = NEARBY_USERS;
+  await loadFriendRelations();
+  applyChatFilters();
+}
+
+async function loadFriendRelations() {
+  FRIEND_RELATIONS = {};
+  const { data, error } = await supa.from('friend_requests')
+    .select('id,sender_id,receiver_id,status')
+    .or(`sender_id.eq.${USER.id},receiver_id.eq.${USER.id}`);
+
+  if (error) {
+    console.error('loadFriendRelations', error.message);
+    return;
+  }
+
+  (data || []).forEach(req => {
+    const otherId = req.sender_id === USER.id ? req.receiver_id : req.sender_id;
+    const existing = FRIEND_RELATIONS[otherId];
+    if (!existing || existing.status !== 'accepted') {
+      FRIEND_RELATIONS[otherId] = req;
+    }
+  });
+}
+
+function getFriendActionHtml(user) {
+  const rel = FRIEND_RELATIONS[user.id];
+  if (!rel) {
+    if (FRIEND_FILTER === 'all') {
+      return '';
+    }
+    return `<button class="btn btn-primary btn-sm" style="font-size:11px;white-space:nowrap;flex-shrink:0" onclick="event.stopPropagation();handleFriendAction('${user.id}')"><i data-lucide="user-plus" style="width:12px;height:12px;pointer-events:none"></i> Adicionar</button>`;
+  }
+  if (rel.status === 'accepted') {
+    return `<button class="btn btn-danger btn-sm" style="font-size:11px;white-space:nowrap;flex-shrink:0" onclick="event.stopPropagation();removeFriendFromChat('${user.id}')"><i data-lucide="user-x" style="width:12px;height:12px;pointer-events:none"></i> Remover</button>`;
+  }
+  if (rel.status === 'pending') {
+    if (rel.sender_id === USER.id) {
+      if (FRIEND_FILTER === 'all' || FRIEND_FILTER === 'pending') {
+        return '';
+      }
+      return `<button class="btn btn-secondary btn-sm" style="font-size:11px;white-space:nowrap;flex-shrink:0" onclick="event.stopPropagation();cancelFriendRequestFromChat('${rel.id}','${user.id}')"><i data-lucide="x-circle" style="width:12px;height:12px;pointer-events:none"></i> Cancelar</button>`;
+    }
+    return `<button class="btn btn-primary btn-sm" style="font-size:11px;white-space:nowrap;flex-shrink:0" onclick="event.stopPropagation();handleFriendAction('${user.id}','${rel.id}')"><i data-lucide="check-circle" style="width:12px;height:12px;pointer-events:none"></i> Aceitar</button>`;
+  }
+  return `<button class="btn btn-primary btn-sm" style="font-size:11px;white-space:nowrap;flex-shrink:0" onclick="event.stopPropagation();handleFriendAction('${user.id}')"><i data-lucide="user-plus" style="width:12px;height:12px;pointer-events:none"></i> Adicionar</button>`;
+}
+
+async function handleFriendAction(userId, requestId) {
+  if (!USER) return;
+  const rel = FRIEND_RELATIONS[userId];
+  if (rel && rel.status === 'pending' && rel.receiver_id === USER.id) {
+    await acceptFriendRequestFromChat(requestId || rel.id);
+    return;
+  }
+  if (rel && rel.status === 'accepted') {
+    toast('Vocês já são amigos.', 'info');
+    return;
+  }
+  await sendFriendRequestToUser(userId);
+}
+
+async function sendFriendRequestToUser(userId) {
+  if (!userId || userId === USER.id) return;
+
+  const { data: existing, error: existingError } = await supa.from('friend_requests')
+    .select('*')
+    .or(`and(sender_id.eq.${USER.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${USER.id})`)
+    .maybeSingle();
+
+  if (existingError) {
+    toast('Erro ao verificar amizade existente: ' + existingError.message, 'err');
+    return;
+  }
+
+  if (existing) {
+    if (existing.status === 'accepted') {
+      FRIEND_RELATIONS[userId] = existing;
+      toast('Vocês já são amigos.', 'info');
+      renderUserList(FILTERED_USERS);
+      return;
+    }
+    if (existing.status === 'pending' && existing.receiver_id === USER.id) {
+      await acceptFriendRequestFromChat(existing.id);
+      return;
+    }
+    if (existing.status === 'pending') {
+      FRIEND_RELATIONS[userId] = existing;
+      toast('Pedido já enviado.', 'info');
+      renderUserList(FILTERED_USERS);
+      return;
+    }
+  }
+
+  const { data, error } = await supa.from('friend_requests')
+    .insert({ sender_id: USER.id, receiver_id: userId, status: 'pending' })
+    .select()
+    .maybeSingle();
+
+  if (error) {
+    toast('Não foi possível enviar o pedido: ' + error.message, 'err');
+    return;
+  }
+
+  FRIEND_RELATIONS[userId] = data;
+  toast('Pedido de amizade enviado!', 'ok');
   renderUserList(FILTERED_USERS);
+}
+
+async function acceptFriendRequestFromChat(requestId) {
+  if (!requestId) return;
+  const { data, error } = await supa.from('friend_requests')
+    .update({ status: 'accepted', updated_at: new Date().toISOString() })
+    .eq('id', requestId)
+    .select()
+    .maybeSingle();
+
+  if (error) {
+    toast('Erro ao aceitar amizade: ' + error.message, 'err');
+    return;
+  }
+
+  const otherId = data.sender_id === USER.id ? data.receiver_id : data.sender_id;
+  FRIEND_RELATIONS[otherId] = data;
+  toast('Amizade aceita!', 'ok');
+  renderUserList(FILTERED_USERS);
+  const activeWrap = document.getElementById('convFriendWrap');
+  if (activeWrap && ACTIVE_USER?.id === otherId) {
+    renderConversationFriendButton(ACTIVE_USER);
+    window.lucide?.createIcons();
+  }
+}
+
+async function cancelFriendRequestFromChat(requestId, userId) {
+  if (!requestId) return;
+  const { error } = await supa.from('friend_requests').delete().eq('id', requestId);
+  if (error) {
+    toast('Erro ao cancelar pedido: ' + error.message, 'err');
+    return;
+  }
+  delete FRIEND_RELATIONS[userId];
+  toast('Pedido de amizade cancelado.', 'ok');
+  renderUserList(FILTERED_USERS);
+  if (ACTIVE_USER?.id === userId) {
+    renderConversationFriendButton(ACTIVE_USER);
+    window.lucide?.createIcons();
+  }
+}
+
+async function removeFriendFromChat(userId) {
+  if (!userId) return;
+  const rel = FRIEND_RELATIONS[userId];
+  if (!rel || rel.status !== 'accepted') return;
+
+  const { error } = await supa.from('friend_requests')
+    .delete()
+    .or(`and(sender_id.eq.${USER.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${USER.id})`)
+    .eq('status','accepted');
+
+  if (error) {
+    toast('Erro ao remover amigo: ' + error.message, 'err');
+    return;
+  }
+
+  delete FRIEND_RELATIONS[userId];
+  toast('Amigo removido.', 'ok');
+  renderUserList(FILTERED_USERS);
+  if (ACTIVE_USER?.id === userId) {
+    renderConversationFriendButton(ACTIVE_USER);
+    window.lucide?.createIcons();
+  }
+}
+
+function renderConversationFriendButton(profile) {
+  const wrap = document.getElementById('convFriendWrap');
+  if (!wrap) return;
+  const rel = FRIEND_RELATIONS[profile.id];
+  let html = '';
+  if (!rel) {
+    html = `<button id="convFriendBtn" class="btn btn-primary btn-sm" style="font-size:12px;white-space:nowrap" onclick="handleFriendAction('${profile.id}')"><i data-lucide="user-plus" style="width:12px;height:12px;pointer-events:none"></i> Adicionar</button>`;
+  } else if (rel.status === 'accepted') {
+    html = `<button id="convFriendBtn" class="btn btn-danger btn-sm" style="font-size:12px;white-space:nowrap" onclick="removeFriendFromChat('${profile.id}')"><i data-lucide="user-x" style="width:12px;height:12px;pointer-events:none"></i> Remover amigo</button>`;
+  } else if (rel.status === 'pending') {
+    if (rel.sender_id === USER.id) {
+      html = `<button id="convFriendBtn" class="btn btn-secondary btn-sm" style="font-size:12px;white-space:nowrap" onclick="cancelFriendRequestFromChat('${rel.id}','${profile.id}')"><i data-lucide="x-circle" style="width:12px;height:12px;pointer-events:none"></i> Cancelar pedido</button>`;
+    } else {
+      html = `<button id="convFriendBtn" class="btn btn-primary btn-sm" style="font-size:12px;white-space:nowrap" onclick="handleFriendAction('${profile.id}','${rel.id}')"><i data-lucide="check-circle" style="width:12px;height:12px;pointer-events:none"></i> Aceitar amizade</button>`;
+    }
+  }
+  wrap.innerHTML = html;
 }
 
 function renderUserList(users) {
@@ -301,8 +491,9 @@ function renderUserList(users) {
   listEl.innerHTML = users.map((u, i) => {
     const hasLocation = u.distance !== null;
     const tooFar  = hasLocation && u.distance > MAX_DIST_KM;
-    const distStr = hasLocation ? fmtDist(u.distance) : 'Sem localização';
+    const distStr = hasLocation ? fmtDist(u.distance) : `<i data-lucide="map-pin-off" class="dist-icon" title="Sem localização"></i>`;
     const isActive = ACTIVE_USER?.id === u.id;
+    const statusHtml = getFriendStatusLabel(u.id);
 
     return `
       <div class="user-card${isActive ? ' active' : ''}${tooFar ? ' far' : ''}${!hasLocation ? ' no-location' : ''}"
@@ -317,7 +508,9 @@ function renderUserList(users) {
         <div class="user-card-info">
           <div class="user-card-name" style="display:flex;align-items:center;gap:5px">${u.full_name || 'Membro'} ${getChatBadgeHtml(u.id)}</div>
           <div class="user-card-sub">${u.bio ? u.bio.substring(0, 35) + (u.bio.length > 35 ? '…' : '') : 'Membro Sobral Cultural'}</div>
+          ${statusHtml ? `<div class="user-card-status">${statusHtml}</div>` : ''}
         </div>
+        ${getFriendActionHtml(u)}
         <span class="dist-badge${tooFar ? ' far' : ''}">${distStr}</span>
       </div>`;
   }).join('');
@@ -342,13 +535,51 @@ function getChatBadgeHtml(userId) {
   return '';
 }
 
+function getFriendStatusLabel(userId) {
+  const rel = FRIEND_RELATIONS[userId];
+  if (!rel) return '';
+  if (rel.status === 'accepted') {
+    return `<span class="friend-status friend">Amigo</span>`;
+  }
+  if (rel.status === 'pending') {
+    if (rel.sender_id === USER.id && (FRIEND_FILTER === 'all' || FRIEND_FILTER === 'pending')) {
+      return '';
+    }
+    return rel.sender_id === USER.id
+      ? `<span class="friend-status pending">Pedido enviado</span>`
+      : `<span class="friend-status pending">Pendente</span>`;
+  }
+  return '';
+}
+
+function applyChatFilters() {
+  let users = NEARBY_USERS;
+  if (searchTerm) {
+    users = users.filter(u => (u.full_name || '').toLowerCase().includes(searchTerm));
+  }
+  if (FRIEND_FILTER === 'friends') {
+    users = users.filter(u => FRIEND_RELATIONS[u.id]?.status === 'accepted');
+  } else if (FRIEND_FILTER === 'pending') {
+    users = users.filter(u => FRIEND_RELATIONS[u.id]?.status === 'pending');
+  } else if (FRIEND_FILTER === 'not_friends') {
+    users = users.filter(u => !FRIEND_RELATIONS[u.id]);
+  }
+  FILTERED_USERS = users;
+  renderUserList(FILTERED_USERS);
+}
+
+function setFriendFilter(filter) {
+  FRIEND_FILTER = filter;
+  document.querySelectorAll('.filter-pill').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
+  applyChatFilters();
+}
+
 // ── Filtro de busca ───────────────────────────────────────────────
 function filterUsers(term) {
   searchTerm = term.toLowerCase().trim();
-  FILTERED_USERS = searchTerm
-    ? NEARBY_USERS.filter(u => (u.full_name || '').toLowerCase().includes(searchTerm))
-    : NEARBY_USERS;
-  renderUserList(FILTERED_USERS);
+  applyChatFilters();
 }
 
 // ── Refresh ───────────────────────────────────────────────────────
@@ -414,6 +645,7 @@ async function openChat(userId) {
   document.getElementById('convDist').innerHTML    =
     `<i data-lucide="map-pin" style="width:11px;height:11px"></i> ${profile.distance != null ? `${fmtDist(profile.distance)} de distância` : 'Localização indisponível'}`;
 
+  renderConversationFriendButton(profile);
   window.lucide?.createIcons();
 
   // Carrega ou cria conversa

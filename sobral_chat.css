@@ -226,6 +226,54 @@ body {
 .sidebar-search input::placeholder { color: rgba(245,237,216,.3); }
 .sidebar-search input:focus { border-color: rgba(200,135,26,.5); }
 
+.sidebar-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+
+.filter-pill {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  color: var(--cream);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.filter-pill.active {
+  background: rgba(200,135,26,.15);
+  border-color: rgba(200,135,26,.35);
+  color: var(--ochre);
+}
+
+.filter-pill:hover {
+  background: rgba(255,255,255,.1);
+}
+
+.user-card-status {
+  margin-top: 8px;
+  font-size: 11px;
+  color: rgba(245,237,216,.7);
+}
+
+.friend-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.friend-status.friend { color: var(--cream); background: rgba(76,175,80,.15); border-color: rgba(76,175,80,.25); }
+.friend-status.pending { color: var(--cream); background: rgba(250,180,60,.15); border-color: rgba(250,180,60,.25); }
+
 /* ── Lista de Usuários ───────────────────────────────────────── */
 .user-list {
   flex: 1;
@@ -335,6 +383,16 @@ body {
   color: var(--ochre);
   border: 1px solid rgba(200,135,26,.25);
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.dist-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--ochre);
 }
 
 .dist-badge.far {
@@ -854,5 +912,16 @@ body {
   padding: 8px 16px; border-radius: 8px;
   font-size: 13px; font-weight: 700; cursor: pointer; transition: transform .2s, filter .2s;
 }
-.btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .18s ease; white-space: nowrap; }
+.btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+
+.btn-secondary { background: transparent; border: 1px solid rgba(255,255,255,.15); color: var(--cream); }
+.btn-secondary:hover { background: rgba(255,255,255,.05); }
+
+.btn-primary { background: var(--ochre); color: var(--deep); }
+.btn-primary:hover { filter: brightness(1.05); transform: translateY(-1px); }
+
+.btn-danger { background: rgba(181,74,42,.15); color: #e89e7e; border: 1px solid rgba(181,74,42,.3); }
+.btn-danger:hover { background: rgba(181,74,42,.25); }
+
 .btn-primary.danger { background: #b54a2a; color: #fff; }

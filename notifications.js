@@ -163,7 +163,15 @@
 
   // ── Lógica Principal ──────────────────────────────────────────
   async function initNotifications() {
-    supa = window.supa;
+    supa = window.supa || (window.supabase ? window.supabase.createClient(SU, SK) : null);
+    if (!supa && window.supabase) {
+      supa = window.supabase.createClient(SU, SK);
+      window.supa = supa;
+    }
+    if (!supa) {
+      console.error('Supabase client não disponível para notifications.js');
+      return;
+    }
     const { data: { session } } = await supa.auth.getSession();
     USER = session?.user || null;
 

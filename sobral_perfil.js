@@ -7,6 +7,12 @@ let USER=null,PROFILE=null,SUBS=[],REACTIONS=[],SPOTS_MAP={};
 let currentTab='mymap';
 let currentFavFilter='all';
 let isMyProfile = false;
+let FRIEND_REQUEST = null;
+let FRIEND_COUNT = 0;
+let FRIEND_COMMON_COUNT = 0;
+let FRIENDS = [];
+let PENDING_SENT = [];
+let PENDING_RECEIVED = [];
 let profileMap=null;
 let ALBUM_POINTS=[];
 let ALBUM_PHOTOS=[];
@@ -167,6 +173,9 @@ async function init(){
   PROFILE=prof||{id: targetUserId, role:'user',full_name: USER?.user_metadata?.full_name || 'Usuário'};
   SUBS=subs||[];
   REACTIONS=reacts||[];
+  FRIEND_COUNT=0;
+  FRIEND_REQUEST=null;
+  await loadFriendData(targetUserId);
 
   document.body.classList.remove('theme-light', 'theme-dark');
   if(PROFILE.theme === 'light') document.body.classList.add('theme-light');
@@ -234,6 +243,8 @@ function renderPage(){
         <div class="profile-info">
           <div class="profile-name">${name} ${badgeHtml}</div>
           ${PROFILE.bio ? `<div class="profile-bio">${PROFILE.bio}</div>` : ''}
+          ${FRIEND_COUNT ? `<div style="margin-top:6px;font-size:12px;color:var(--muted)">${FRIEND_COUNT} amigo${FRIEND_COUNT !== 1 ? 's' : ''}</div>` : ''}
+          ${FRIEND_COMMON_COUNT ? `<div style="margin-top:4px;font-size:12px;color:var(--muted)">${FRIEND_COMMON_COUNT} amigo${FRIEND_COMMON_COUNT !== 1 ? 's' : ''} em comum</div>` : ''}
           <div style="margin-top:6px;margin-bottom:12px">
             <a href="${PROFILE.username ? window.location.origin + '/' + PROFILE.username : window.location.origin + '/sobral_perfil.html?id=' + PROFILE.id}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;color:var(--ochre);font-size:12.5px;font-weight:600;text-decoration:none;background:rgba(200,135,26,.1);padding:6px 12px;border-radius:20px;">
               <i data-lucide="link" style="width:13px;height:13px"></i> ${PROFILE.username ? window.location.host + '/' + PROFILE.username : 'Copiar link do perfil'}
@@ -260,9 +271,7 @@ function renderPage(){
         </div>
         ` : `
         <div style="padding-bottom:16px;flex-shrink:0">
-          <button class="btn btn-primary btn-sm" onclick="iniciarConversa('${user.id}', ${user.distance})" style="font-size:12px">
-            <i data-lucide="message-square" style="width:12px;height:12px;pointer-events:none"></i> Enviar Mensagem
-          </button>
+          ${getFriendActionHtml()}
         </div>
         `}
       </div>
@@ -274,7 +283,7 @@ function renderPage(){
         <button class="ptab" data-tab="favorites"   onclick="showTab('favorites')"><i data-lucide="heart"    style="width:14px;height:14px;pointer-events:none"></i> Reações</button>
         <button class="ptab" data-tab="submissions" onclick="showTab('submissions')"><i data-lucide="map-pin" style="width:14px;height:14px;pointer-events:none"></i> Envios</button>
         <button class="ptab" data-tab="photos" onclick="showTab('photos')"><i data-lucide="camera" style="width:14px;height:14px;pointer-events:none"></i> Fotos</button>
-        ${isMyProfile ? `<button class="ptab" data-tab="settings"    onclick="showTab('settings')"><i data-lucide="settings" style="width:14px;height:14px;pointer-events:none"></i> Configurações</button>` : ''}
+        ${isMyProfile ? `<button class="ptab" data-tab="friends" onclick="showTab('friends')"><i data-lucide="users" style="width:14px;height:14px;pointer-events:none"></i> Amigos</button><button class="ptab" data-tab="settings"    onclick="showTab('settings')"><i data-lucide="settings" style="width:14px;height:14px;pointer-events:none"></i> Configurações</button>` : ''}
       </div>
     </div>
 
@@ -284,6 +293,208 @@ function renderPage(){
   setActiveTab(currentTab);
   renderTab(currentTab);
   window.lucide?.createIcons();
+}
+
+function getFriendActionHtml(){
+  if(!USER && !isMyProfile){
+    return `<button class="btn btn-primary btn-sm" onclick="location.href='sobral_login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search)" style="font-size:12px"><i data-lucide="log-in" style="width:12px;height:12px;pointer-events:none"></i> Entrar para adicionar amigo</button>`;
+  }
+  if(!USER || isMyProfile) return '';
+  if(!FRIEND_REQUEST){
+    return `<button class="btn btn-primary btn-sm" onclick="sendFriendRequest()" style="font-size:12px"><i data-lucide="user-plus" style="width:12px;height:12px;pointer-events:none"></i> Adicionar</button>`;
+  }
+
+  if(FRIEND_REQUEST.status === 'pending'){
+    if(FRIEND_REQUEST.sender_id === USER.id){
+      return `<button class="btn btn-secondary btn-sm" onclick="cancelFriendRequest('${FRIEND_REQUEST.id}')" style="font-size:12px"><i data-lucide="x-circle" style="width:12px;height:12px;pointer-events:none"></i> Cancelar pedido</button>`;
+    }
+    if(FRIEND_REQUEST.receiver_id === USER.id){
+      return `<button class="btn btn-primary btn-sm" onclick="acceptFriendRequest()" style="font-size:12px"><i data-lucide="check-circle" style="width:12px;height:12px;pointer-events:none"></i> Aceitar amizade</button>`;
+    }
+  }
+
+  if(FRIEND_REQUEST.status === 'accepted'){
+    return `<button class="btn btn-secondary btn-sm" style="font-size:12px" disabled><i data-lucide="users" style="width:12px;height:12px;pointer-events:none"></i> Amigos</button>`;
+  }
+
+  return `<button class="btn btn-primary btn-sm" onclick="sendFriendRequest()" style="font-size:12px"><i data-lucide="user-plus" style="width:12px;height:12px;pointer-events:none"></i> Adicionar</button>`;
+}
+
+async function loadFriendData(targetUserId){
+  if(!targetUserId) return;
+
+  const friendCountQuery = supa.from('friend_requests')
+    .select('id')
+    .or(`sender_id.eq.${targetUserId},receiver_id.eq.${targetUserId}`)
+    .eq('status','accepted');
+
+  let friendQuery = Promise.resolve({ data: null });
+  if(USER){
+    friendQuery = supa.from('friend_requests')
+      .select('*')
+      .or(`and(sender_id.eq.${USER.id},receiver_id.eq.${targetUserId}),and(sender_id.eq.${targetUserId},receiver_id.eq.${USER.id})`)
+      .maybeSingle();
+  }
+
+  const [{ data: friendData }, { data: countData }] = await Promise.all([friendQuery, friendCountQuery]);
+
+  FRIEND_REQUEST = friendData || null;
+  FRIEND_COUNT = (countData || []).length;
+  FRIEND_COMMON_COUNT = 0;
+
+  if(USER && !isMyProfile){
+    const [myFriendsRes, targetFriendsRes] = await Promise.all([
+      supa.from('friend_requests').select('sender_id,receiver_id').or(`and(sender_id.eq.${USER.id},status.eq.accepted),and(receiver_id.eq.${USER.id},status.eq.accepted)`),
+      supa.from('friend_requests').select('sender_id,receiver_id').or(`and(sender_id.eq.${targetUserId},status.eq.accepted),and(receiver_id.eq.${targetUserId},status.eq.accepted)`)
+    ]);
+
+    const myFriendIds = new Set();
+    (myFriendsRes.data || []).forEach(req => {
+      if(req.sender_id === USER.id) myFriendIds.add(req.receiver_id);
+      else if(req.receiver_id === USER.id) myFriendIds.add(req.sender_id);
+    });
+
+    const targetFriendIds = new Set();
+    (targetFriendsRes.data || []).forEach(req => {
+      if(req.sender_id === targetUserId) targetFriendIds.add(req.receiver_id);
+      else if(req.receiver_id === targetUserId) targetFriendIds.add(req.sender_id);
+    });
+
+    FRIEND_COMMON_COUNT = Array.from(targetFriendIds).filter(id => myFriendIds.has(id)).length;
+  }
+
+  if(isMyProfile && USER){
+    const [acceptedRes, sentRes, receivedRes] = await Promise.all([
+      supa.from('friend_requests').select('*').or(`and(sender_id.eq.${USER.id},status.eq.accepted),and(receiver_id.eq.${USER.id},status.eq.accepted)`),
+      supa.from('friend_requests').select('*').eq('sender_id', USER.id).eq('status', 'pending'),
+      supa.from('friend_requests').select('*').eq('receiver_id', USER.id).eq('status', 'pending')
+    ]);
+
+    const acceptedData = acceptedRes.data || [];
+    const sentData = sentRes.data || [];
+    const receivedData = receivedRes.data || [];
+
+    const friendIds = new Set();
+    const pendingIds = new Set();
+
+    acceptedData.forEach(req => {
+      if(req.sender_id === USER.id) friendIds.add(req.receiver_id);
+      else if(req.receiver_id === USER.id) friendIds.add(req.sender_id);
+    });
+
+    sentData.forEach(req => pendingIds.add(req.receiver_id));
+    receivedData.forEach(req => pendingIds.add(req.sender_id));
+
+    let profileIds = Array.from(new Set([...friendIds, ...pendingIds]));
+    let profilesData = [];
+    if(profileIds.length){
+      const { data: profiles, error: profileError } = await supa.from('profiles').select('id,full_name,username,avatar_url,bio').in('id', profileIds);
+      if(!profileError) profilesData = profiles || [];
+    }
+
+    FRIENDS = Array.from(friendIds).map(id => profilesData.find(p => p.id === id) || { id });
+    PENDING_SENT = sentData.map(req => ({
+      ...req,
+      profile: profilesData.find(p => p.id === req.receiver_id) || { id: req.receiver_id }
+    }));
+    PENDING_RECEIVED = receivedData.map(req => ({
+      ...req,
+      profile: profilesData.find(p => p.id === req.sender_id) || { id: req.sender_id }
+    }));
+  } else {
+    FRIENDS = [];
+    PENDING_SENT = [];
+    PENDING_RECEIVED = [];
+  }
+}
+
+async function sendFriendRequest(){
+  if(!USER){
+    location.href = 'sobral_login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+    return;
+  }
+  if(!PROFILE?.id || isMyProfile) return;
+  if(PROFILE.id === USER.id) return;
+
+  const { data: existing, error: existingError } = await supa.from('friend_requests')
+    .select('*')
+    .or(`and(sender_id.eq.${USER.id},receiver_id.eq.${PROFILE.id}),and(sender_id.eq.${PROFILE.id},receiver_id.eq.${USER.id})`)
+    .maybeSingle();
+
+  if(existingError){
+    toast('Erro ao verificar amizade existente: ' + existingError.message, 'err');
+    return;
+  }
+
+  if(existing){
+    if(existing.status === 'accepted'){
+      FRIEND_REQUEST = existing;
+      toast('Vocês já são amigos.', 'info');
+      renderPage();
+      return;
+    }
+    if(existing.status === 'pending'){
+      if(existing.sender_id === USER.id){
+        FRIEND_REQUEST = existing;
+        toast('Pedido já enviado.', 'info');
+        renderPage();
+        return;
+      }
+      if(existing.receiver_id === USER.id){
+        const { data, error } = await supa.from('friend_requests')
+          .update({ status: 'accepted', updated_at: new Date().toISOString() })
+          .eq('id', existing.id)
+          .select()
+          .maybeSingle();
+
+        if(error){
+          toast('Não foi possível aceitar o pedido existente: ' + error.message, 'err');
+          return;
+        }
+
+        FRIEND_REQUEST = data || existing;
+        toast('Pedido de amizade aceito automaticamente!','ok');
+        await loadFriendData(PROFILE.id);
+        renderPage();
+        return;
+      }
+    }
+  }
+
+  const { data, error } = await supa.from('friend_requests')
+    .insert({ sender_id: USER.id, receiver_id: PROFILE.id, status: 'pending' })
+    .select()
+    .maybeSingle();
+
+  if(error){
+    toast('Não foi possível enviar o pedido: ' + error.message, 'err');
+    return;
+  }
+
+  FRIEND_REQUEST = data || null;
+  toast('Pedido de amizade enviado!','ok');
+  renderPage();
+}
+
+async function acceptFriendRequest(){
+  if(!USER || !FRIEND_REQUEST || FRIEND_REQUEST.status !== 'pending') return;
+  if(FRIEND_REQUEST.receiver_id !== USER.id) return;
+
+  const { data, error } = await supa.from('friend_requests')
+    .update({ status: 'accepted', updated_at: new Date().toISOString() })
+    .eq('id', FRIEND_REQUEST.id)
+    .select()
+    .maybeSingle();
+
+  if(error){
+    toast('Não foi possível aceitar o pedido: ' + error.message, 'err');
+    return;
+  }
+
+  FRIEND_REQUEST = data || FRIEND_REQUEST;
+  await loadFriendData(PROFILE.id);
+  toast('Amizade aceita!','ok');
+  renderPage();
 }
 
 function setActiveTab(tab){
@@ -296,6 +507,119 @@ function showTab(tab){
   currentTab=tab;
   setActiveTab(tab);
   renderTab(tab);
+}
+
+function renderFriends(){
+  if(!isMyProfile){
+    return `<div class="empty"><div class="empty-icon"><i data-lucide="users" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div><h3>Amigos apenas no seu perfil</h3><p>Faça login e visite seu próprio perfil para ver sua lista de amigos.</p></div>`;
+  }
+
+  const friendCards = FRIENDS.map(f => {
+    const profileUrl = f.username ? `/${f.username}` : `sobral_perfil.html?id=${f.id}`;
+    return `<div class="sub-card" style="padding:14px;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <a href="${profileUrl}" style="display:flex;align-items:center;gap:12px;flex:1;text-decoration:none;color:inherit">
+        <div style="width:44px;height:44px;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.06);flex-shrink:0">
+          ${f.avatar_url ? `<img src="${f.avatar_url}" alt="${f.full_name||'Amigo'}" style="width:100%;height:100%;object-fit:cover">` : `<div class="avatar-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:16px">${(f.full_name||'A').charAt(0).toUpperCase()}</div>`}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px">${f.full_name || 'Amigo'}</div>
+          <div style="font-size:12px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${f.username ? '@' + f.username : (f.bio ? f.bio.substring(0, 45) : 'Perfil Sobral Cultural')}</div>
+        </div>
+      </a>
+      <button class="btn btn-danger btn-sm" onclick="removeFriend('${f.id}')" style="font-size:12px;white-space:nowrap">Remover</button>
+    </div>`;
+  }).join('');
+
+  const sentHtml = PENDING_SENT.length ? `<div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:15px;font-weight:700">Pedidos enviados</div><div style="color:var(--muted);font-size:12px">${PENDING_SENT.length} pedido${PENDING_SENT.length!==1?'s':''}</div></div>
+      <div class="cards-grid">${PENDING_SENT.map(req=>{
+        const other = req.profile || { id: req.receiver_id, full_name: 'Membro' };
+        const profileUrl = other.username ? `/${other.username}` : `sobral_perfil.html?id=${other.id}`;
+        return `<div class="sub-card" style="padding:14px;min-width:0;display:flex;flex-direction:column;gap:12px">
+          <div>
+            <div style="font-weight:600">${other.full_name || 'Membro'}</div>
+            <a href="${profileUrl}" style="font-size:12px;color:var(--ochre);text-decoration:none">Ver perfil</a>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="cancelFriendRequest('${req.id}')" style="font-size:12px;width:100%">Cancelar pedido</button>
+        </div>`;
+      }).join('')}</div>
+    </div>` : '';
+
+  const receivedHtml = PENDING_RECEIVED.length ? `<div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:15px;font-weight:700">Pedidos recebidos</div><div style="color:var(--muted);font-size:12px">${PENDING_RECEIVED.length} pedido${PENDING_RECEIVED.length!==1?'s':''}</div></div>
+      <div class="cards-grid">${PENDING_RECEIVED.map(req=>{
+        const other = req.profile || { id: req.sender_id, full_name: 'Membro' };
+        const profileUrl = other.username ? `/${other.username}` : `sobral_perfil.html?id=${other.id}`;
+        return `<div class="sub-card" style="padding:14px;min-width:0;display:flex;flex-direction:column;gap:12px">
+          <div>
+            <div style="font-weight:600">${other.full_name || 'Membro'}</div>
+            <a href="${profileUrl}" style="font-size:12px;color:var(--ochre);text-decoration:none">Ver perfil</a>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="acceptFriendRequestById('${req.id}')" style="font-size:12px;width:100%">Aceitar amizade</button>
+        </div>`;
+      }).join('')}</div>
+    </div>` : '';
+
+  if(!FRIENDS.length && !sentHtml && !receivedHtml){
+    return `<div class="empty"><div class="empty-icon"><i data-lucide="users" style="width:40px;height:40px;stroke-width:1;opacity:.4"></i></div><h3>Você ainda não tem amigos</h3><p>Envie pedidos de amizade para outros membros e eles aparecerão aqui quando aceitarem.</p></div>`;
+  }
+
+  return `<div style="display:flex;flex-direction:column;gap:22px">
+    ${receivedHtml}
+    ${sentHtml}
+    ${FRIENDS.length ? `<div><div style="font-size:15px;font-weight:700;margin-bottom:12px">Meus amigos (${FRIENDS.length})</div><div class="cards-grid">${friendCards}</div></div>` : ''}
+  </div>`;
+}
+
+function acceptFriendRequestById(requestId){
+  if(!requestId) return;
+  (async () => {
+    const { data, error } = await supa.from('friend_requests')
+      .update({ status: 'accepted', updated_at: new Date().toISOString() })
+      .eq('id', requestId)
+      .select()
+      .maybeSingle();
+
+    if(error){
+      toast('Erro ao aceitar amizade: ' + error.message, 'err');
+      return;
+    }
+
+    toast('Amizade aceita!','ok');
+    await loadFriendData(USER.id);
+    renderTab('friends');
+  })();
+}
+
+async function removeFriend(friendId){
+  if(!friendId || !USER) return;
+  const { error } = await supa.from('friend_requests')
+    .delete()
+    .or(`and(sender_id.eq.${USER.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${USER.id})`)
+    .eq('status','accepted');
+
+  if(error){
+    toast('Erro ao remover amigo: ' + error.message, 'err');
+    return;
+  }
+
+  toast('Amigo removido.','ok');
+  await loadFriendData(USER.id);
+  renderTab('friends');
+}
+
+async function cancelFriendRequest(requestId){
+  if(!requestId) return;
+  const { error } = await supa.from('friend_requests').delete().eq('id', requestId);
+  if(error){
+    toast('Erro ao cancelar pedido: ' + error.message, 'err');
+    return;
+  }
+  toast('Pedido cancelado.','ok');
+  const targetId = isMyProfile ? USER.id : PROFILE.id;
+  await loadFriendData(targetId);
+  renderPage();
+  if(isMyProfile) renderTab('friends');
 }
 
 function showFavTab(filter){
@@ -311,6 +635,7 @@ function renderTab(tab){
   if(tab==='favorites')   html=renderFavorites();
   else if(tab==='photos') html=renderPhotos();
   else if(tab==='submissions') html=renderSubmissions();
+  else if(tab==='friends') html=renderFriends();
   else if(tab==='settings')    html=renderSettings();
   c.classList.remove('tab-fade');
   void c.offsetWidth;

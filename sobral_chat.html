@@ -104,6 +104,12 @@
         <input type="text" id="searchUsers" placeholder="Buscar membros…" oninput="filterUsers(this.value)">
       </div>
 
+      <div class="sidebar-filters" id="sidebarFilters">
+        <button class="filter-pill active" data-filter="all" onclick="setFriendFilter('all')">Todos</button>
+        <button class="filter-pill" data-filter="friends" onclick="setFriendFilter('friends')">Amigos</button>
+        <button class="filter-pill" data-filter="pending" onclick="setFriendFilter('pending')">Pendentes</button>
+      </div>
+
       <div class="user-list" id="userList">
         <div class="user-list-loading">
           <div class="skeleton-user"></div>
@@ -144,6 +150,7 @@
               <div class="conv-dist" id="convDist"></div>
             </div>
           </a>
+          <div id="convFriendWrap" style="margin-left:12px;display:flex;align-items:center;gap:8px"></div>
           <div class="conv-options">
             <button class="btn-conv-opt" onclick="toggleConvOptions()" aria-label="Opções da conversa">
               <i data-lucide="more-vertical"></i>
