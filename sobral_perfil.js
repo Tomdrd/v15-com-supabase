@@ -217,6 +217,16 @@ function renderPage(){
   const beenCount=REACTIONS.filter(r=>r.reaction==='been').length;
   const goingCount=REACTIONS.filter(r=>r.reaction==='going').length;
 
+  const photoCount = ALBUM_PHOTOS.length;
+  let badgeHtml = '';
+  if (photoCount === 1) {
+    badgeHtml = `<i data-lucide="badge-check" class="verif-badge bronze" title="Verificado Bronze (1 foto no álbum)"></i>`;
+  } else if (photoCount >= 2 && photoCount <= 3) {
+    badgeHtml = `<i data-lucide="badge-check" class="verif-badge silver" title="Verificado Prata (${photoCount} fotos no álbum)"></i>`;
+  } else if (photoCount >= 4) {
+    badgeHtml = `<i data-lucide="badge-check" class="verif-badge gold" title="Verificado Ouro (${photoCount} fotos no álbum)"></i>`;
+  }
+
   document.getElementById('root').innerHTML=`
     <div class="profile-hero">
       <div class="profile-inner">
@@ -225,7 +235,7 @@ function renderPage(){
           <div class="role-badge ${isAdmin?'admin':''}">${isAdmin?'Admin':(PROFILE.role || 'Usuário')}</div>
         </div>
         <div class="profile-info">
-          <div class="profile-name">${name}</div>
+          <div class="profile-name">${name} ${badgeHtml}</div>
           ${PROFILE.bio ? `<div class="profile-bio">${PROFILE.bio}</div>` : ''}
           <div style="margin-top:6px;margin-bottom:12px">
             <a href="${PROFILE.username ? window.location.origin + '/' + PROFILE.username : window.location.origin + '/sobral_perfil.html?id=' + PROFILE.id}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;color:var(--ochre);font-size:12.5px;font-weight:600;text-decoration:none;background:rgba(200,135,26,.1);padding:6px 12px;border-radius:20px;">
@@ -532,7 +542,38 @@ function renderPhotos(){
     </div>`;
   }).join('');
 
-  return `<div class="photos-intro"><p>Envie apenas fotos tiradas no próprio ponto turístico. A imagem precisa ter localização registrada para ser aceita. Fotos sem dados de localização não serão enviadas.</p><div class="photos-progress">${completed} de ${ALBUM_POINTS.length} fotos aceitas</div></div><div class="photos-grid">${cards}</div>`;
+  const bronzeDone = completed >= 1;
+  const silverDone = completed >= 2;
+  const goldDone = completed >= 4;
+  const progressPercent = Math.min((completed / 4) * 100, 100);
+
+  const checklistHtml = `
+    <div class="badge-progress-container" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--cream)">Progresso do Selo de Verificação</div>
+      <div class="badge-progress-bar" style="height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-bottom:16px">
+        <div style="height:100%;width:${progressPercent}%;background:var(--ochre);border-radius:3px;transition:width 0.5s ease"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="badge-step ${bronzeDone ? 'done' : ''}" style="display:flex;align-items:center;gap:10px;opacity:${bronzeDone ? '1' : '0.5'}">
+          <i data-lucide="${bronzeDone ? 'check-circle-2' : 'circle'}" style="width:18px;height:18px;color:${bronzeDone ? '#CD7F32' : 'var(--muted)'}"></i>
+          <i data-lucide="badge-check" style="width:20px;height:20px;color:#CD7F32;fill:rgba(205,127,50,0.15)"></i>
+          <span style="font-size:13px;color:var(--cream)">Bronze (1 foto)</span>
+        </div>
+        <div class="badge-step ${silverDone ? 'done' : ''}" style="display:flex;align-items:center;gap:10px;opacity:${silverDone ? '1' : '0.5'}">
+          <i data-lucide="${silverDone ? 'check-circle-2' : 'circle'}" style="width:18px;height:18px;color:${silverDone ? '#C0C0C0' : 'var(--muted)'}"></i>
+          <i data-lucide="badge-check" style="width:20px;height:20px;color:#C0C0C0;fill:rgba(192,192,192,0.15)"></i>
+          <span style="font-size:13px;color:var(--cream)">Prata (2 a 3 fotos)</span>
+        </div>
+        <div class="badge-step ${goldDone ? 'done' : ''}" style="display:flex;align-items:center;gap:10px;opacity:${goldDone ? '1' : '0.5'}">
+          <i data-lucide="${goldDone ? 'check-circle-2' : 'circle'}" style="width:18px;height:18px;color:${goldDone ? '#FFD700' : 'var(--muted)'}"></i>
+          <i data-lucide="badge-check" style="width:20px;height:20px;color:#FFD700;fill:rgba(255,215,0,0.15)"></i>
+          <span style="font-size:13px;color:var(--cream)">Ouro (4 fotos)</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return `<div class="photos-intro"><p>Envie apenas fotos tiradas no próprio ponto turístico. A imagem precisa ter localização registrada para ser aceita. Fotos sem dados de localização não serão enviadas.</p>${checklistHtml}<div class="photos-progress" style="margin-top:16px">${completed} de ${ALBUM_POINTS.length} fotos aceitas</div></div><div class="photos-grid">${cards}</div>`;
 }
 
 async function loadAlbumPhotoLikes(){

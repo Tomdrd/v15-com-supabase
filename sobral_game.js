@@ -138,6 +138,7 @@ let USER = null;
 let quiz = null;
 let rankPag = 0;
 let rankAll = [];
+let ALBUM_COUNTS = {}; // { userId: count }
 let timerInterval = null;
 let isMuted = localStorage.getItem('quizMuted') === 'true';
 let volumeSfx = parseFloat(localStorage.getItem('quizVolSfx') ?? '1');
@@ -180,14 +181,25 @@ async function carregarRanking() {
   });
 
   const ids = melhores.map(s => s.user_id);
-  const { data: perfis } = await supa
-    .from('profiles')
-    .select('id, full_name, avatar_url')
-    .in('id', ids);
+  
+  // Busca perfis e contagem de fotos verificadas simultaneamente
+  const [perfisResult, albumResult] = await Promise.all([
+    supa.from('profiles').select('id, full_name, avatar_url').in('id', ids),
+    supa.from('album_photos').select('user_id').eq('status', 'verified').in('user_id', ids)
+  ]);
+
+  const perfis = perfisResult.data || [];
+  const albumData = albumResult.data || [];
+
+  // Monta mapa de contagem de fotos por usuário
+  ALBUM_COUNTS = {};
+  albumData.forEach(row => {
+    ALBUM_COUNTS[row.user_id] = (ALBUM_COUNTS[row.user_id] || 0) + 1;
+  });
 
   // Busca metadados do auth para pegar avatar do Google OAuth se não tiver no perfil
   const pm = {};
-  (perfis || []).forEach(p => { pm[p.id] = p; });
+  perfis.forEach(p => { pm[p.id] = p; });
 
   // Para o usuário logado, prioriza avatar do metadata do Google
   const { data: { user: authUser } } = await supa.auth.getUser().catch(() => ({ data: { user: null } }));
@@ -436,6 +448,18 @@ function renderGate() {
   window.lucide?.createIcons();
 }
 
+/**
+ * Retorna o HTML do selo de verificação baseado no número de fotos no álbum
+ */
+function getBadgeHtml(userId) {
+  const count = ALBUM_COUNTS[userId] || 0;
+  if (count === 0) return '';
+  if (count === 1) return `<i data-lucide="badge-check" class="verif-badge bronze" title="Verificado Bronze"></i>`;
+  if (count >= 2 && count <= 3) return `<i data-lucide="badge-check" class="verif-badge silver" title="Verificado Prata"></i>`;
+  if (count >= 4) return `<i data-lucide="badge-check" class="verif-badge gold" title="Verificado Ouro"></i>`;
+  return '';
+}
+
 /* ── RANKING CARD ────────────────────────────────────────────────────────── */
 function renderRankingCard() {
   const total = rankAll.length;
@@ -465,7 +489,10 @@ function renderRankingCard() {
             <div class="rank-pos ${posClass}">${pos}</div>
             <div class="rank-avatar ${avatarBorder}">${avatarHtml}</div>
             <div class="rank-info">
-              <div class="rank-name">${nome}${isMe ? ' <span style="color:var(--ochre);font-size:10px;font-weight:400">(você)</span>' : ''}</div>
+              <div class="rank-name" style="display:flex;align-items:center;gap:6px">
+                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${nome}${isMe ? ' <span style="color:var(--ochre);font-size:10px;font-weight:400">(você)</span>' : ''}</span>
+                ${getBadgeHtml(r.user_id)}
+              </div>
               <div class="rank-meta">${pct}% de acertos · ${data}</div>
             </div>
             <div class="rank-score">

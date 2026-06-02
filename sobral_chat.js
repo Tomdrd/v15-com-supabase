@@ -28,6 +28,7 @@ let ACTIVE_CONV  = null;   // conversa ativa { id, user1_id, user2_id }
 let MESSAGES     = [];     // mensagens carregadas
 let REALTIME_CH  = null;   // canal Supabase Realtime
 let searchTerm   = '';
+let ALBUM_COUNTS = {}; // { userId: photoCount }
 
 // ── Rate Limiting (client-side) ──────────────────────────────────
 const RATE_LIMIT      = 20;   // máx. mensagens
@@ -245,16 +246,24 @@ async function loadNearbyUsers() {
     (blocks || []).map(b => b.blocker_id === USER.id ? b.blocked_id : b.blocker_id)
   );
 
-  const { data: profiles, error } = await supa
-    .from('profiles')
-    .select('id, full_name, avatar_url, bio, lat, lng, location_updated_at, public_key')
-    .neq('id', USER.id);
+  const [profilesResult, albumResult] = await Promise.all([
+    supa.from('profiles').select('id, full_name, avatar_url, bio, lat, lng, location_updated_at, public_key').neq('id', USER.id),
+    supa.from('album_photos').select('user_id').eq('status', 'verified')
+  ]);
+
+  const { data: profiles, error } = profilesResult;
 
   if (error) {
     listEl.innerHTML = `<div class="list-empty"><div class="list-empty-icon"><i data-lucide="alert-triangle"></i></div>Erro ao carregar membros.</div>`;
     window.lucide?.createIcons();
     return;
   }
+
+  // Monta mapa de contagem de fotos por usuário
+  ALBUM_COUNTS = {};
+  (albumResult.data || []).forEach(row => {
+    ALBUM_COUNTS[row.user_id] = (ALBUM_COUNTS[row.user_id] || 0) + 1;
+  });
 
   NEARBY_USERS = (profiles || [])
     .filter(p => !blockedIds.has(p.id))
@@ -311,7 +320,7 @@ function renderUserList(users) {
           ${hasLocation && !tooFar ? '<div class="online-dot"></div>' : ''}
         </div>
         <div class="user-card-info">
-          <div class="user-card-name">${u.full_name || 'Membro'}</div>
+          <div class="user-card-name" style="display:flex;align-items:center;gap:5px">${u.full_name || 'Membro'} ${getChatBadgeHtml(u.id)}</div>
           <div class="user-card-sub">${u.bio ? u.bio.substring(0, 35) + (u.bio.length > 35 ? '…' : '') : 'Membro Sobral Cultural'}</div>
         </div>
         <span class="dist-badge${tooFar ? ' far' : ''}">${distStr}</span>
@@ -319,6 +328,23 @@ function renderUserList(users) {
   }).join('');
 
   window.lucide?.createIcons();
+}
+
+/**
+ * Retorna o HTML do selo de verificação baseado no número de fotos no álbum
+ */
+function getChatBadgeHtml(userId) {
+  const count = ALBUM_COUNTS[userId] || 0;
+  if (count === 0) return '';
+  
+  if (count === 1) {
+    return `<i data-lucide="badge-check" class="verif-badge bronze" title="Verificado Bronze (1 foto)"></i>`;
+  } else if (count >= 2 && count <= 3) {
+    return `<i data-lucide="badge-check" class="verif-badge silver" title="Verificado Prata (${count} fotos)"></i>`;
+  } else if (count >= 4) {
+    return `<i data-lucide="badge-check" class="verif-badge gold" title="Verificado Ouro (${count} fotos)"></i>`;
+  }
+  return '';
 }
 
 // ── Filtro de busca ───────────────────────────────────────────────
@@ -376,7 +402,17 @@ async function openChat(userId) {
 
   // Preenche header
   document.getElementById('convAvatar').innerHTML = avatarHtml(profile, 40);
-  document.getElementById('convName').textContent  = profile.full_name || 'Membro';
+  // Monta nome + selo no header
+  const convNameEl = document.getElementById('convName');
+  convNameEl.innerHTML = '';
+  const nameSpan = document.createElement('span');
+  nameSpan.textContent = profile.full_name || 'Membro';
+  convNameEl.appendChild(nameSpan);
+  const badgeNode = document.createElement('span');
+  badgeNode.innerHTML = getChatBadgeHtml(profile.id);
+  if (badgeNode.firstChild) convNameEl.appendChild(badgeNode.firstChild);
+  convNameEl.style.cssText = 'display:flex;align-items:center;gap:6px';
+
   const profUrl = profile.username ? `/${profile.username}` : `sobral_perfil.html?id=${profile.id}`;
   document.getElementById('convProfileLink').href = profUrl;
   document.getElementById('convProfileLink').target = '_blank';

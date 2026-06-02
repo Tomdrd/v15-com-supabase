@@ -65,3 +65,14 @@ a [data-lucide] {
   width: var(--icon-sm);
   height: var(--icon-sm);
 }
+
+/* SELO DE VERIFICAÇÃO */
+.verif-badge {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.5px;
+  flex-shrink: 0;
+}
+.verif-badge.bronze { color: #CD7F32; fill: rgba(205,127,50,0.15); }
+.verif-badge.silver { color: #C0C0C0; fill: rgba(192,192,192,0.15); }
+.verif-badge.gold   { color: #FFD700; fill: rgba(255,215,0,0.15); }

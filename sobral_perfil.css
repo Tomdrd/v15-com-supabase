@@ -20,7 +20,7 @@ html{scroll-behavior:smooth}body{font-family:'Plus Jakarta Sans',sans-serif;back
 .role-badge{position:absolute;bottom:2px;right:2px;background:var(--ochre);color:var(--deep);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap}
 .role-badge.admin{background:#6440B4;color:white}
 .profile-info{flex:1;min-width:0;padding-bottom:16px}
-.profile-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(22px,4vw,32px);font-weight:800;color:var(--cream);margin-bottom:4px}
+.profile-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(22px,4vw,32px);font-weight:800;color:var(--cream);margin-bottom:4px;display:flex;align-items:center;gap:8px}
 .profile-email{font-size:13px;color:var(--muted);margin-bottom:10px}
 .profile-stats{display:flex;gap:20px;flex-wrap:wrap}
 .pstat{text-align:center}.pstat-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;color:var(--ochre)}.pstat-lbl{font-size:11px;color:var(--muted)}
