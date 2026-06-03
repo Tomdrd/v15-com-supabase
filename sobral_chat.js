@@ -88,6 +88,202 @@ function showState(id) {
 }
 
 // ── INIT ─────────────────────────────────────────────────────────
+// ── Modal E2EE ───────────────────────────────────────────────────
+/**
+ * Exibe o modal de configuração de criptografia.
+ * mode: 'create'  → primeiro acesso, cria par + senha
+ *       'restore' → dispositivo novo, restaura par com a senha
+ *       'reset'   → esqueceu a senha, gera par novo
+ * Retorna quando o usuário conclui ou cancela (sem E2EE).
+ */
+function e2eeSetupModal(mode) {
+  return new Promise(resolve => {
+    // Remove modal anterior se existir
+    document.getElementById('e2eeModal')?.remove();
+
+    const isCreate  = mode === 'create';
+    const isRestore = mode === 'restore';
+
+    const modal = document.createElement('div');
+    modal.id = 'e2eeModal';
+    modal.style.cssText = `
+      position:fixed;inset:0;z-index:9999;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,.7);backdrop-filter:blur(6px);
+    `;
+
+    modal.innerHTML = `
+      <div style="
+        background:var(--deep,#1a1410);
+        border:1px solid rgba(200,135,26,.3);
+        border-radius:16px;padding:32px;
+        width:min(420px,90vw);
+        box-shadow:0 24px 64px rgba(0,0,0,.6);
+      ">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+          <i data-lucide="lock" style="width:22px;height:22px;color:var(--ochre,#c8871a)"></i>
+          <h2 style="margin:0;font-size:18px;color:var(--cream,#f5edd8);font-weight:600">
+            ${isCreate  ? 'Proteja suas mensagens' :
+              isRestore ? 'Acessar chat neste dispositivo' :
+                          'Criar nova chave de criptografia'}
+          </h2>
+        </div>
+        <p style="font-size:13px;color:rgba(245,237,216,.6);margin:0 0 20px;line-height:1.6">
+          ${isCreate
+            ? 'Crie uma senha para criptografar suas mensagens. <strong style="color:var(--ochre)">Guarde-a bem</strong> — você vai precisar dela em novos dispositivos.'
+            : isRestore
+            ? 'Digite a senha que você criou no primeiro acesso para restaurar sua chave de criptografia neste dispositivo.'
+            : 'Você vai perder acesso às mensagens anteriores. Mensagens novas funcionarão normalmente.'}
+        </p>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="position:relative">
+            <input id="e2eePass" type="password" placeholder="Senha de criptografia"
+              autocomplete="${isCreate ? 'new-password' : 'current-password'}"
+              style="
+                width:100%;box-sizing:border-box;
+                background:rgba(255,255,255,.06);
+                border:1px solid rgba(200,135,26,.25);
+                border-radius:10px;padding:12px 44px 12px 14px;
+                color:var(--cream,#f5edd8);font-size:14px;outline:none;
+              "/>
+            <i id="e2eeToggle" data-lucide="eye" style="
+              position:absolute;right:14px;top:50%;transform:translateY(-50%);
+              width:18px;height:18px;color:rgba(245,237,216,.4);cursor:pointer;
+            "></i>
+          </div>
+
+          ${isCreate ? `
+          <input id="e2eePassConfirm" type="password" placeholder="Confirmar senha"
+            autocomplete="new-password"
+            style="
+              background:rgba(255,255,255,.06);
+              border:1px solid rgba(200,135,26,.25);
+              border-radius:10px;padding:12px 14px;
+              color:var(--cream,#f5edd8);font-size:14px;outline:none;
+              box-sizing:border-box;width:100%;
+            "/>
+          ` : ''}
+
+          <p id="e2eeError" style="
+            color:#f87171;font-size:12px;margin:0;min-height:16px;
+          "></p>
+
+          <button id="e2eeSubmit" style="
+            background:var(--ochre,#c8871a);color:#1a1410;
+            border:none;border-radius:10px;padding:13px;
+            font-size:14px;font-weight:700;cursor:pointer;
+            transition:opacity .15s;
+          ">
+            ${isCreate ? 'Criar senha' : isRestore ? 'Entrar' : 'Criar nova chave'}
+          </button>
+
+          <button id="e2eeSkip" style="
+            background:transparent;color:rgba(245,237,216,.4);
+            border:none;padding:8px;font-size:13px;cursor:pointer;
+          ">
+            ${isRestore ? 'Esqueci minha senha' : 'Pular por agora (sem criptografia)'}
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    const passEl    = modal.querySelector('#e2eePass');
+    const confirmEl = modal.querySelector('#e2eePassConfirm');
+    const errorEl   = modal.querySelector('#e2eeError');
+    const submitBtn = modal.querySelector('#e2eeSubmit');
+    const skipBtn   = modal.querySelector('#e2eeSkip');
+    const toggleBtn = modal.querySelector('#e2eeToggle');
+
+    // Toggle visibilidade da senha
+    toggleBtn?.addEventListener('click', () => {
+      passEl.type = passEl.type === 'password' ? 'text' : 'password';
+    });
+
+    // Enter submete
+    modal.addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitBtn.click();
+    });
+
+    passEl.focus();
+
+    submitBtn.addEventListener('click', async () => {
+      errorEl.textContent = '';
+      const pass = passEl.value.trim();
+
+      if (pass.length < 8) {
+        errorEl.textContent = 'Mínimo 8 caracteres.';
+        return;
+      }
+      if (isCreate && confirmEl && pass !== confirmEl.value.trim()) {
+        errorEl.textContent = 'As senhas não coincidem.';
+        return;
+      }
+
+      submitBtn.textContent = '...';
+      submitBtn.disabled = true;
+
+      try {
+        if (isCreate) {
+          // Gera par RSA, cifra a privada com a senha, salva tudo no banco
+          const keys = await SobralCrypto.generateKeyPair();
+          const blob = await SobralCrypto.wrapPrivateKey(keys.privateKey, pass);
+          const { error } = await supa.from('profiles').update({
+            public_key:      keys.publicKey,
+            private_key_enc: blob,
+          }).eq('id', USER.id);
+          if (error) throw new Error('Erro ao salvar no banco: ' + error.message);
+          SobralCrypto.savePrivateKey(USER.id, keys.privateKey);
+          MY_PROFILE.public_key      = keys.publicKey;
+          MY_PROFILE.private_key_enc = blob;
+
+        } else if (isRestore) {
+          // Baixa blob do banco e decripta com a senha
+          const privKey = await SobralCrypto.unwrapPrivateKey(MY_PROFILE.private_key_enc, pass);
+          SobralCrypto.savePrivateKey(USER.id, privKey);
+
+        } else {
+          // Reset: gera par novo, sobrescreve banco
+          const keys = await SobralCrypto.generateKeyPair();
+          const blob = await SobralCrypto.wrapPrivateKey(keys.privateKey, pass);
+          await supa.from('profiles').update({
+            public_key:      keys.publicKey,
+            private_key_enc: blob,
+          }).eq('id', USER.id);
+          SobralCrypto.savePrivateKey(USER.id, keys.privateKey);
+          MY_PROFILE.public_key      = keys.publicKey;
+          MY_PROFILE.private_key_enc = blob;
+        }
+
+        modal.remove();
+        resolve(true);
+
+      } catch(e) {
+        errorEl.textContent = e.message === 'Senha incorreta'
+          ? 'Senha incorreta. Tente novamente.'
+          : 'Erro inesperado. Tente novamente.';
+        submitBtn.textContent = isCreate ? 'Criar senha' : isRestore ? 'Entrar' : 'Criar nova chave';
+        submitBtn.disabled = false;
+      }
+    });
+
+    skipBtn.addEventListener('click', () => {
+      if (isRestore) {
+        // Esqueceu a senha → oferece reset
+        modal.remove();
+        e2eeSetupModal('reset').then(resolve);
+      } else {
+        // Pular: segue sem E2EE
+        modal.remove();
+        resolve(false);
+      }
+    });
+  });
+}
+
 async function init() {
   // Aguarda Supabase
   if (!window.supabase) {
@@ -106,41 +302,19 @@ async function init() {
   const { data: prof } = await supa.from('profiles').select('*').eq('id', USER.id).single();
   MY_PROFILE = prof || { id: USER.id, full_name: USER.user_metadata?.full_name || 'Você' };
 
-  // Garante par de chaves E2EE (requer HTTPS ou localhost)
-  // Só gera se: SobralCrypto disponível, sem chave local E sem chave no banco
-  if (typeof SobralCrypto !== 'undefined' && !MY_PROFILE.public_key) {
-    try {
-      // Verifica se Web Crypto está disponível antes de tentar
-      if (!window.crypto?.subtle) throw new Error('Web Crypto API indisponível (requer HTTPS)');
+  // ── E2EE: inicialização da chave ────────────────────────────────
+  if (typeof SobralCrypto !== 'undefined' && window.crypto?.subtle) {
+    const hasLocal = SobralCrypto.hasKeys(USER.id);
+    const hasBank  = !!(MY_PROFILE.public_key && MY_PROFILE.private_key_enc);
 
-      const keys = await SobralCrypto.generateKeyPair();
-      SobralCrypto.savePrivateKey(USER.id, keys.privateKey);
-      const { error: keyErr } = await supa.from('profiles')
-        .update({ public_key: keys.publicKey }).eq('id', USER.id);
-      if (!keyErr) {
-        MY_PROFILE.public_key = keys.publicKey;
-        console.log('[E2EE] Chave gerada e salva com sucesso.');
-      } else {
-        console.warn('[E2EE] Erro ao salvar chave no banco:', keyErr.message);
-      }
-    } catch (e) {
-      console.warn('[E2EE] Não disponível:', e.message);
-      // Mensagens serão enviadas sem criptografia — ainda funcionam normalmente
+    if (!hasLocal && !hasBank) {
+      // Primeiro acesso: pede senha para criar o par
+      await e2eeSetupModal('create');
+    } else if (!hasLocal && hasBank) {
+      // Dispositivo novo: tem blob no banco, pede senha para restaurar
+      await e2eeSetupModal('restore');
     }
-  } else if (typeof SobralCrypto !== 'undefined' && MY_PROFILE.public_key && !SobralCrypto.hasKeys(USER.id)) {
-    // Tem chave no banco mas não tem chave privada local (trocou de dispositivo/browser)
-    // Precisa regenerar o par
-    try {
-      if (window.crypto?.subtle) {
-        const keys = await SobralCrypto.generateKeyPair();
-        SobralCrypto.savePrivateKey(USER.id, keys.privateKey);
-        await supa.from('profiles').update({ public_key: keys.publicKey }).eq('id', USER.id);
-        MY_PROFILE.public_key = keys.publicKey;
-        console.log('[E2EE] Par de chaves regenerado (novo dispositivo).');
-      }
-    } catch (e) {
-      console.warn('[E2EE] Não foi possível regenerar chaves:', e.message);
-    }
+    // hasLocal = true → chave já no localStorage, segue sem modal
   }
 
   // 1. Tenta usar a última localização salva no banco se for recente (menos de LOC_TTL_MIN min)
@@ -849,9 +1023,10 @@ function renderMessages() {
       const isOptimistic = msg.id.toString().startsWith('temp-');
       const icon = isOptimistic ? 'clock' : (msg.read_at ? 'check-check' : 'check');
       // Cores com contraste garantido sobre o fundo dourado da bolha
-      const color = msg.read_at ? 'var(--deep)' : 'rgba(26,20,16,0.55)';
-      const shadow = 'none'; 
-      statusHtml = `<i data-lucide="${icon}" class="msg-status-icon" style="width:12px; height:12px; color:${color}; margin-left:4px; transition: color 0.3s ease;"></i>`;
+      // clock/check → branco com sombra escura; check-check (lido) → verde com sombra
+      const color = msg.read_at ? '#22c55e' : 'rgba(255,255,255,0.75)';
+      const shadow = msg.read_at ? '0 0 4px rgba(0,0,0,0.5)' : '0 0 3px rgba(0,0,0,0.4)';
+      statusHtml = `<i data-lucide="${icon}" class="msg-status-icon" style="width:12px; height:12px; color:${color}; margin-left:4px; transition: color 0.3s ease; filter: drop-shadow(${shadow});"></i>`;
     }
 
     html += `
