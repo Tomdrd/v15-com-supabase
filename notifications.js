@@ -210,7 +210,7 @@
 
         unreadCount++;
         updateBadge();
-        showGlobalToast(msg.text, "Nova mensagem do Chat");
+        showGlobalToast("Você recebeu uma nova mensagem.", "Nova mensagem do Chat");
       })
       .subscribe();
   }

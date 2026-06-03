@@ -848,8 +848,11 @@ function renderMessages() {
     if (isMine) {
       const isOptimistic = msg.id.toString().startsWith('temp-');
       const icon = isOptimistic ? 'clock' : (msg.read_at ? 'check-check' : 'check');
-      const color = msg.read_at ? '#7ecece' : 'rgba(245,237,216,.4)';
-      statusHtml = `<i data-lucide="${icon}" class="msg-status-icon" style="width:12px; height:12px; color:${color}; margin-left:4px; transition: color 0.3s ease;"></i>`;
+      // Cores com contraste garantido sobre o fundo dourado da bolha
+      // clock/check → branco com sombra escura; check-check (lido) → verde com sombra
+      const color = msg.read_at ? '#22c55e' : 'rgba(255,255,255,0.75)';
+      const shadow = msg.read_at ? '0 0 4px rgba(0,0,0,0.5)' : '0 0 3px rgba(0,0,0,0.4)';
+      statusHtml = `<i data-lucide="${icon}" class="msg-status-icon" style="width:12px; height:12px; color:${color}; margin-left:4px; transition: color 0.3s ease; filter: drop-shadow(${shadow});"></i>`;
     }
 
     html += `

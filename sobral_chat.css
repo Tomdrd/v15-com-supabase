@@ -638,6 +638,22 @@ body {
 .msg-row.mine.grouped .msg-bubble  { border-top-right-radius: 4px; }
 .msg-row.other.grouped .msg-bubble { border-top-left-radius: 4px; }
 
+/* ── Status de mensagem (check, lido) ───────────────────────── */
+/* Horário e ícone de status dentro da bolha mine (fundo dourado) */
+.msg-row.mine .msg-bubble .msg-footer {
+  opacity: 1 !important; /* sobrescreve o opacity:0.7 inline */
+}
+.msg-row.mine .msg-bubble .msg-footer span {
+  color: rgba(0,0,0,0.55); /* hora legível no dourado */
+  font-weight: 600;
+  font-size: 10px;
+}
+.msg-status-icon {
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 /* ── Input de Mensagem ───────────────────────────────────────── */
 .message-input-wrap {
   flex-shrink: 0;
