@@ -809,12 +809,30 @@ function renderSettings(){
     </div>
     <div class="fg">
       <label>Tema do Perfil</label>
-      <select id="sTheme" style="width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--cream);font-family:inherit;font-size:14px;margin-top:4px;outline:none;cursor:pointer">
-        <option value="default" ${PROFILE.theme==='default'||!PROFILE.theme?'selected':''}>Padrão (Sobral)</option>
-        <option value="dark" ${PROFILE.theme==='dark'?'selected':''}>Modo Escuro (Dark)</option>
-        <option value="light" ${PROFILE.theme==='light'?'selected':''}>Modo Claro (Light)</option>
-      </select>
-      <small style="color:var(--muted);font-size:11px;display:block;margin-top:6px">Altera as cores da sua página de perfil para você e seus visitantes.</small>
+      <div class="theme-picker" id="sTheme" data-value="${PROFILE.theme||'default'}">
+        <div class="theme-card ${PROFILE.theme==='default'||!PROFILE.theme?'active':''}" data-theme="default" onclick="selectTheme('default')">
+          <div class="theme-card-info">
+            <div class="theme-card-name">Padrão (Sobral)</div>
+            <div class="theme-card-desc">Tons quentes e acolhedores</div>
+          </div>
+          <div class="theme-card-check"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        </div>
+        <div class="theme-card ${PROFILE.theme==='dark'?'active':''}" data-theme="dark" onclick="selectTheme('dark')">
+          <div class="theme-card-info">
+            <div class="theme-card-name">Modo Escuro (Dark)</div>
+            <div class="theme-card-desc">Preto profundo estilo zinc</div>
+          </div>
+          <div class="theme-card-check"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        </div>
+        <div class="theme-card ${PROFILE.theme==='light'?'active':''}" data-theme="light" onclick="selectTheme('light')">
+          <div class="theme-card-info">
+            <div class="theme-card-name">Modo Claro (Light)</div>
+            <div class="theme-card-desc">Fundo branco e limpo</div>
+          </div>
+          <div class="theme-card-check"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        </div>
+      </div>
+      <small style="color:var(--muted);font-size:11px;display:block;margin-top:8px">Altera as cores da sua página de perfil para você e seus visitantes.</small>
     </div>
     <div class="fg"><label>E-mail (não editável)</label><input value="${USER.email}" disabled style="opacity:.5"></div>
     <div style="display:flex;gap:10px;margin-top:4px">
@@ -1309,11 +1327,24 @@ function compressImageToWebP(file, maxWidth = 720, quality = 0.72){
   });
 }
 
+function selectTheme(value){
+  const picker = document.getElementById('sTheme');
+  if(!picker) return;
+  picker.dataset.value = value;
+  picker.querySelectorAll('.theme-card').forEach(card => {
+    card.classList.toggle('active', card.dataset.theme === value);
+  });
+  // Live preview
+  document.body.classList.remove('theme-light','theme-dark');
+  if(value === 'light') document.body.classList.add('theme-light');
+  else if(value === 'dark') document.body.classList.add('theme-dark');
+}
+
 async function saveProfile(){
   const name=document.getElementById('sName').value.trim();
   const bio=document.getElementById('sBio').value.trim();
   const user=document.getElementById('sUser').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,'');
-  const theme=document.getElementById('sTheme').value;
+  const theme=document.getElementById('sTheme').dataset.value||'default';
   
   if(user && user !== PROFILE.username){
     const { data: exist } = await supa.from('profiles').select('id').eq('username', user).single();
