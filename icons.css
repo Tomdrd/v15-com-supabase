@@ -80,3 +80,13 @@ a [data-lucide] {
 .verif-badge.bronze { color: #CD7F32; fill: rgba(205,127,50,0.15); }
 .verif-badge.silver { color: #C0C0C0; fill: rgba(192,192,192,0.15); }
 .verif-badge.gold   { color: #FFD700; fill: rgba(255,215,0,0.15); }
+
+/* TOAST NOTIFICATIONS — Correção de Responsividade */
+.toast {
+  max-width: 85vw !important;  /* Limita a largura a 85% da tela para dar respiro nas bordas */
+  white-space: normal !important; /* Força a quebra de linha */
+  text-align: center;          /* Garante que o texto fique centralizado ao quebrar */
+  line-height: 1.4;            /* Melhora a legibilidade em múltiplas linhas */
+  box-sizing: border-box;      /* Garante que o padding não aumente a largura total */
+  word-wrap: break-word;       /* Força a quebra de palavras se necessário */
+}

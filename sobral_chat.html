@@ -167,7 +167,7 @@
         </div>
 
         <!-- Mensagens -->
-        <div class="messages-area" id="messagesArea">
+        <div class="messages-area" id="messagesArea" onscroll="handleChatScroll()">
           <div class="messages-loading" id="messagesLoading">
             <div class="skeleton-msg right"></div>
             <div class="skeleton-msg left"></div>
@@ -175,13 +175,19 @@
           </div>
         </div>
 
+        <!-- Scroll to bottom button -->
+        <button id="btnScrollBottom" class="btn-scroll-bottom" onclick="scrollToBottom(true)" aria-label="Ir para a mensagem mais recente">
+          <i data-lucide="chevron-down"></i>
+          <span id="unreadScrollBadge" class="unread-scroll-badge" style="display:none"></span>
+        </button>
+
         <!-- Input de mensagem -->
         <div class="message-input-wrap" id="messageInputWrap">
           <div class="message-input-inner">
             <textarea
               id="msgInput"
               class="message-input"
-              placeholder="Digite uma mensagem…"
+              placeholder="Mensagem"
               rows="1"
               maxlength="1000"
               onkeydown="handleMsgKey(event)"

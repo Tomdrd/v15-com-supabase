@@ -26,6 +26,7 @@ let ALBUM_COUNTS = {}; // { userId: photoCount }
 let FRIEND_RELATIONS = {}; // { userId: friendRequest }
 let FRIEND_FILTER = 'all'; // all, friends, pending, not_friends
 let LOCATION_INTERVAL = null; // referência do setInterval de localização
+let UNREAD_SCROLL_COUNT = 0; // mensagens recebidas enquanto scroll não está no fim
 
 // ── Rate Limiting (client-side) ──────────────────────────────────
 const RATE_LIMIT      = 20;   // máx. mensagens
@@ -1086,7 +1087,28 @@ function scrollToBottom(force = false) {
   // Só rola automaticamente se o usuário já está perto do fim (< 100px do fundo)
   // ou se for forçado (ex: ao abrir a conversa pela primeira vez)
   const nearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 100;
-  if (force || nearBottom) area.scrollTop = area.scrollHeight;
+  if (force || nearBottom) {
+    area.scrollTop = area.scrollHeight;
+    UNREAD_SCROLL_COUNT = 0;
+    const badge = document.getElementById('unreadScrollBadge');
+    if (badge) badge.style.display = 'none';
+  }
+}
+
+function handleChatScroll() {
+  const area = document.getElementById('messagesArea');
+  const btn = document.getElementById('btnScrollBottom');
+  const badge = document.getElementById('unreadScrollBadge');
+  if (!area || !btn) return;
+  
+  const nearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 100;
+  if (nearBottom) {
+    btn.classList.remove('visible');
+    UNREAD_SCROLL_COUNT = 0;
+    if(badge) badge.style.display = 'none';
+  } else {
+    btn.classList.add('visible');
+  }
 }
 
 // ── Enviar mensagem ───────────────────────────────────────────────
@@ -1240,6 +1262,20 @@ function subscribeRealtime() {
 
       MESSAGES.push(msg);
       renderMessages();
+      
+      const area = document.getElementById('messagesArea');
+      const nearBottom = area ? (area.scrollHeight - area.scrollTop - area.clientHeight < 150) : true;
+      if (!nearBottom && !isMine) {
+        UNREAD_SCROLL_COUNT++;
+        const badge = document.getElementById('unreadScrollBadge');
+        if (badge) {
+          badge.style.display = 'block';
+          badge.textContent = UNREAD_SCROLL_COUNT > 99 ? '99+' : UNREAD_SCROLL_COUNT;
+        }
+      } else {
+        scrollToBottom(true);
+      }
+      
       // Só marca como lida se a mensagem foi enviada pelo outro usuário
       if (!isMine) markMessagesAsRead();
     })
