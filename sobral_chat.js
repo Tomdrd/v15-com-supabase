@@ -1042,7 +1042,7 @@ function renderMessages() {
       const isOptimistic = msg.id.toString().startsWith('temp-');
       // SVG inline — evita duplicação causada pelo lucide.createIcons()
       // Cores escuras para contrastar com o fundo dourado da bolha
-      const color  = msg.read_at ? '#15803d' : 'rgba(0,0,0,0.45)';
+      const color  = msg.read_at ? '#000000' : 'rgba(0,0,0,0.45)';
       const svgClock = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-left:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
       const svgCheck = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-left:4px"><polyline points="20 6 9 17 4 12"/></svg>`;
       const svgCheckCheck = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-left:4px"><polyline points="17 1 9 12 5 8"/><polyline points="22 6 12 17 7 12"/></svg>`;
