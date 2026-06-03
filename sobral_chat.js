@@ -116,15 +116,39 @@ async function init() {
   MY_PROFILE = prof || { id: USER.id, full_name: USER.user_metadata?.full_name || 'Você' };
 
   // Garante par de chaves E2EE (requer HTTPS ou localhost)
-  if (typeof SobralCrypto !== 'undefined' && !SobralCrypto.hasKeys(USER.id)) {
+  // Só gera se: SobralCrypto disponível, sem chave local E sem chave no banco
+  if (typeof SobralCrypto !== 'undefined' && !MY_PROFILE.public_key) {
     try {
+      // Verifica se Web Crypto está disponível antes de tentar
+      if (!window.crypto?.subtle) throw new Error('Web Crypto API indisponível (requer HTTPS)');
+
       const keys = await SobralCrypto.generateKeyPair();
       SobralCrypto.savePrivateKey(USER.id, keys.privateKey);
-      await supa.from('profiles').update({ public_key: keys.publicKey }).eq('id', USER.id);
-      MY_PROFILE.public_key = keys.publicKey; // Atualiza estado local imediatamente
+      const { error: keyErr } = await supa.from('profiles')
+        .update({ public_key: keys.publicKey }).eq('id', USER.id);
+      if (!keyErr) {
+        MY_PROFILE.public_key = keys.publicKey;
+        console.log('[E2EE] Chave gerada e salva com sucesso.');
+      } else {
+        console.warn('[E2EE] Erro ao salvar chave no banco:', keyErr.message);
+      }
     } catch (e) {
-      console.warn('E2EE não disponível:', e.message);
-      // Opcional: toast('Criptografia indisponível em conexões inseguras.', 'warn');
+      console.warn('[E2EE] Não disponível:', e.message);
+      // Mensagens serão enviadas sem criptografia — ainda funcionam normalmente
+    }
+  } else if (typeof SobralCrypto !== 'undefined' && MY_PROFILE.public_key && !SobralCrypto.hasKeys(USER.id)) {
+    // Tem chave no banco mas não tem chave privada local (trocou de dispositivo/browser)
+    // Precisa regenerar o par
+    try {
+      if (window.crypto?.subtle) {
+        const keys = await SobralCrypto.generateKeyPair();
+        SobralCrypto.savePrivateKey(USER.id, keys.privateKey);
+        await supa.from('profiles').update({ public_key: keys.publicKey }).eq('id', USER.id);
+        MY_PROFILE.public_key = keys.publicKey;
+        console.log('[E2EE] Par de chaves regenerado (novo dispositivo).');
+      }
+    } catch (e) {
+      console.warn('[E2EE] Não foi possível regenerar chaves:', e.message);
     }
   }
 
@@ -880,16 +904,29 @@ async function sendMessage() {
   renderMessages();
 
   let textToSend = text;
-  if (typeof SobralCrypto !== 'undefined' && ACTIVE_USER?.public_key) {
-    const payload = await SobralCrypto.encrypt(text, ACTIVE_USER.public_key);
-    textToSend = SobralCrypto.serializePayload(payload);
-  }
-
   let senderEncryptedText = null;
-  // Criptografa a mensagem também para o próprio remetente
-  if (typeof SobralCrypto !== 'undefined' && MY_PROFILE?.public_key) {
-    const senderPayload = await SobralCrypto.encrypt(text, MY_PROFILE.public_key);
-    senderEncryptedText = SobralCrypto.serializePayload(senderPayload);
+
+  const canEncrypt = typeof SobralCrypto !== 'undefined' && window.crypto?.subtle;
+  if (canEncrypt) {
+    // Criptografa para o destinatário (só se ele tiver public_key)
+    if (ACTIVE_USER?.public_key) {
+      try {
+        const payload = await SobralCrypto.encrypt(text, ACTIVE_USER.public_key);
+        textToSend = SobralCrypto.serializePayload(payload);
+      } catch (e) {
+        console.warn('[E2EE] Erro ao criptografar para destinatário:', e.message);
+        // Continua com plaintext — mensagem ainda é entregue
+      }
+    }
+    // Criptografa para o próprio remetente poder ler depois
+    if (MY_PROFILE?.public_key) {
+      try {
+        const senderPayload = await SobralCrypto.encrypt(text, MY_PROFILE.public_key);
+        senderEncryptedText = SobralCrypto.serializePayload(senderPayload);
+      } catch (e) {
+        console.warn('[E2EE] Erro ao criptografar cópia do remetente:', e.message);
+      }
+    }
   }
 
   const { data, error } = await supa
@@ -942,24 +979,43 @@ function subscribeRealtime() {
       filter: `conversation_id=eq.${ACTIVE_CONV.id}`
     }, async (payload) => {
       const msg = payload.new;
-      
-      // Se a mensagem já existe no array (por causa do update otimista ou recarregamento), 
-      // apenas atualizamos o objeto para garantir que o ID final do banco seja aplicado
+
+      // Se a mensagem real já existe, ignora (reconexão / duplicata)
       if (MESSAGES.some(m => m.id === msg.id)) return;
 
       const isMine = String(msg.sender_id).toLowerCase() === String(USER.id).toLowerCase();
+
+      // FIX: Se veio do próprio usuário, substitui a mensagem otimista (temp-xxx)
+      // em vez de adicionar duplicata
+      if (isMine) {
+        const tempIdx = MESSAGES.findIndex(m =>
+          m._optimistic && m.conversation_id === msg.conversation_id
+        );
+        if (tempIdx !== -1) {
+          MESSAGES[tempIdx] = { ...MESSAGES[tempIdx], id: msg.id, _optimistic: false, read_at: msg.read_at };
+          renderMessages();
+          return;
+        }
+      }
+
       const rtPrivKey = typeof SobralCrypto !== 'undefined' ? SobralCrypto.loadPrivateKey(USER.id) : null;
 
       if (rtPrivKey) {
         const payloadToDecrypt = isMine ? msg.sender_encrypted_text : msg.text;
         const encPayload = SobralCrypto.deserializePayload(payloadToDecrypt);
-        
         if (encPayload) {
           try {
             msg.text = await SobralCrypto.decrypt(encPayload, rtPrivKey);
           } catch (e) {
             msg.text = isMine ? "[Erro ao ler sua mensagem]" : "[mensagem não pode ser lida]";
           }
+        }
+      } else if (typeof SobralCrypto !== 'undefined') {
+        // FIX: sem chave privada local, verifica se o texto é um payload criptografado
+        // Se for, avisa — em vez de exibir o base64 cru
+        const encPayload = SobralCrypto.deserializePayload(isMine ? msg.sender_encrypted_text : msg.text);
+        if (encPayload) {
+          msg.text = '[Mensagem criptografada — recarregue a página para ler]';
         }
       }
 
