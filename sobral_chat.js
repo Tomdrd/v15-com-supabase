@@ -103,6 +103,7 @@ function e2eeSetupModal(mode) {
 
     const isCreate  = mode === 'create';
     const isRestore = mode === 'restore';
+    const isProtect = mode === 'protect';
 
     const modal = document.createElement('div');
     modal.id = 'e2eeModal';
