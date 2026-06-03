@@ -1021,12 +1021,13 @@ function renderMessages() {
     let statusHtml = '';
     if (isMine) {
       const isOptimistic = msg.id.toString().startsWith('temp-');
-      const icon = isOptimistic ? 'clock' : (msg.read_at ? 'check-check' : 'check');
-      // Cores com contraste garantido sobre o fundo dourado da bolha
-      // clock/check → branco com sombra escura; check-check (lido) → verde com sombra
-      const color = msg.read_at ? '#22c55e' : 'rgba(255,255,255,0.75)';
-      const shadow = msg.read_at ? '0 0 4px rgba(0,0,0,0.5)' : '0 0 3px rgba(0,0,0,0.4)';
-      statusHtml = `<i data-lucide="${icon}" class="msg-status-icon" style="width:12px; height:12px; color:${color}; margin-left:4px; transition: color 0.3s ease; filter: drop-shadow(${shadow});"></i>`;
+      // SVG inline — evita duplicação causada pelo lucide.createIcons()
+      // Cores escuras para contrastar com o fundo dourado da bolha
+      const color  = msg.read_at ? '#15803d' : 'rgba(0,0,0,0.45)';
+      const svgClock = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-left:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+      const svgCheck = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-left:4px"><polyline points="20 6 9 17 4 12"/></svg>`;
+      const svgCheckCheck = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-left:4px"><polyline points="17 1 9 12 5 8"/><polyline points="22 6 12 17 7 12"/></svg>`;
+      statusHtml = isOptimistic ? svgClock : (msg.read_at ? svgCheckCheck : svgCheck);
     }
 
     html += `
