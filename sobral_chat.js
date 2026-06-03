@@ -800,11 +800,29 @@ function renderMessages() {
       ? `<div class="msg-mini-avatar">${avatarHtml(ACTIVE_USER, 28)}</div>`
       : '';
 
+    const d = new Date(msg.created_at);
+    const timeOnly = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    
+    // Define o ícone de status para as minhas mensagens
+    let statusHtml = '';
+    if (isMine) {
+      const isOptimistic = msg.id.toString().startsWith('temp-');
+      const icon = isOptimistic ? 'clock' : (msg.read_at ? 'check-check' : 'check');
+      const color = msg.read_at ? '#7ecece' : 'rgba(245,237,216,.4)';
+      statusHtml = `<i data-lucide="${icon}" class="msg-status-icon" style="width:12px; height:12px; color:${color}; margin-left:4px; transition: color 0.3s ease;"></i>`;
+    }
+
     html += `
       <div class="msg-row ${isMine ? 'mine' : 'other'}${grouped ? ' grouped' : ''}" data-msg="${msg.id}">
         ${miniAvatar}
         <div>
-          <div class="msg-bubble">${escapeHtml(msg.text)}</div>
+          <div class="msg-bubble">
+            ${escapeHtml(msg.text)}
+            <div class="msg-footer" style="display:flex; align-items:center; justify-content:flex-end; margin-top:2px; font-size:10px; opacity:0.7;">
+              <span>${timeOnly}</span>
+              ${statusHtml}
+            </div>
+          </div>
         </div>
       </div>`;
   });
@@ -948,6 +966,20 @@ function subscribeRealtime() {
       MESSAGES.push(msg);
       renderMessages();
       markMessagesAsRead(); // Marca como lida assim que chega
+    })
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'chat_messages',
+      filter: `conversation_id=eq.${ACTIVE_CONV.id}`
+    }, (payload) => {
+      const updatedMsg = payload.new;
+      // Atualiza o status de leitura no array local se a mensagem existir
+      const idx = MESSAGES.findIndex(m => m.id === updatedMsg.id);
+      if (idx !== -1) {
+        MESSAGES[idx].read_at = updatedMsg.read_at;
+        renderMessages();
+      }
     })
     .subscribe();
 }
