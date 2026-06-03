@@ -7,7 +7,6 @@
 
 // ── Constantes ──────────────────────────────────────────────────
 const MAX_DIST_KM   = 14;      // distância máxima para conversar
-const GEO_MAX_AGE   = 30 * 60; // posição válida por 30 min (segundos)
 const LOC_TTL_MIN   = 30;      // tempo máximo que uma posição é considerada "recente"
 const MSG_PAGE_SIZE = 60;      // mensagens carregadas por conversa
 
@@ -26,6 +25,7 @@ let searchTerm   = '';
 let ALBUM_COUNTS = {}; // { userId: photoCount }
 let FRIEND_RELATIONS = {}; // { userId: friendRequest }
 let FRIEND_FILTER = 'all'; // all, friends, pending, not_friends
+let LOCATION_INTERVAL = null; // referência do setInterval de localização
 
 // ── Rate Limiting (client-side) ──────────────────────────────────
 const RATE_LIMIT      = 20;   // máx. mensagens
@@ -59,15 +59,6 @@ function haversine(lat1, lng1, lat2, lng2) {
 function fmtDist(km) {
   if (km < 1) return `${Math.round(km * 1000)} m`;
   return `${km.toFixed(1)} km`;
-}
-
-function fmtTime(iso) {
-  const d = new Date(iso);
-  const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
-  if (sameDay) return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' '
-    + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
 function fmtDateSep(iso) {
@@ -215,7 +206,7 @@ async function activateLocation() {
       loadNearbyUsers();
 
       // Atualiza localização periodicamente (a cada 5 min)
-      setInterval(updateLocationSilent, 5 * 60 * 1000);
+      if (!LOCATION_INTERVAL) LOCATION_INTERVAL = setInterval(updateLocationSilent, 5 * 60 * 1000);
     },
     (err) => {
       console.warn('Geo error:', err);
@@ -230,7 +221,7 @@ function startLocationWatcher() {
   document.getElementById('chatMain').style.display = 'flex';
   showState('chatMain');
   updateLocationBanner();
-  setInterval(updateLocationSilent, 5 * 60 * 1000);
+  if (!LOCATION_INTERVAL) LOCATION_INTERVAL = setInterval(updateLocationSilent, 5 * 60 * 1000);
 }
 
 function updateLocationBanner() {
@@ -263,7 +254,11 @@ async function loadNearbyUsers() {
 
   // Limite temporal: localização atualizada há menos de LOC_TTL_MIN min
   // Busca bloqueios (onde eu bloqueei ou fui bloqueado)
-  const { data: blocks } = await supa.from('chat_blocks').select('blocker_id, blocked_id');
+  // RLS já filtra: só retorna bloqueios onde eu sou blocker ou blocked
+  const { data: blocks } = await supa
+    .from('chat_blocks')
+    .select('blocker_id, blocked_id')
+    .or(`blocker_id.eq.${USER.id},blocked_id.eq.${USER.id}`);
   const blockedIds = new Set(
     (blocks || []).map(b => b.blocker_id === USER.id ? b.blocked_id : b.blocker_id)
   );
@@ -685,6 +680,7 @@ function backToList() {
   document.getElementById('chatEmpty').style.display        = 'flex';
   ACTIVE_USER = null;
   ACTIVE_CONV = null;
+  MESSAGES = []; // limpa para evitar flash de mensagens antigas ao abrir outra conversa
   unsubRealtime();
 }
 
@@ -729,14 +725,28 @@ async function loadOrCreateConversation(otherUserId) {
 
 async function markMessagesAsRead() {
   if (!ACTIVE_CONV || !USER) return;
-  
-  // Atualiza no banco as mensagens recebidas
-  await supa
+
+  const now = new Date().toISOString();
+
+  // Atualiza no banco as mensagens recebidas ainda não lidas
+  const { error } = await supa
     .from('chat_messages')
-    .update({ read_at: new Date().toISOString() })
+    .update({ read_at: now })
     .eq('conversation_id', ACTIVE_CONV.id)
     .neq('sender_id', USER.id)
     .is('read_at', null);
+
+  if (!error) {
+    // Sincroniza o array local para refletir imediatamente (sem esperar o Realtime)
+    let changed = false;
+    MESSAGES.forEach(m => {
+      if (String(m.sender_id).toLowerCase() !== String(USER.id).toLowerCase() && !m.read_at) {
+        m.read_at = now;
+        changed = true;
+      }
+    });
+    if (changed) renderMessages();
+  }
 
   // Zera badge global na interface se existir a função
   if (window.resetGlobalUnreadBadge) window.resetGlobalUnreadBadge();
@@ -758,6 +768,7 @@ async function loadMessages() {
   }
 
   MESSAGES = data || [];
+  const _isInitialLoad = true; // sinaliza que a próxima renderMessages deve forçar o scroll
   const privKey = typeof SobralCrypto !== 'undefined' ? SobralCrypto.loadPrivateKey(USER.id) : null;
   if (privKey) {
     for (const msg of MESSAGES) {
@@ -778,15 +789,20 @@ async function loadMessages() {
           msg.text = "[Mensagem segura enviada]"; // Fallback para mensagens antigas ou falha
         }
       } else {
-        // Se a mensagem é de outro usuário, uso a lógica existente
+        // Se a mensagem é de outro usuário, descriptografa com proteção
         const encPayload = SobralCrypto.deserializePayload(msg.text);
         if (encPayload) {
-          msg.text = await SobralCrypto.decrypt(encPayload, privKey); // O try/catch já está na função decrypt do crypto.js
+          try {
+            msg.text = await SobralCrypto.decrypt(encPayload, privKey) || '[Mensagem ilegível]';
+          } catch (e) {
+            console.warn('Erro ao descriptografar mensagem recebida:', e);
+            msg.text = '[Mensagem não pôde ser lida]';
+          }
         }
       }
     }
   }
-  renderMessages();
+  scrollToBottom(true); // força scroll ao carregar conversa pela primeira vez
 }
 
 // ── Renderizar mensagens ──────────────────────────────────────────
@@ -865,9 +881,13 @@ function escapeHtml(str) {
     .replace(/\n/g, '<br>');
 }
 
-function scrollToBottom() {
+function scrollToBottom(force = false) {
   const area = document.getElementById('messagesArea');
-  if (area) area.scrollTop = area.scrollHeight;
+  if (!area) return;
+  // Só rola automaticamente se o usuário já está perto do fim (< 100px do fundo)
+  // ou se for forçado (ex: ao abrir a conversa pela primeira vez)
+  const nearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 100;
+  if (force || nearBottom) area.scrollTop = area.scrollHeight;
 }
 
 // ── Enviar mensagem ───────────────────────────────────────────────
@@ -1021,7 +1041,8 @@ function subscribeRealtime() {
 
       MESSAGES.push(msg);
       renderMessages();
-      markMessagesAsRead(); // Marca como lida assim que chega
+      // Só marca como lida se a mensagem foi enviada pelo outro usuário
+      if (!isMine) markMessagesAsRead();
     })
     .on('postgres_changes', {
       event: 'UPDATE',
@@ -1030,9 +1051,10 @@ function subscribeRealtime() {
       filter: `conversation_id=eq.${ACTIVE_CONV.id}`
     }, (payload) => {
       const updatedMsg = payload.new;
-      // Atualiza o status de leitura no array local se a mensagem existir
+      // Atualiza APENAS o read_at no array local — não sobrescreve o texto
+      // já descriptografado em memória com o payload criptografado do banco
       const idx = MESSAGES.findIndex(m => m.id === updatedMsg.id);
-      if (idx !== -1) {
+      if (idx !== -1 && updatedMsg.read_at && !MESSAGES[idx].read_at) {
         MESSAGES[idx].read_at = updatedMsg.read_at;
         renderMessages();
       }
