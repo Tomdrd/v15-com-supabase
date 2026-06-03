@@ -121,6 +121,7 @@ async function init() {
       const keys = await SobralCrypto.generateKeyPair();
       SobralCrypto.savePrivateKey(USER.id, keys.privateKey);
       await supa.from('profiles').update({ public_key: keys.publicKey }).eq('id', USER.id);
+      MY_PROFILE.public_key = keys.publicKey; // Atualiza estado local imediatamente
     } catch (e) {
       console.warn('E2EE não disponível:', e.message);
       // Opcional: toast('Criptografia indisponível em conexões inseguras.', 'warn');
@@ -736,8 +737,29 @@ async function loadMessages() {
   const privKey = typeof SobralCrypto !== 'undefined' ? SobralCrypto.loadPrivateKey(USER.id) : null;
   if (privKey) {
     for (const msg of MESSAGES) {
-      const encPayload = SobralCrypto.deserializePayload(msg.text);
-      if (encPayload) msg.text = await SobralCrypto.decrypt(encPayload, privKey);
+      const isMine = String(msg.sender_id).toLowerCase() === String(USER.id).toLowerCase();
+      
+      if (isMine) {
+        // Se a mensagem foi enviada por mim, tento descriptografar a versão "sender_encrypted_text"
+        const senderEncryptedPayload = SobralCrypto.deserializePayload(msg.sender_encrypted_text);
+        if (senderEncryptedPayload) {
+          try {
+            const decryptedText = await SobralCrypto.decrypt(senderEncryptedPayload, privKey);
+            msg.text = decryptedText || "[Erro ao ler sua mensagem]"; // Usa o texto descriptografado ou um fallback
+          } catch (e) {
+            console.warn("Erro ao descriptografar sua própria mensagem:", e);
+            msg.text = "[Erro ao ler sua mensagem]";
+          }
+        } else {
+          msg.text = "[Mensagem segura enviada]"; // Fallback para mensagens antigas ou falha
+        }
+      } else {
+        // Se a mensagem é de outro usuário, uso a lógica existente
+        const encPayload = SobralCrypto.deserializePayload(msg.text);
+        if (encPayload) {
+          msg.text = await SobralCrypto.decrypt(encPayload, privKey); // O try/catch já está na função decrypt do crypto.js
+        }
+      }
     }
   }
   renderMessages();
@@ -764,7 +786,7 @@ function renderMessages() {
   let lastSender = '';
 
   MESSAGES.forEach((msg, i) => {
-    const isMine   = msg.sender_id === USER.id;
+    const isMine   = String(msg.sender_id).toLowerCase() === String(USER.id).toLowerCase();
     const dateStr  = fmtDateSep(msg.created_at);
     const grouped  = lastSender === msg.sender_id;
     lastSender     = msg.sender_id;
@@ -833,7 +855,8 @@ async function sendMessage() {
     conversation_id: ACTIVE_CONV.id,
     sender_id: USER.id,
     text,
-    created_at: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    _optimistic: true // Adiciona uma flag para identificar mensagens otimistas
   };
   MESSAGES.push(tempMsg);
   renderMessages();
@@ -843,12 +866,21 @@ async function sendMessage() {
     const payload = await SobralCrypto.encrypt(text, ACTIVE_USER.public_key);
     textToSend = SobralCrypto.serializePayload(payload);
   }
+
+  let senderEncryptedText = null;
+  // Criptografa a mensagem também para o próprio remetente
+  if (typeof SobralCrypto !== 'undefined' && MY_PROFILE?.public_key) {
+    const senderPayload = await SobralCrypto.encrypt(text, MY_PROFILE.public_key);
+    senderEncryptedText = SobralCrypto.serializePayload(senderPayload);
+  }
+
   const { data, error } = await supa
     .from('chat_messages')
     .insert({
       conversation_id: ACTIVE_CONV.id,
       sender_id: USER.id,
-      text: textToSend
+      text: textToSend, // Mensagem criptografada para o destinatário
+      sender_encrypted_text: senderEncryptedText // Mensagem criptografada para o remetente
     })
     .select()
     .single();
@@ -861,10 +893,15 @@ async function sendMessage() {
     return;
   }
 
-  // Substitui temporário pelo real, mantendo texto legível para o remetente
+  // Substitui a mensagem otimista pela mensagem real do banco, preservando o texto original
   const idx = MESSAGES.findIndex(m => m.id === tempMsg.id);
-  if (idx !== -1) MESSAGES[idx] = { ...data, text };
-  else { MESSAGES = MESSAGES.filter(m => m.id !== tempMsg.id); MESSAGES.push({ ...data, text }); }
+  if (idx !== -1) {
+    MESSAGES[idx] = {
+      ...data,
+      text: tempMsg.text, // Mantém o texto original (plaintext) da mensagem otimista
+      _optimistic: false
+    };
+  }
   renderMessages();
 
   // Atualiza last_message
@@ -887,16 +924,30 @@ function subscribeRealtime() {
       filter: `conversation_id=eq.${ACTIVE_CONV.id}`
     }, async (payload) => {
       const msg = payload.new;
-      if (msg.sender_id !== USER.id) {
-        const rtPrivKey = typeof SobralCrypto !== 'undefined' ? SobralCrypto.loadPrivateKey(USER.id) : null;
-        if (rtPrivKey) {
-          const encPayload = SobralCrypto.deserializePayload(msg.text);
-          if (encPayload) msg.text = await SobralCrypto.decrypt(encPayload, rtPrivKey);
+      
+      // Se a mensagem já existe no array (por causa do update otimista ou recarregamento), 
+      // apenas atualizamos o objeto para garantir que o ID final do banco seja aplicado
+      if (MESSAGES.some(m => m.id === msg.id)) return;
+
+      const isMine = String(msg.sender_id).toLowerCase() === String(USER.id).toLowerCase();
+      const rtPrivKey = typeof SobralCrypto !== 'undefined' ? SobralCrypto.loadPrivateKey(USER.id) : null;
+
+      if (rtPrivKey) {
+        const payloadToDecrypt = isMine ? msg.sender_encrypted_text : msg.text;
+        const encPayload = SobralCrypto.deserializePayload(payloadToDecrypt);
+        
+        if (encPayload) {
+          try {
+            msg.text = await SobralCrypto.decrypt(encPayload, rtPrivKey);
+          } catch (e) {
+            msg.text = isMine ? "[Erro ao ler sua mensagem]" : "[mensagem não pode ser lida]";
+          }
         }
-        MESSAGES.push(msg);
-        renderMessages();
-        markMessagesAsRead(); // Marca como lida assim que chega
       }
+
+      MESSAGES.push(msg);
+      renderMessages();
+      markMessagesAsRead(); // Marca como lida assim que chega
     })
     .subscribe();
 }

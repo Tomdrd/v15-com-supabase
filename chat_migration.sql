@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   conversation_id UUID NOT NULL REFERENCES chat_conversations(id) ON DELETE CASCADE,
   sender_id       UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   text            TEXT NOT NULL CHECK (char_length(text) > 0 AND char_length(text) <= 1000),
+  sender_encrypted_text TEXT,
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   read_at         TIMESTAMPTZ
 );

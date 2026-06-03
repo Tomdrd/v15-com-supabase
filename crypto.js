@@ -31,7 +31,7 @@ const SobralCrypto = (() => {
       const aesKey = await crypto.subtle.importKey('raw', aesRaw, ALGO_AES, false, ['decrypt']);
       const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: base64ToBuf(payload.iv) }, aesKey, base64ToBuf(payload.encryptedText));
       return new TextDecoder().decode(decrypted);
-    } catch(e) { console.warn('Erro ao decriptografar:', e); return '[mensagem não pode ser lida]'; }
+    } catch(e) { console.warn('Erro ao decriptografar:', e); return ''; }
   }
   const savePrivateKey = (uid, k) => localStorage.setItem(`sc_priv_${uid}`, k);
   const loadPrivateKey = uid => localStorage.getItem(`sc_priv_${uid}`);
