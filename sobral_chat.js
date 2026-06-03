@@ -125,12 +125,15 @@ function e2eeSetupModal(mode) {
           <h2 style="margin:0;font-size:18px;color:var(--cream,#f5edd8);font-weight:600">
             ${isCreate  ? 'Proteja suas mensagens' :
               isRestore ? 'Acessar chat neste dispositivo' :
+              isProtect ? 'Crie uma senha para suas chaves' :
                           'Criar nova chave de criptografia'}
           </h2>
         </div>
         <p style="font-size:13px;color:rgba(245,237,216,.6);margin:0 0 20px;line-height:1.6">
           ${isCreate
             ? 'Crie uma senha para criptografar suas mensagens. <strong style="color:var(--ochre)">Guarde-a bem</strong> — você vai precisar dela em novos dispositivos.'
+            : isProtect
+            ? 'Sua chave ainda não está protegida. Crie uma senha para acessar o chat em outros dispositivos.'
             : isRestore
             ? 'Digite a senha que você criou no primeiro acesso para restaurar sua chave de criptografia neste dispositivo.'
             : 'Você vai perder acesso às mensagens anteriores. Mensagens novas funcionarão normalmente.'}
@@ -139,7 +142,7 @@ function e2eeSetupModal(mode) {
         <div style="display:flex;flex-direction:column;gap:12px">
           <div style="position:relative">
             <input id="e2eePass" type="password" placeholder="Senha de criptografia"
-              autocomplete="${isCreate ? 'new-password' : 'current-password'}"
+              autocomplete="${(isCreate || isProtect) ? 'new-password' : 'current-password'}"
               style="
                 width:100%;box-sizing:border-box;
                 background:rgba(255,255,255,.06);
@@ -153,7 +156,7 @@ function e2eeSetupModal(mode) {
             "></i>
           </div>
 
-          ${isCreate ? `
+          ${(isCreate || isProtect) ? `
           <input id="e2eePassConfirm" type="password" placeholder="Confirmar senha"
             autocomplete="new-password"
             style="
@@ -175,14 +178,14 @@ function e2eeSetupModal(mode) {
             font-size:14px;font-weight:700;cursor:pointer;
             transition:opacity .15s;
           ">
-            ${isCreate ? 'Criar senha' : isRestore ? 'Entrar' : 'Criar nova chave'}
+            ${isCreate ? 'Criar senha' : isRestore ? 'Entrar' : isProtect ? 'Salvar senha' : 'Criar nova chave'}
           </button>
 
           <button id="e2eeSkip" style="
             background:transparent;color:rgba(245,237,216,.4);
             border:none;padding:8px;font-size:13px;cursor:pointer;
           ">
-            ${isRestore ? 'Esqueci minha senha' : 'Pular por agora (sem criptografia)'}
+            ${isRestore ? 'Esqueci minha senha' : isProtect ? 'Pular por agora' : 'Pular por agora (sem criptografia)'}
           </button>
         </div>
       </div>
@@ -218,7 +221,7 @@ function e2eeSetupModal(mode) {
         errorEl.textContent = 'Mínimo 8 caracteres.';
         return;
       }
-      if (isCreate && confirmEl && pass !== confirmEl.value.trim()) {
+      if ((isCreate || isProtect) && confirmEl && pass !== confirmEl.value.trim()) {
         errorEl.textContent = 'As senhas não coincidem.';
         return;
       }
@@ -227,7 +230,17 @@ function e2eeSetupModal(mode) {
       submitBtn.disabled = true;
 
       try {
-        if (isCreate) {
+        if (isProtect) {
+          // Cifra a chave privada já existente no localStorage com a nova senha
+          const existingPrivKey = SobralCrypto.loadPrivateKey(USER.id);
+          if (!existingPrivKey) throw new Error('Chave local não encontrada');
+          const blob = await SobralCrypto.wrapPrivateKey(existingPrivKey, pass);
+          const { error } = await supa.from('profiles')
+            .update({ private_key_enc: blob }).eq('id', USER.id);
+          if (error) throw new Error('Erro ao salvar no banco: ' + error.message);
+          MY_PROFILE.private_key_enc = blob;
+
+        } else if (isCreate) {
           // Gera par RSA, cifra a privada com a senha, salva tudo no banco
           const keys = await SobralCrypto.generateKeyPair();
           const blob = await SobralCrypto.wrapPrivateKey(keys.privateKey, pass);
@@ -265,7 +278,7 @@ function e2eeSetupModal(mode) {
         errorEl.textContent = e.message === 'Senha incorreta'
           ? 'Senha incorreta. Tente novamente.'
           : 'Erro inesperado. Tente novamente.';
-        submitBtn.textContent = isCreate ? 'Criar senha' : isRestore ? 'Entrar' : 'Criar nova chave';
+        submitBtn.textContent = isCreate ? 'Criar senha' : isRestore ? 'Entrar' : isProtect ? 'Salvar senha' : 'Criar nova chave';
         submitBtn.disabled = false;
       }
     });
@@ -313,8 +326,12 @@ async function init() {
     } else if (!hasLocal && hasBank) {
       // Dispositivo novo: tem blob no banco, pede senha para restaurar
       await e2eeSetupModal('restore');
+    } else if (hasLocal && MY_PROFILE.public_key && !MY_PROFILE.private_key_enc) {
+      // Tem chave local mas ainda não salvou o blob no banco (usuário antigo)
+      // Pede senha para proteger a chave existente sem gerar um par novo
+      await e2eeSetupModal('protect');
     }
-    // hasLocal = true → chave já no localStorage, segue sem modal
+    // hasLocal = true + hasBank = true → chave já no localStorage, segue sem modal
   }
 
   // 1. Tenta usar a última localização salva no banco se for recente (menos de LOC_TTL_MIN min)
@@ -954,20 +971,22 @@ async function loadMessages() {
         if (senderEncryptedPayload) {
           try {
             const decryptedText = await SobralCrypto.decrypt(senderEncryptedPayload, privKey);
-            msg.text = decryptedText || "[Erro ao ler sua mensagem]"; // Usa o texto descriptografado ou um fallback
+            // Se decrypt falhar (chave trocada, mensagem antiga), mantém o texto original
+            if (decryptedText) msg.text = decryptedText;
           } catch (e) {
-            console.warn("Erro ao descriptografar sua própria mensagem:", e);
-            msg.text = "[Erro ao ler sua mensagem]";
+            console.warn("Erro ao descriptografar própria mensagem:", e);
+            // Não substitui o texto — mantém o que veio do banco (pode ser legível)
           }
         } else {
-          msg.text = "[Mensagem segura enviada]"; // Fallback para mensagens antigas ou falha
+          // sem sender_encrypted_text: mantém msg.text (pode ser plaintext de época sem E2EE)
         }
       } else {
         // Se a mensagem é de outro usuário, descriptografa com proteção
         const encPayload = SobralCrypto.deserializePayload(msg.text);
         if (encPayload) {
           try {
-            msg.text = await SobralCrypto.decrypt(encPayload, privKey) || '[Mensagem ilegível]';
+            const dec = await SobralCrypto.decrypt(encPayload, privKey);
+            msg.text = dec || msg.text; // se falhou, mantém o texto original (plaintext ou payload)
           } catch (e) {
             console.warn('Erro ao descriptografar mensagem recebida:', e);
             msg.text = '[Mensagem não pôde ser lida]';
