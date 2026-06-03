@@ -46,6 +46,10 @@
 .icon-success { stroke: #8ecb6e;       }
 .icon-teal    { stroke: var(--teal);   }
 
+/* STATUS DE MENSAGENS NO CHAT */
+.icon-read    { stroke: var(--deep); opacity: 1; }    /* Lido: Totalmente Profundo */
+.icon-sent    { stroke: var(--deep); opacity: 0.55; } /* Enviado: Profundo Suave */
+
 /* ÍCONES EM BOTÕES — ajuste de alinhamento */
 .btn [data-lucide],
 button [data-lucide],

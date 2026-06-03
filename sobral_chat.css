@@ -619,7 +619,7 @@ body {
 
 /* Minha mensagem */
 .msg-row.mine .msg-bubble {
-  background: linear-gradient(135deg, var(--ochre), #a06a10);
+  background: var(--ochre);
   color: var(--deep);
   border-bottom-right-radius: 4px;
 }
